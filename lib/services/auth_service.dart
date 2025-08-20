@@ -1,0 +1,306 @@
+import 'dart:async';
+import 'package:vidstream/models/api_models.dart';
+import 'package:vidstream/models/response_model.dart' as response_models;
+import 'package:vidstream/services/api_service.dart';
+import 'package:vidstream/services/notification_service.dart';
+import 'package:vidstream/utils/auth_utils.dart';
+
+class AuthService {
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
+
+  // Use lazy getter to avoid circular dependency
+  ApiService get _apiService => ApiService();
+  final StreamController<ApiUser?> _authStateController = StreamController<ApiUser?>.broadcast();
+  
+  ApiUser? _currentUser;
+  String? _accessToken;
+  String? _refreshToken;
+
+  // Initialize service (lightweight)
+  Future<void> initialize() async {
+    try {
+      await _loadCurrentUser();
+      
+      // Emit initial auth state to unblock UI
+      if (!_authStateController.isClosed) {
+        _authStateController.add(_currentUser);
+      }
+      
+      print('✅ AuthService initialized');
+    } catch (e) {
+      print('❌ AuthService init error: $e');
+      
+      // Still emit null to unblock UI
+      if (!_authStateController.isClosed) {
+        _authStateController.add(null);
+      }
+    }
+  }
+
+  // Get current user
+  ApiUser? get currentUser => _currentUser;
+
+  // Auth state stream
+  Stream<ApiUser?> get authStateChanges => _authStateController.stream;
+
+  // Sign up with email and password
+  Future<ApiUser?> signUpWithEmailAndPassword({
+    required String email,
+    required String password,
+    required String displayName,
+    String? gender,
+    DateTime? dateOfBirth,
+  }) async {
+    try {
+      final authResponse = await _apiService.register(
+        email: email,
+        password: password,
+        displayName: displayName,
+        gender: gender,
+        dateOfBirth: dateOfBirth,
+      );
+
+      if (authResponse != null) {
+        _accessToken = authResponse.accessToken;
+        _refreshToken = authResponse.refreshToken;
+        
+        // Extract user data from response
+        _currentUser = ApiUser.fromJson(authResponse.user);
+        _authStateController.add(_currentUser);
+        
+        return _currentUser;
+      }
+      
+      return null;
+    } catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Sign in with email and password
+  Future<ApiUser?> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final authResponse = await _apiService.login(
+        email: email,
+        password: password,
+      );
+
+      if (authResponse != null) {
+        _accessToken = authResponse.accessToken;
+        _refreshToken = authResponse.refreshToken;
+        
+        // Extract user data from response
+        _currentUser = ApiUser.fromJson(authResponse.user);
+        _authStateController.add(_currentUser);
+        
+        return _currentUser;
+      }
+      
+      return null;
+    } catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Sign out
+  Future<void> signOut() async {
+    try {
+      // Clean up FCM token before signing out
+      await NotificationService().deleteToken();
+      
+      // Call logout API
+      await _apiService.logout();
+      
+      // Clear local state
+      _currentUser = null;
+      _accessToken = null;
+      _refreshToken = null;
+      
+      _authStateController.add(null);
+    } catch (e) {
+      throw 'Sign out failed: ${e.toString()}';
+    }
+  }
+
+  // Reset password
+  Future<void> resetPassword(String email) async {
+    try {
+      // TODO: Implement password reset API call
+      throw 'Password reset not implemented yet';
+    } catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Get user profile
+  Future<ApiUser?> getUserProfile(String userId) async {
+    try {
+      return await _apiService.getUserById(userId);
+    } catch (e) {
+      throw 'Failed to get user profile: ${e.toString()}';
+    }
+  }
+
+  // Update user profile
+  Future<void> updateUserProfile(ApiUser user) async {
+    try {
+      final updatedUser = await _apiService.updateUserProfile(
+        displayName: user.displayName,
+        bio: user.bio,
+        gender: user.gender,
+        dateOfBirth: user.dateOfBirth,
+      );
+      
+      if (updatedUser != null) {
+        _currentUser = updatedUser;
+        _authStateController.add(_currentUser);
+      }
+    } catch (e) {
+      throw 'Failed to update user profile: ${e.toString()}';
+    }
+  }
+
+  // Sign in with Google (simplified for demo)
+  Future<ApiUser?> signInWithGoogle() async {
+    try {
+      // For demo purposes, we'll create a demo email account
+      return await signUpWithEmailAndPassword(
+        email: 'demo@vidstream.com', 
+        password: 'password123',
+        displayName: 'Demo User',
+      );
+    } catch (e) {
+      // If user already exists, sign in instead
+      try {
+        return await signInWithEmailAndPassword(
+          email: 'demo@vidstream.com',
+          password: 'password123',
+        );
+      } catch (e) {
+        throw 'Google sign in failed: ${e.toString()}';
+      }
+    }
+  }
+
+  // Sign in with Apple (simplified for demo)
+  Future<ApiUser?> signInWithApple() async {
+    try {
+      // For demo purposes, we'll create a demo Apple account
+      return await signUpWithEmailAndPassword(
+        email: 'apple@vidstream.com', 
+        password: 'password123',
+        displayName: 'Apple User',
+      );
+    } catch (e) {
+      // If user already exists, sign in instead
+      try {
+        return await signInWithEmailAndPassword(
+          email: 'apple@vidstream.com',
+          password: 'password123',
+        );
+      } catch (e) {
+        throw 'Apple sign in failed: ${e.toString()}';
+      }
+    }
+  }
+
+  // Sign in as guest
+  Future<ApiUser?> signInAsGuest() async {
+    try {
+      // Create a guest user
+      final guestUser = await _createGuestUser();
+      
+      _currentUser = guestUser;
+      _authStateController.add(_currentUser);
+      
+      return _currentUser;
+    } catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Check if Apple Sign In is available (simplified for demo)
+  Future<bool> isAppleSignInAvailable() async {
+    return true; // Always available for demo
+  }
+  
+  // Check if user is authenticated
+  bool get isAuthenticated => _currentUser != null;
+  
+  // Refresh current user data
+  Future<void> refreshCurrentUser() async {
+    if (_currentUser != null) {
+      await _loadCurrentUser();
+    }
+  }
+  
+  // Private method to load current user
+  Future<void> _loadCurrentUser() async {
+    try {
+      // For now, just check if we have stored auth data
+      // TODO: Implement token storage/retrieval when backend is ready
+      if (_accessToken != null) {
+        // Would call API to get current user data
+        // final user = await _apiService.getCurrentUser();
+        // For now, maintain existing user if available
+        if (_currentUser != null) {
+          _authStateController.add(_currentUser);
+        }
+      }
+      print('✅ Current user loaded');
+    } catch (e) {
+      print('Error loading current user: $e');
+      // If loading fails, user might need to re-authenticate
+      _currentUser = null;
+      _authStateController.add(null);
+    }
+  }
+
+  Future<ApiUser> _createGuestUser() async {
+    final deviceId = await AuthUtils().getDeviceId();
+    print('Creating guest user with device ID: $deviceId');
+    final authResponse = await _apiService.guestLogin(deviceId: deviceId);
+
+    if (authResponse != null) {
+      _accessToken = authResponse.accessToken;
+      _refreshToken = authResponse.refreshToken;
+
+      final user = ApiUser.fromJson(authResponse.user);
+      return user;
+    }
+
+    throw 'Guest login failed';
+  }
+
+  // Handle authentication exceptions
+  String _handleAuthException(dynamic error) {
+    if (error is response_models.ApiException) {
+      switch (error.statusCode) {
+        case 401:
+          return 'Invalid credentials';
+        case 403:
+          return 'Account disabled';
+        case 429:
+          return 'Too many requests. Please try again later';
+        default:
+          return error.message;
+      }
+    } else if (error is response_models.ValidationException) {
+      return error.message;
+    } else if (error is response_models.NetworkException) {
+      return 'Network error. Please check your connection';
+    } else {
+      return error.toString();
+    }
+  }
+  
+  // Dispose resources
+  void dispose() {
+    _authStateController.close();
+  }
+}

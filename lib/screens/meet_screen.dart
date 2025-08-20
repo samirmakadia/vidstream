@@ -1,0 +1,516 @@
+import 'package:flutter/material.dart';
+import 'package:vidstream/services/meet_service.dart';
+import 'package:vidstream/services/auth_service.dart';
+import 'package:vidstream/models/api_models.dart';
+import 'package:vidstream/screens/chat_screen.dart';
+
+class MeetScreen extends StatefulWidget {
+  const MeetScreen({super.key});
+
+  @override
+  State<MeetScreen> createState() => _MeetScreenState();
+}
+
+class _MeetScreenState extends State<MeetScreen> {
+  bool _hasJoinedMeet = false;
+  bool _isLoading = false;
+  List<ApiUser> _onlineUsers = [];
+  String _selectedGenderFilter = 'all'; // 'all', 'male', 'female', 'other'
+  final MeetService _meetService = MeetService();
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkMeetStatus();
+  }
+
+  Future<void> _checkMeetStatus() async {
+    final currentUser = _authService.currentUser;
+    if (currentUser != null) {
+      final isInMeet = await _meetService.isUserInMeet(currentUser.id);
+      setState(() {
+        _hasJoinedMeet = isInMeet;
+      });
+      if (_hasJoinedMeet) {
+        _loadOnlineUsers();
+      }
+    }
+  }
+
+  Future<void> _loadOnlineUsers() async {
+    if (!_hasJoinedMeet) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final stream = _meetService.getOnlineUsers(genderFilter: _selectedGenderFilter);
+      final users = await stream.first;
+      setState(() {
+        _onlineUsers = users;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading online users: $e')),
+        );
+      }
+    }
+  }
+
+  void _onGenderFilterChanged(String filter) {
+    setState(() {
+      _selectedGenderFilter = filter;
+    });
+    _loadOnlineUsers();
+  }
+
+  Future<void> _joinMeet() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _meetService.joinMeet();
+      setState(() {
+        _hasJoinedMeet = true;
+        _isLoading = false;
+      });
+      _loadOnlineUsers();
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error joining meet: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _leaveMeet() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _meetService.leaveMeet();
+      setState(() {
+        _hasJoinedMeet = false;
+        _onlineUsers.clear();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error leaving meet: $e')),
+        );
+      }
+    }
+  }
+
+  void _startChat(ApiUser user) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ChatScreen(otherUserId: user.id),
+      ),
+    );
+  }
+
+  String _getGenderDisplayName(String gender) {
+    switch (gender) {
+      case 'male':
+        return 'Male';
+      case 'female':
+        return 'Female';
+      case 'other':
+        return 'Other';
+      default:
+        return 'All';
+    }
+  }
+
+  void _showGenderFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Filter by Gender'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                title: const Text('All Users'),
+                value: 'all',
+                groupValue: _selectedGenderFilter,
+                onChanged: (value) {
+                  Navigator.of(context).pop();
+                  _onGenderFilterChanged(value!);
+                },
+              ),
+              RadioListTile<String>(
+                title: const Text('Male'),
+                value: 'male',
+                groupValue: _selectedGenderFilter,
+                onChanged: (value) {
+                  Navigator.of(context).pop();
+                  _onGenderFilterChanged(value!);
+                },
+              ),
+              RadioListTile<String>(
+                title: const Text('Female'),
+                value: 'female',
+                groupValue: _selectedGenderFilter,
+                onChanged: (value) {
+                  Navigator.of(context).pop();
+                  _onGenderFilterChanged(value!);
+                },
+              ),
+              RadioListTile<String>(
+                title: const Text('Other'),
+                value: 'other',
+                groupValue: _selectedGenderFilter,
+                onChanged: (value) {
+                  Navigator.of(context).pop();
+                  _onGenderFilterChanged(value!);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Meet'),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        actions: [
+          if (_hasJoinedMeet) ...[
+            IconButton(
+              onPressed: _showGenderFilterDialog,
+              icon: Stack(
+                children: [
+                  const Icon(Icons.filter_list),
+                  if (_selectedGenderFilter != 'all')
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              tooltip: 'Filter by Gender',
+            ),
+            IconButton(
+              onPressed: _leaveMeet,
+              icon: const Icon(Icons.exit_to_app),
+              tooltip: 'Leave Meet',
+            ),
+          ],
+        ],
+      ),
+      body: _hasJoinedMeet ? _buildMeetContent() : _buildJoinPrompt(),
+    );
+  }
+
+  Widget _buildJoinPrompt() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.videocam,
+                size: 80,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Join Meet',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Connect with other users online and start chatting',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _joinMeet,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Join Meet'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMeetContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_onlineUsers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.people_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No users online',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Check back later to see online users',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Users are already sorted by the API
+
+    return RefreshIndicator(
+      onRefresh: _loadOnlineUsers,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Online Users (${_onlineUsers.length})',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_selectedGenderFilter != 'all')
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.filter_list,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _getGenderDisplayName(_selectedGenderFilter),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: _onlineUsers.length,
+                itemBuilder: (context, index) {
+                  final user = _onlineUsers[index];
+                  return _buildUserCard(user);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserCard(ApiUser user) {
+    return GestureDetector(
+      onTap: () => _startChat(user),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  backgroundImage: user.profileImageUrl != null
+                      ? NetworkImage(user.profileImageUrl!)
+                      : null,
+                  child: user.profileImageUrl == null
+                      ? Icon(
+                          Icons.person,
+                          size: 30,
+                          color: Theme.of(context).colorScheme.primary,
+                        )
+                      : null,
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: user.isInMeet ? Colors.green : Colors.orange,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Theme.of(context).cardColor,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              user.displayName ?? '',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: user.isInMeet 
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.orange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                user.isInMeet ? 'Online' : 'Away',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: user.isInMeet ? Colors.green : Colors.orange,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            if (user.gender != null && _selectedGenderFilter != 'all') ...[
+              const SizedBox(height: 2),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  _getGenderDisplayName(user.gender!),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.secondary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+}

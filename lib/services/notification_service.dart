@@ -1,0 +1,244 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:vidstream/repositories/api_repository.dart';
+
+class NotificationService {
+  static final NotificationService _instance = NotificationService._internal();
+  factory NotificationService() => _instance;
+  NotificationService._internal();
+
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final ApiRepository _apiRepository = ApiRepository.instance;
+
+  bool _isInitialized = false;
+
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    try {
+      // Initialize local notifications
+      await _initializeLocalNotifications();
+
+      _isInitialized = true;
+      debugPrint('✅ NotificationService initialized successfully');
+    } catch (e) {
+      debugPrint('❌ NotificationService initialization failed: $e');
+    }
+  }
+
+  Future<void> _initializeLocalNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid = 
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    
+    const DarwinInitializationSettings initializationSettingsIOS = 
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
+    );
+
+    // Request permissions for iOS
+    if (Platform.isIOS) {
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+    }
+
+    // Request permissions for Android 13+
+    if (Platform.isAndroid) {
+      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+          _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+      await androidImplementation?.requestNotificationsPermission();
+    }
+  }
+
+  void _onDidReceiveNotificationResponse(NotificationResponse notificationResponse) async {
+    final String? payload = notificationResponse.payload;
+    if (payload != null) {
+      debugPrint('Notification payload: $payload');
+      // Handle navigation based on payload
+      // TODO: Implement navigation logic
+    }
+  }
+
+  // Show local notification
+  Future<void> showLocalNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    try {
+      const AndroidNotificationDetails androidPlatformChannelSpecifics = 
+          AndroidNotificationDetails(
+        'vidstream_channel',
+        'VidStream Notifications',
+        channelDescription: 'Notifications for VidStream app',
+        importance: Importance.max,
+        priority: Priority.high,
+        showWhen: false,
+      );
+
+      const DarwinNotificationDetails iOSPlatformChannelSpecifics = 
+          DarwinNotificationDetails();
+
+      const NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+        iOS: iOSPlatformChannelSpecifics,
+      );
+
+      await _localNotifications.show(
+        id,
+        title,
+        body,
+        platformChannelSpecifics,
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint('Error showing local notification: $e');
+    }
+  }
+
+  // Send push notification via API
+  Future<void> sendNotification({
+    required String toUserId,
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      await _apiRepository.api.sendNotification(
+        userId: toUserId,
+        title: title,
+        body: body,
+        data: data?.cast<String, String>(),
+      );
+    } catch (e) {
+      debugPrint('Error sending notification: $e');
+    }
+  }
+
+  // Get FCM token (placeholder for API-based implementation)
+  Future<String?> getFcmToken() async {
+    try {
+      // In API-based implementation, this would be handled differently
+      // For now, return a placeholder
+      return 'api_based_token_${DateTime.now().millisecondsSinceEpoch}';
+    } catch (e) {
+      debugPrint('Error getting FCM token: $e');
+      return null;
+    }
+  }
+
+  // Update FCM token in backend
+  Future<void> updateFcmToken(String token) async {
+    try {
+      await _apiRepository.api.updateFcmToken(token);
+    } catch (e) {
+      debugPrint('Error updating FCM token: $e');
+    }
+  }
+
+  // Subscribe to topic
+  Future<void> subscribeToTopic(String topic) async {
+    try {
+      await _apiRepository.api.subscribeToNotificationTopic(topic);
+    } catch (e) {
+      debugPrint('Error subscribing to topic: $e');
+    }
+  }
+
+  // Unsubscribe from topic
+  Future<void> unsubscribeFromTopic(String topic) async {
+    try {
+      await _apiRepository.api.unsubscribeFromNotificationTopic(topic);
+    } catch (e) {
+      debugPrint('Error unsubscribing from topic: $e');
+    }
+  }
+
+  // Save notification to database
+  Future<void> saveNotification({
+    required String userId,
+    required String title,
+    required String body,
+    required String type,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      await _apiRepository.api.saveNotification(
+        title: title,
+        body: body,
+        data: data?.cast<String, String>(),
+      );
+    } catch (e) {
+      debugPrint('Error saving notification: $e');
+    }
+  }
+
+  // Clear all notifications
+  Future<void> clearAllNotifications() async {
+    try {
+      await _localNotifications.cancelAll();
+    } catch (e) {
+      debugPrint('Error clearing notifications: $e');
+    }
+  }
+
+  // Clear specific notification
+  Future<void> clearNotification(int id) async {
+    try {
+      await _localNotifications.cancel(id);
+    } catch (e) {
+      debugPrint('Error clearing notification: $e');
+    }
+  }
+
+  // Get token (for backwards compatibility)
+  Future<String?> getToken() async {
+    return getFcmToken();
+  }
+
+  // Delete token
+  Future<void> deleteToken() async {
+    try {
+      // In API-based implementation, clear token on backend
+      await _apiRepository.api.updateFcmToken('');
+    } catch (e) {
+      debugPrint('Error deleting FCM token: $e');
+    }
+  }
+
+  // Send notification to user (for backwards compatibility)
+  Future<void> sendNotificationToUser({
+    required String userId,
+    required String title,
+    required String body,
+    String? imageUrl,
+    Map<String, String>? data,
+  }) async {
+    await sendNotification(
+      toUserId: userId,
+      title: title,
+      body: body,
+      data: data?.cast<String, dynamic>(),
+    );
+  }
+}

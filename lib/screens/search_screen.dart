@@ -1,0 +1,808 @@
+import 'package:flutter/material.dart';
+import 'package:vidstream/models/api_models.dart';
+import 'package:vidstream/services/search_service.dart';
+import 'package:vidstream/screens/video_player_screen.dart';
+import 'package:vidstream/screens/other_user_profile_screen.dart';
+import 'package:vidstream/widgets/user_info_widget.dart';
+
+class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
+
+  @override
+  State<SearchScreen> createState() => _SearchScreenState();
+}
+
+class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderStateMixin {
+  final SearchService _searchService = SearchService();
+  final TextEditingController _searchController = TextEditingController();
+  late TabController _tabController;
+  
+  List<ApiVideo> _videos = [];
+  List<ApiUser> _users = [];
+  bool _isLoading = false;
+  bool _hasSearched = false;
+  String _currentQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadDefaultContent();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _loadDefaultContent() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final trendingVideos = await _searchService.getTrendingVideos(limit: 20);
+      final popularUsers = await _searchService.getPopularUsers(limit: 20);
+
+      setState(() {
+        _videos = trendingVideos.map((video) => ApiVideo(
+          id: video?.id ?? '',
+          userId: video?.userId ?? '',
+          title: video?.title ?? '',
+          description: video?.description ?? '',
+          videoUrl: video?.videoUrl ?? '',
+          thumbnailUrl: video?.thumbnailUrl ?? '',
+          category: video?.category ?? '',
+          tags: video?.tags ?? [],
+          likesCount: video?.likesCount ?? 0,
+          viewsCount: video?.viewsCount ?? 0,
+          commentsCount: video?.commentsCount ?? 0,
+          createdAt: video?.createdAt ?? DateTime.now(),
+          updatedAt: video?.updatedAt ?? DateTime.now(),
+          isPublic: video?.isPublic ?? true,
+        )).toList();
+        _users = popularUsers.map((user) => ApiUser(
+          id: user?.uid ?? '',
+          email: user?.email ?? '',
+          displayName: user?.displayName ?? '',
+          profileImageUrl: user?.profileImageUrl,
+          photoURL: user?.photoURL,
+          bannerImageUrl: user?.bannerImageUrl,
+          bio: user?.bio,
+          dateOfBirth: user?.dateOfBirth,
+          gender: user?.gender,
+          createdAt: user?.createdAt ?? DateTime.now(),
+          updatedAt: user?.updatedAt ?? DateTime.now(),
+          following: user?.following ?? [],
+          followers: user?.followers ?? [],
+          videosCount: user?.videosCount ?? 0,
+          isGuest: user?.isGuest ?? false,
+        )).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Error loading default content: $e');
+    }
+  }
+
+  void _performSearch(String query) async {
+    if (query.trim().isEmpty) {
+      _loadDefaultContent();
+      setState(() {
+        _hasSearched = false;
+        _currentQuery = '';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _hasSearched = true;
+      _currentQuery = query.trim();
+    });
+
+    try {
+      final videos = await _searchService.searchVideos(query.trim());
+      final users = await _searchService.searchUsers(query.trim());
+
+      setState(() {
+        _videos = videos.map((video) => ApiVideo(
+          id: video?.id ?? '',
+          userId: video?.userId ?? '',
+          title: video?.title ?? '',
+          description: video?.description ?? '',
+          videoUrl: video?.videoUrl ?? '',
+          thumbnailUrl: video?.thumbnailUrl ?? '',
+          category: video?.category ?? '',
+          tags: video?.tags ?? [],
+          likesCount: video?.likesCount ?? 0,
+          viewsCount: video?.viewsCount ?? 0,
+          commentsCount: video?.commentsCount ?? 0,
+          createdAt: video?.createdAt ?? DateTime.now(),
+          updatedAt: video?.updatedAt ?? DateTime.now(),
+          isPublic: video?.isPublic ?? true,
+        )).toList();
+        _users = users.map((user) => ApiUser(
+          id: user?.uid ?? '',
+          email: user?.email ?? '',
+          displayName: user?.displayName ?? '',
+          profileImageUrl: user?.profileImageUrl,
+          photoURL: user?.photoURL,
+          bannerImageUrl: user?.bannerImageUrl,
+          bio: user?.bio,
+          dateOfBirth: user?.dateOfBirth,
+          gender: user?.gender,
+          createdAt: user?.createdAt ?? DateTime.now(),
+          updatedAt: user?.updatedAt ?? DateTime.now(),
+          following: user?.following ?? [],
+          followers: user?.followers ?? [],
+          videosCount: user?.videosCount ?? 0,
+          isGuest: user?.isGuest ?? false,
+        )).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Error performing search: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Search'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(120),
+          child: Column(
+            children: [
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search videos, users...',
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                _performSearch('');
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onChanged: _performSearch,
+                    textInputAction: TextInputAction.search,
+                  ),
+                ),
+              ),
+              
+              // Tabs
+              TabBar(
+                controller: _tabController,
+                tabs: [
+                  Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.play_arrow),
+                        const SizedBox(width: 8),
+                        Text('Videos'),
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.people),
+                        const SizedBox(width: 8),
+                        Text('Users'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildVideosTab(),
+          _buildUsersTab(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideosTab() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_videos.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _hasSearched ? Icons.search_off : Icons.trending_up,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _hasSearched
+                  ? 'No videos found for "$_currentQuery"'
+                  : 'No trending videos available',
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            if (_hasSearched) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Try different keywords or check your spelling',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        if (!_hasSearched)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Text(
+              '🔥 Trending Videos',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 0.7,
+              ),
+              itemCount: _videos.length,
+              itemBuilder: (context, index) {
+                final video = _videos[index];
+                return _buildVideoGridItem(video);
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUsersTab() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_users.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _hasSearched ? Icons.person_search : Icons.star,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _hasSearched
+                  ? 'No users found for "$_currentQuery"'
+                  : 'No popular users available',
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            if (_hasSearched) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Try different keywords or check your spelling',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        if (!_hasSearched)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Text(
+              '⭐ Popular Users',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        
+        Expanded(
+          child: ListView.builder(
+            itemCount: _users.length,
+            itemBuilder: (context, index) {
+              final user = _users[index];
+              return UserCard(
+                user: user,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OtherUserProfileScreen(userId: user.id),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVideoGridItem(ApiVideo video) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VideoPlayerScreen(
+                video: video,
+                allVideos: _videos,
+              ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: Theme.of(context).colorScheme.surfaceContainer,
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Thumbnail
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: video.thumbnailUrl.isNotEmpty
+                    ? Image.network(
+                        video.thumbnailUrl,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                            child: Icon(
+                              Icons.broken_image,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              size: 32,
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                        child: Icon(
+                          Icons.video_library,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          size: 32,
+                        ),
+                      ),
+              ),
+              
+              // Play button
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.play_arrow,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+              
+              // Video stats
+              Positioned(
+                bottom: 6,
+                left: 6,
+                right: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.favorite,
+                            size: 12,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            _formatCount(video.likesCount),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.visibility,
+                            size: 12,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            _formatCount(video.viewsCount),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
+  }
+}
+
+class VideoCard extends StatelessWidget {
+  final ApiVideo video;
+  final VoidCallback onTap;
+
+  const VideoCard({
+    super.key,
+    required this.video,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Thumbnail
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  image: video.thumbnailUrl.isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(video.thumbnailUrl),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: video.thumbnailUrl.isEmpty
+                    ? Icon(
+                        Icons.play_circle_fill,
+                        size: 32,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                    : null,
+              ),
+              
+              const SizedBox(width: 12),
+              
+              // Video Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      video.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    
+                    const SizedBox(height: 4),
+                    
+                    if (video.description.isNotEmpty)
+                      Text(
+                        video.description,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Stats
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.favorite,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatCountStatic(video.likesCount),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        
+                        const SizedBox(width: 16),
+                        
+                        Icon(
+                          Icons.visibility,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatCountStatic(video.viewsCount),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        
+                        const Spacer(),
+                        
+                        Text(
+                          _formatDate(video.createdAt),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
+  static String _formatCountStatic(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
+  }
+}
+
+class UserCard extends StatelessWidget {
+  final ApiUser user;
+  final VoidCallback onTap;
+
+  const UserCard({
+    super.key,
+    required this.user,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Profile Image
+              CircleAvatar(
+                radius: 25,
+                backgroundImage: user.profileImageUrl?.isNotEmpty == true
+                    ? NetworkImage(user.profileImageUrl!)
+                    : null,
+                child: user.profileImageUrl?.isEmpty != false
+                    ? Text(
+                        user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : null,
+              ),
+              
+              const SizedBox(width: 16),
+              
+              // User Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.displayName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    
+                    if (user.bio?.isNotEmpty == true) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        user.bio!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Stats
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.people,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${user.followers.length} followers',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        
+                        const SizedBox(width: 16),
+                        
+                        Icon(
+                          Icons.video_library,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${user.videosCount} videos',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Arrow
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

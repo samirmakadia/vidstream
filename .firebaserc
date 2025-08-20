@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "yn93iop2hhxnc0jdkzwuepcttcyq00",
+    "staging": "yn93iop2hhxnc0jdkzwuepcttcyq00",  
+    "production": "yn93iop2hhxnc0jdkzwuepcttcyq00"
+  },
+  "targets": {},
+  "etags": {}
+}
