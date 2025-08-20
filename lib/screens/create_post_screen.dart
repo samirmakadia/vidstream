@@ -23,6 +23,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
 
   File? _selectedVideo;
   bool _isUploading = false;
+  bool _isUploadingVideo = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   ApiCommonFile? _uploadedFile;
@@ -58,7 +59,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       if (video != null) {
         setState(() {
           _selectedVideo = File(video.path);
-          _isUploading = true; // show progress while uploading
+          _isUploadingVideo = true;
         });
 
         // Immediately upload the selected video
@@ -67,7 +68,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     } catch (e) {
       _showErrorSnackBar('Failed to capture video: $e');
     } finally {
-      setState(() => _isUploading = false);
+      setState(() => _isUploadingVideo = false);
     }
   }
 
@@ -78,7 +79,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       if (video != null) {
         setState(() {
           _selectedVideo = File(video.path);
-          _isUploading = true;
+          _isUploadingVideo = true;
         });
 
         await _uploadCommonFile(_selectedVideo!.path);
@@ -86,7 +87,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     } catch (e) {
       _showErrorSnackBar('Failed to pick video: $e');
     } finally {
-      setState(() => _isUploading = false);
+      setState(() => _isUploadingVideo = false);
     }
   }
 
@@ -100,7 +101,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       if (result != null) {
         setState(() {
           _selectedVideo = File(result.files.single.path!);
-          _isUploading = true;
+          _isUploadingVideo = true;
         });
 
         await _uploadCommonFile(_selectedVideo!.path);
@@ -108,7 +109,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     } catch (e) {
       _showErrorSnackBar('Failed to pick video file: $e');
     } finally {
-      setState(() => _isUploading = false);
+      setState(() => _isUploadingVideo = false);
     }
   }
 
@@ -164,12 +165,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       final uploadedVideo = await videoService.uploadVideo(
         videoPath: _uploadedFile!.url,
         thumbnailPath: _uploadedFile!.thumbnailUrl,
+        duration: _uploadedFile!.duration,
         title: "Untitled",
         description: _descriptionController.text.trim(),
         category: _uploadedFile!.category ?? 'general',
         tags: _selectedTags,
         isPublic: true,
       );
+      print('Uploaded video object: $uploadedVideo');
 
       if (uploadedVideo != null && mounted) {
         Navigator.of(context).pop();
@@ -385,7 +388,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Video Preview
           Container(
             width: double.infinity,
             height: 200,
@@ -395,6 +397,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
             ),
             child: Stack(
               children: [
+                _isUploadingVideo
+                    ? const Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+                    :
                 Center(
                   child: Icon(
                     Icons.play_circle_outline,

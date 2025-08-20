@@ -78,6 +78,7 @@ class PaginatedResponse<T> {
 class AuthResponse {
   final String accessToken;
   final String refreshToken;
+  final String token;
   final String tokenType;
   final int expiresIn;
   final Map<String, dynamic> user;
@@ -85,6 +86,7 @@ class AuthResponse {
   AuthResponse({
     required this.accessToken,
     required this.refreshToken,
+    required this.token,
     required this.tokenType,
     required this.expiresIn,
     required this.user,
@@ -94,6 +96,7 @@ class AuthResponse {
     return AuthResponse(
       accessToken: json['access_token'] ?? json['accessToken'] ?? '',
       refreshToken: json['refresh_token'] ?? json['refreshToken'] ?? '',
+      token: json['token'] ?? json['token'] ?? '',
       tokenType: json['token_type'] ?? json['tokenType'] ?? 'Bearer',
       expiresIn: json['expires_in'] ?? json['expiresIn'] ?? 3600,
       user: json['user'] ?? {},
@@ -104,6 +107,7 @@ class AuthResponse {
     'access_token': accessToken,
     'refresh_token': refreshToken,
     'token_type': tokenType,
+    'token': token,
     'expires_in': expiresIn,
     'user': user,
   };

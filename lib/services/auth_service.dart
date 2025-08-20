@@ -264,11 +264,12 @@ class AuthService {
   Future<ApiUser> _createGuestUser() async {
     final deviceId = await AuthUtils().getDeviceId();
     print('Creating guest user with device ID: $deviceId');
+
     final authResponse = await _apiService.guestLogin(deviceId: deviceId);
 
     if (authResponse != null) {
-      _accessToken = authResponse.accessToken;
-      _refreshToken = authResponse.refreshToken;
+      _accessToken = authResponse.token;
+      _refreshToken = authResponse.token;
 
       final user = ApiUser.fromJson(authResponse.user);
       return user;

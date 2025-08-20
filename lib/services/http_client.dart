@@ -66,7 +66,7 @@ class HttpClient {
         if (error.response?.statusCode == 401 && _refreshToken != null) {
           // Try to refresh token
           try {
-            await _refreshAccessToken();
+           // await _refreshAccessToken();
             // Retry the original request
             final retryOptions = error.requestOptions;
             retryOptions.headers['Authorization'] = 'Bearer $_accessToken';

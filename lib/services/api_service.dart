@@ -86,7 +86,7 @@ class ApiService {
 
       if (response.success && response.data != null) {
         final authData = response.data!;
-        _httpClient.setTokens(authData.accessToken, authData.refreshToken);
+        _httpClient.setTokens(authData.token, authData.token);
         return authData;
       }
 
@@ -271,6 +271,7 @@ class ApiService {
   Future<ApiVideo?> uploadVideo({
     required String videoPath,
     required String thumbnailPath,
+    required double duration,
     required String title,
     required String description,
     required String category,
@@ -284,23 +285,30 @@ class ApiService {
         'category': category,
         'videoUrl': videoPath,
         'thumbnailUrl': thumbnailPath,
+        'duration': duration,
         'tags': tags ?? [],
         'isPublic': isPublic,
       };
 
-      final response = await _httpClient.post<ApiVideo>(
+      // _httpClient.post returns ApiResponse<Map<String,dynamic>>
+      final response = await _httpClient.post<Map<String, dynamic>>(
         '/videos',
         data: body,
-        fromJson: (json) => ApiVideo.fromJson(json['data'] as Map<String, dynamic>),
       );
 
+      print('Upload video raw response: $response');
+
+      // Access the ApiResponse fields
       if (response.success && response.data != null) {
-        return response.data!;
+        final data = response.data!;
+        return ApiVideo.fromJson(data as Map<String, dynamic>);
       }
 
       throw response_models.ApiException(response.message);
     });
   }
+
+
 
   Future<ApiCommonFile?> uploadCommonFile({
     required String videoPath,

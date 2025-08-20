@@ -141,6 +141,7 @@ class VideoService {
     required String title,
     required String description,
     required String category,
+    required double duration,
     List<String>? tags,
     bool isPublic = true,
   }) async {
@@ -151,6 +152,7 @@ class VideoService {
         title: title,
         description: description,
         category: category,
+        duration: duration,
         tags: tags,
         isPublic: isPublic,
       );
