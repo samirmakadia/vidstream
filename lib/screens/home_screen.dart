@@ -101,9 +101,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   Future<void> _loadVideos() async {
+    setState(() => _isLoading = true);
     try {
       final videos = await ApiRepository.instance.videos.getVideosOnce();
       setState(() {
+        print('Loaded ${videos.length} videos');
         _videos = videos;
         _allVideos = videos;
         _isLoading = false;
@@ -120,6 +122,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       }
     }
   }
+
 
   Future<void> _refreshVideos() async {
     await _loadVideos();
@@ -534,6 +537,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                         },
                         itemBuilder: (context, index) {
                           final video = _videos[index];
+                          print('$index: ${video.title}, URL: ${video.videoUrl}');
                           return VideoFeedItem(
                             video: video,
                             isActive: index == _currentIndex && _isScreenVisible,

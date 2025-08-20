@@ -162,21 +162,21 @@ class ApiVideo {
 
   factory ApiVideo.fromJson(Map<String, dynamic> json) {
     return ApiVideo(
-      id: json['id']?.toString() ?? '',
-      userId: json['user_id']?.toString() ?? json['userId']?.toString() ?? '',
+      id: json['_id'] ?? '', // match API "_id"
+      userId: json['userId']?['_id'] ?? '', // nested userId object
       title: json['title'] ?? '',
       description: json['description'] ?? '',
-      videoUrl: json['video_url'] ?? json['videoUrl'] ?? '',
-      thumbnailUrl: json['thumbnail_url'] ?? json['thumbnailUrl'] ?? '',
+      videoUrl: json['videoUrl'] ?? json['video_url'] ?? '',
+      thumbnailUrl: json['thumbnailUrl'] ?? json['thumbnail_url'] ?? '',
       category: json['category'] ?? '',
       tags: List<String>.from(json['tags'] ?? []),
-      likesCount: json['likes_count'] ?? json['likesCount'] ?? 0,
-      viewsCount: json['views_count'] ?? json['viewsCount'] ?? 0,
-      commentsCount: json['comments_count'] ?? json['commentsCount'] ?? 0,
-      createdAt: DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at'] ?? json['updatedAt'] ?? '') ?? DateTime.now(),
-      isPublic: json['is_public'] ?? json['isPublic'] ?? true,
-      user: json['user'] != null ? ApiUser.fromJson(json['user']) : null,
+      likesCount: json['likesCount'] ?? json['likes_count'] ?? 0,
+      viewsCount: json['viewsCount'] ?? json['views_count'] ?? 0,
+      commentsCount: json['commentsCount'] ?? json['comments_count'] ?? 0,
+      createdAt: DateTime.tryParse(json['createdAt'] ?? json['created_at'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updatedAt'] ?? json['updated_at'] ?? '') ?? DateTime.now(),
+      isPublic: json['isPublic'] ?? json['is_public'] ?? true,
+      user: json['userId'] != null ? ApiUser.fromJson(json['userId']) : null, // optional user
     );
   }
 

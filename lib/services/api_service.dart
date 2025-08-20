@@ -232,26 +232,29 @@ class ApiService {
         'page': page,
         'limit': limit,
       };
-      
+
       if (category != null) queryParams['category'] = category;
       if (userId != null) queryParams['user_id'] = userId;
-      
+
       final response = await _httpClient.get<response_models.PaginatedResponse<ApiVideo>>(
         '/videos/feed',
         queryParameters: queryParams,
-        fromJson: (json) => response_models.PaginatedResponse.fromJson(
-          json as Map<String, dynamic>,
-          (item) => ApiVideo.fromJson(item as Map<String, dynamic>),
-        ),
+        fromJson: (json) {
+          final videosJson = (json as Map<String, dynamic>)['videos'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': videosJson}, // wrap in 'data' to match your PaginatedResponse
+                (item) => ApiVideo.fromJson(item as Map<String, dynamic>),
+          );
+        },
       );
-      
       if (response.success && response.data != null) {
         return response.data!;
       }
-      
+
       throw response_models.ApiException(response.message);
     });
   }
+
 
   Future<ApiVideo?> getVideoById(String videoId) async {
     return ErrorHandler.safeApiCall(() async {
@@ -290,24 +293,22 @@ class ApiService {
         'isPublic': isPublic,
       };
 
-      // _httpClient.post returns ApiResponse<Map<String,dynamic>>
-      final response = await _httpClient.post<Map<String, dynamic>>(
+      final response = await _httpClient.post<ApiVideo>(
         '/videos',
         data: body,
+        fromJson: (json) => ApiVideo.fromJson(json['data'] as Map<String, dynamic>),
       );
 
-      print('Upload video raw response: $response');
+      print('Upload video response: ${response.data}');
 
-      // Access the ApiResponse fields
-      if (response.success && response.data != null) {
-        final data = response.data!;
-        return ApiVideo.fromJson(data as Map<String, dynamic>);
+      if (response.success) {
+        if (response.data != null) return response.data!;
+        throw response_models.ApiException('No video data returned');
       }
 
       throw response_models.ApiException(response.message);
     });
   }
-
 
 
   Future<ApiCommonFile?> uploadCommonFile({

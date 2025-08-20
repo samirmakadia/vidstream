@@ -41,12 +41,14 @@ class VideoService {
   Future<List<ApiVideo>> getVideosOnce({int limit = 20}) async {
     try {
       final response = await _apiService.getVideos(limit: limit);
-      return response?.data ?? [];
+      final videos = response?.data ?? [];
+      return videos;
     } catch (e) {
       print('Failed to get videos: $e');
       return [];
     }
   }
+
 
   // Get user videos as Future
   Future<List<ApiVideo>> getUserVideos(String userId, {int limit = 20}) async {
