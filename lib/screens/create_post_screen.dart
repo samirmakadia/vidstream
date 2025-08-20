@@ -3,6 +3,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
+import '../models/api_models.dart';
+import '../services/video_service.dart';
+
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
 
@@ -17,11 +20,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     'funny', 'comedy', 'emotional', 'inspiring', 'tutorial', 'music',
     'dance', 'cooking', 'travel', 'lifestyle', 'pets', 'gaming'
   ];
-  
+
   File? _selectedVideo;
   bool _isUploading = false;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  ApiCommonFile? _uploadedFile;
 
   @override
   void initState() {
@@ -54,10 +58,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       if (video != null) {
         setState(() {
           _selectedVideo = File(video.path);
+          _isUploading = true; // show progress while uploading
         });
+
+        // Immediately upload the selected video
+        await _uploadCommonFile(_selectedVideo!.path);
       }
     } catch (e) {
       _showErrorSnackBar('Failed to capture video: $e');
+    } finally {
+      setState(() => _isUploading = false);
     }
   }
 
@@ -68,10 +78,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       if (video != null) {
         setState(() {
           _selectedVideo = File(video.path);
+          _isUploading = true;
         });
+
+        await _uploadCommonFile(_selectedVideo!.path);
       }
     } catch (e) {
       _showErrorSnackBar('Failed to pick video: $e');
+    } finally {
+      setState(() => _isUploading = false);
     }
   }
 
@@ -85,12 +100,40 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       if (result != null) {
         setState(() {
           _selectedVideo = File(result.files.single.path!);
+          _isUploading = true;
         });
+
+        await _uploadCommonFile(_selectedVideo!.path);
       }
     } catch (e) {
       _showErrorSnackBar('Failed to pick video file: $e');
+    } finally {
+      setState(() => _isUploading = false);
     }
   }
+
+  Future<void> _uploadCommonFile(String filePath) async {
+    try {
+      final videoService = VideoService();
+
+      final uploadedFile = await videoService.uploadCommonFile(
+        filePath: filePath,
+        type: 'post',
+      );
+
+      if (uploadedFile == null) {
+        _showErrorSnackBar("Failed to upload video to server");
+        return;
+      }
+
+      setState(() {
+        _uploadedFile = uploadedFile;
+      });
+    } catch (e) {
+      _showErrorSnackBar('Failed to upload video: $e');
+    }
+  }
+
 
   void _toggleTag(String tag) {
     setState(() {
@@ -103,7 +146,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   }
 
   Future<void> _uploadVideo() async {
-    if (_selectedVideo == null) {
+    if (_uploadedFile == null) {
       _showErrorSnackBar('Please select a video first');
       return;
     }
@@ -116,28 +159,36 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     setState(() => _isUploading = true);
 
     try {
-      // TODO: Implement actual video upload to Firebase Storage
-      // and create video document in Firestore
-      
-      // Simulate upload delay
-      await Future.delayed(const Duration(seconds: 3));
-      
-      if (mounted) {
+      final videoService = VideoService();
+
+      final uploadedVideo = await videoService.uploadVideo(
+        videoPath: _uploadedFile!.url,
+        thumbnailPath: _uploadedFile!.thumbnailUrl,
+        title: "Untitled",
+        description: _descriptionController.text.trim(),
+        category: _uploadedFile!.category ?? 'general',
+        tags: _selectedTags,
+        isPublic: true,
+      );
+
+      if (uploadedVideo != null && mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Video uploaded successfully!'),
+            content: Text('Video shared successfully!'),
             backgroundColor: Colors.green,
           ),
         );
+      } else {
+        _showErrorSnackBar("Failed to upload video metadata");
       }
-      
     } catch (e) {
       _showErrorSnackBar('Failed to upload video: $e');
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
   }
+
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -166,21 +217,21 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
               onPressed: _isUploading ? null : _uploadVideo,
               child: _isUploading
                   ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
                   : Text(
-                      'Share',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                'Share',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
         ],
       ),
@@ -202,9 +253,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
             size: 80,
             color: Colors.white.withValues(alpha: 0.6),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           Text(
             'Share Your Story',
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
@@ -213,9 +264,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
             ),
             textAlign: TextAlign.center,
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           Text(
             'Choose a video to share with the world',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -223,9 +274,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
             ),
             textAlign: TextAlign.center,
           ),
-          
+
           const SizedBox(height: 48),
-          
+
           // Video selection buttons
           Column(
             children: [
@@ -235,18 +286,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
                 subtitle: 'Capture a new video',
                 onTap: _pickVideoFromCamera,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               _buildSelectionButton(
                 icon: Icons.photo_library,
                 title: 'Choose from Gallery',
                 subtitle: 'Select from your photos',
                 onTap: _pickVideoFromGallery,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               _buildSelectionButton(
                 icon: Icons.folder_open,
                 title: 'Browse Files',
@@ -290,9 +341,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
                     size: 24,
                   ),
                 ),
-                
+
                 const SizedBox(width: 16),
-                
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,7 +365,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
                     ],
                   ),
                 ),
-                
+
                 Icon(
                   Icons.arrow_forward_ios,
                   color: Colors.white.withValues(alpha: 0.6),
@@ -377,9 +428,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
               ],
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Description Input
           Text(
             'Description',
@@ -388,9 +439,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           TextField(
             controller: _descriptionController,
             style: const TextStyle(color: Colors.white),
@@ -406,9 +457,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Tags Section
           Text(
             'Tags',
@@ -417,18 +468,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           Text(
             'Select up to 5 tags (${_selectedTags.length}/5)',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -461,7 +512,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
               );
             }).toList(),
           ),
-          
+
           const SizedBox(height: 40),
         ],
       ),

@@ -237,7 +237,7 @@ class ApiService {
       if (userId != null) queryParams['user_id'] = userId;
       
       final response = await _httpClient.get<response_models.PaginatedResponse<ApiVideo>>(
-        '/videos',
+        '/videos/feed',
         queryParameters: queryParams,
         fromJson: (json) => response_models.PaginatedResponse.fromJson(
           json as Map<String, dynamic>,
@@ -278,25 +278,49 @@ class ApiService {
     bool isPublic = true,
   }) async {
     return ErrorHandler.safeApiCall(() async {
-      final response = await _httpClient.uploadFile<ApiVideo>(
-        endpoint: '/videos',
-        filePath: videoPath,
-        fieldName: 'video',
-        additionalData: {
-          'thumbnail': await MultipartFile.fromFile(thumbnailPath),
-          'title': title,
-          'description': description,
-          'category': category,
-          'tags': tags?.join(',') ?? '',
-          'is_public': isPublic,
-        },
-        fromJson: (json) => ApiVideo.fromJson(json as Map<String, dynamic>),
+      final body = {
+        'title': title,
+        'description': description,
+        'category': category,
+        'videoUrl': videoPath,
+        'thumbnailUrl': thumbnailPath,
+        'tags': tags ?? [],
+        'isPublic': isPublic,
+      };
+
+      final response = await _httpClient.post<ApiVideo>(
+        '/videos',
+        data: body,
+        fromJson: (json) => ApiVideo.fromJson(json['data'] as Map<String, dynamic>),
       );
-      
+
       if (response.success && response.data != null) {
         return response.data!;
       }
-      
+
+      throw response_models.ApiException(response.message);
+    });
+  }
+
+  Future<ApiCommonFile?> uploadCommonFile({
+    required String videoPath,
+    String type = "post",
+  }) async {
+    return ErrorHandler.safeApiCall(() async {
+      final response = await _httpClient.uploadFile<ApiCommonFile>(
+        endpoint: '/common/upload',
+        filePath: videoPath,
+        fieldName: 'file',
+        additionalData: {
+          'type': type,
+        },
+        fromJson: (json) => ApiCommonFile.fromJson(json as Map<String, dynamic>),
+      );
+
+      if (response.success && response.data != null) {
+        return response.data!;
+      }
+
       throw response_models.ApiException(response.message);
     });
   }

@@ -237,6 +237,108 @@ class ApiVideo {
   }
 }
 
+class ApiCommonFile {
+  final String url;
+  final String thumbnailUrl;
+  final String filename;
+  final String originalName;
+  final int size;
+  final double duration;
+  final Dimensions dimensions;
+  final String fileType;
+  final String category;
+
+  ApiCommonFile({
+    required this.url,
+    required this.thumbnailUrl,
+    required this.filename,
+    required this.originalName,
+    required this.size,
+    required this.duration,
+    required this.dimensions,
+    required this.fileType,
+    required this.category,
+  });
+
+  factory ApiCommonFile.fromJson(Map<String, dynamic> json) {
+    return ApiCommonFile(
+      url: json['url'] ?? '',
+      thumbnailUrl: json['thumbnailUrl'] ?? '',
+      filename: json['filename'] ?? '',
+      originalName: json['originalName'] ?? '',
+      size: json['size'] ?? 0,
+      duration: (json['duration'] != null) ? (json['duration'] as num).toDouble() : 0.0,
+      dimensions: json['dimensions'] != null
+          ? Dimensions.fromJson(json['dimensions'])
+          : Dimensions(width: 0, height: 0),
+      fileType: json['fileType'] ?? '',
+      category: json['category'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'url': url,
+      'thumbnailUrl': thumbnailUrl,
+      'filename': filename,
+      'originalName': originalName,
+      'size': size,
+      'duration': duration,
+      'dimensions': dimensions.toJson(),
+      'fileType': fileType,
+      'category': category,
+    };
+  }
+
+  ApiCommonFile copyWith({
+    String? url,
+    String? thumbnailUrl,
+    String? filename,
+    String? originalName,
+    int? size,
+    double? duration,
+    Dimensions? dimensions,
+    String? fileType,
+    String? category,
+  }) {
+    return ApiCommonFile(
+      url: url ?? this.url,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+      filename: filename ?? this.filename,
+      originalName: originalName ?? this.originalName,
+      size: size ?? this.size,
+      duration: duration ?? this.duration,
+      dimensions: dimensions ?? this.dimensions,
+      fileType: fileType ?? this.fileType,
+      category: category ?? this.category,
+    );
+  }
+}
+
+class Dimensions {
+  final int width;
+  final int height;
+
+  Dimensions({
+    required this.width,
+    required this.height,
+  });
+
+  factory Dimensions.fromJson(Map<String, dynamic> json) {
+    return Dimensions(
+      width: json['width'] ?? 0,
+      height: json['height'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'width': width,
+      'height': height,
+    };
+  }
+}
+
 // Comment Model - adapted for API
 class ApiComment {
   final String id;

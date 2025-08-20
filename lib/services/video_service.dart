@@ -154,10 +154,28 @@ class VideoService {
         tags: tags,
         isPublic: isPublic,
       );
-    } catch (e) {
+    } catch (e,s) {
+      print('Error uploading video: $e');
+      print('Error uploading video: $s');
       throw 'Failed to upload video: ${e.toString()}';
     }
   }
+
+  // Upload a file to /common/upload
+  Future<ApiCommonFile?> uploadCommonFile({
+    required String filePath,
+    String type = "post",
+  }) async {
+    try {
+      return await _apiService.uploadCommonFile(
+        videoPath: filePath,
+        type: type,
+      );
+    } catch (e) {
+      throw 'Failed to upload file: ${e.toString()}';
+    }
+  }
+
 
   // Update video (placeholder - implement based on your API)
   Future<void> updateVideo(ApiVideo video) async {
