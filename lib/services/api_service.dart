@@ -544,7 +544,7 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<response_models.PaginatedResponse<ApiUser>>(
-        '/users/$userId/followers',
+        '/follows/$userId/followers',
         queryParameters: {
           'page': page,
           'limit': limit,
@@ -570,15 +570,18 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<response_models.PaginatedResponse<ApiUser>>(
-        '/users/$userId/following',
+        '/follows/$userId/following',
         queryParameters: {
           'page': page,
           'limit': limit,
         },
-        fromJson: (json) => response_models.PaginatedResponse.fromJson(
-          json as Map<String, dynamic>,
-          (item) => ApiUser.fromJson(item as Map<String, dynamic>),
-        ),
+        fromJson: (json) {
+          final videosJson = (json as Map<String, dynamic>)['following'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': videosJson}, // wrap in 'data' to match your PaginatedResponse
+                (item) => ApiUser.fromJson(item as Map<String, dynamic>),
+          );
+        },
       );
       
       if (response.success && response.data != null) {
@@ -1370,4 +1373,29 @@ class ApiService {
       }
     });
   }
+
+  Future<ApiCommonFile?> uploadCommonImageFile({
+    required String imagePath,
+    String type = "post",
+  }) async {
+    return ErrorHandler.safeApiCall(() async {
+      final response = await _httpClient.uploadFile<ApiCommonFile>(
+        endpoint: '/common/upload',
+        filePath: imagePath,
+        fieldName: 'file',
+        additionalData: {
+          'type': type,
+        },
+        fromJson: (json) => ApiCommonFile.fromJson(json as Map<String, dynamic>),
+      );
+
+      if (response.success && response.data != null) {
+        return response.data!;
+      }
+
+      throw response_models.ApiException(response.message);
+    });
+  }
+
+
 }
