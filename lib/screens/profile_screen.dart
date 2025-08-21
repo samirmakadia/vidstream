@@ -9,6 +9,8 @@ import 'package:vidstream/screens/blocked_users_screen.dart';
 import 'package:vidstream/screens/settings_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 
+import '../widgets/common_app_dialog.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -141,6 +143,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
 
   Future<void> _signOut() async {
+    bool confirmed = await CommonDialog.showConfirmationDialog(
+      context: context,
+      title: "Sign Out",
+      content:
+      "Are you sure you want to sign out of your account?",
+      confirmText: "Sign Out",
+      confirmColor: Colors.orange,
+    );
+    if (!confirmed) return;
     try {
       await ApiRepository.instance.auth.signOut();
       if (mounted) {

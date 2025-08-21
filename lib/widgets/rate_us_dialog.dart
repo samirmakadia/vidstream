@@ -273,10 +273,10 @@ class _RateUsDialogState extends State<RateUsDialog> with TickerProviderStateMix
                       onTap: () => _onStarTap(starIndex),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
                         child: Icon(
                           isSelected ? Icons.star : Icons.star_border,
-                          size: 40,
+                          size: 32,
                           color: isSelected
                               ? Colors.amber
                               : theme.colorScheme.onSurface.withValues(alpha: 0.3),

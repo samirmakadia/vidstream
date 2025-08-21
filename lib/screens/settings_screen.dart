@@ -16,6 +16,9 @@ import 'package:vidstream/widgets/app_update_dialog.dart';
 import 'package:vidstream/services/dialog_manager_service.dart';
 import 'package:vidstream/services/notification_service.dart';
 
+import '../widgets/common_app_dialog.dart';
+import '../widgets/common_snackbar.dart';
+
 class SettingsScreen extends StatefulWidget {
   final ApiUser? currentUser;
 
@@ -32,6 +35,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoading = false;
 
   Future<void> _signOut() async {
+    bool confirmed = await CommonDialog.showConfirmationDialog(
+      context: context,
+      title: "Sign Out",
+      content:
+      "Are you sure you want to sign out of your account?",
+      confirmText: "Sign Out",
+      confirmColor: Colors.orange,
+    );
+    if (!confirmed) return;
     setState(() => _isLoading = true);
     try {
       await ApiRepository.instance.auth.signOut();
@@ -42,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to sign out: $e');
+      AppSnackBar.showError(context, 'Failed to sign out: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -51,7 +63,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _deleteAccount() async {
-    final confirmed = await _showDeleteAccountDialog();
+    // final confirmed = await _showDeleteAccountDialog();
+    bool confirmed = await CommonDialog.showConfirmationDialog(
+      context: context,
+      title: "Delete Account",
+      content:
+      "Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.",
+      confirmText: "Delete",
+      confirmColor: Colors.red,
+    );
     if (!confirmed) return;
 
     setState(() => _isLoading = true);
@@ -73,40 +93,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to delete account: $e');
+      AppSnackBar.showError(context, 'Failed to delete account: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
-  }
-
-  Future<bool> _showDeleteAccountDialog() async {
-    return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Delete Account',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    ) ?? false;
   }
 
   void _showEditProfileBottomSheet() {
@@ -210,7 +202,7 @@ Instagram: @VidStreamOfficial''',
 
   Future<void> _checkForUpdates() async {
     try {
-      _showLoadingSnackBar('Checking for updates...');
+      AppSnackBar.showLoading(context, "Checking for updates...");
       
       final updateInfo = await AppUpdateDialog.checkForUpdate();
       if (updateInfo != null) {
@@ -219,30 +211,30 @@ Instagram: @VidStreamOfficial''',
           if (updateInfo.hasUpdate) {
             await AppUpdateDialog.show(context, updateInfo);
           } else {
-            _showSuccessSnackBar('You\'re using the latest version!');
+            AppSnackBar.showSuccess(context, 'You\'re using the latest version!');
           }
         }
       } else {
-        _showErrorSnackBar('Unable to check for updates');
+        AppSnackBar.showError(context, 'Unable to check for updates');
       }
     } catch (e) {
-      _showErrorSnackBar('Error checking for updates: $e');
+      AppSnackBar.showError(context, 'Error checking for updates: $e');
     }
   }
 
   Future<void> _resetOnboarding() async {
     try {
-      _showLoadingSnackBar('Resetting onboarding...');
+      AppSnackBar.showLoading(context, "Resetting onboarding...");
       
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('onboarding_completed', false);
       
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        _showSuccessSnackBar('Onboarding reset! Restart the app to see onboarding.');
+        AppSnackBar.showSuccess(context, "Onboarding reset! Restart the app to see onboarding.");
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to reset onboarding: $e');
+      AppSnackBar.showError(context, 'Failed to reset onboarding: $e');
     }
   }
 
@@ -320,54 +312,6 @@ Instagram: @VidStreamOfficial''',
     );
   }
 
-  void _showLoadingSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(message),
-          ],
-        ),
-        backgroundColor: Colors.blue,
-        duration: const Duration(seconds: 10),
-      ),
-    );
-  }
-
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(message),
-          ],
-        ),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -426,7 +370,7 @@ Instagram: @VidStreamOfficial''',
                         ),
                       );
                     } else {
-                      _showErrorSnackBar('User not found');
+                      AppSnackBar.showError(context, 'User not found');
                     }
                   },
                 ),
