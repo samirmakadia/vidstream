@@ -34,6 +34,12 @@ class FollowService {
         await _apiRepository.api.unfollowUser(followedId: followedId);
       } else {
         await _apiRepository.api.followUser(followedId: followedId);
+        
+        // Send notification
+        await NotificationHelper.sendFollowNotification(
+          toUserId: followedId,
+          fromUserId: followerId,
+        );
       }
     } catch (e) {
       throw 'Failed to toggle follow: $e';
