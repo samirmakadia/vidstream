@@ -450,7 +450,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       await _commentService.createComment(
         videoId: widget.videoId,
         text: text,
-        parentCommentId: _replyingTo?.id,
+        parentCommentId: _replyingTo?.id, // Set parent if replying
       );
       _commentController.clear();
       FocusScope.of(context).unfocus();

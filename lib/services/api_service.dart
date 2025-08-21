@@ -428,29 +428,36 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final queryParams = <String, dynamic>{
-        'video_id': videoId,
         'page': page,
         'limit': limit,
       };
-      
-      if (parentCommentId != null) queryParams['parent_comment_id'] = parentCommentId;
-      
+
+      if (parentCommentId != null) {
+        queryParams['parentCommentId'] = parentCommentId;
+      }
+
       final response = await _httpClient.get<response_models.PaginatedResponse<ApiComment>>(
-        '/comments',
+        '/comments/video/$videoId',
         queryParameters: queryParams,
-        fromJson: (json) => response_models.PaginatedResponse.fromJson(
-          json as Map<String, dynamic>,
-          (item) => ApiComment.fromJson(item as Map<String, dynamic>),
-        ),
+        fromJson: (json) {
+          final videosJson = (json as Map<String, dynamic>)['comments'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': videosJson}, // wrap in 'data' to match your PaginatedResponse
+                (item) => ApiComment.fromJson(item as Map<String, dynamic>),
+          );
+        },
       );
-      
+
       if (response.success && response.data != null) {
         return response.data!;
       }
-      
+
       throw response_models.ApiException(response.message);
     });
   }
+
+
+
 
   Future<ApiComment?> createComment({
     required String videoId,
@@ -458,23 +465,29 @@ class ApiService {
     String? parentCommentId,
   }) async {
     return ErrorHandler.safeApiCall(() async {
+      final data = {
+        'videoId': videoId,
+        'text': text,
+      };
+
+      if (parentCommentId != null) {
+        data['parentCommentId'] = parentCommentId; // only include if not null
+      }
+
       final response = await _httpClient.post<ApiComment>(
         '/comments',
-        data: {
-          'video_id': videoId,
-          'text': text,
-          'parent_comment_id': parentCommentId,
-        },
+        data: data,
         fromJson: (json) => ApiComment.fromJson(json as Map<String, dynamic>),
       );
-      
+
       if (response.success && response.data != null) {
         return response.data!;
       }
-      
+
       throw response_models.ApiException(response.message);
     });
   }
+
 
   Future<void> deleteComment(String commentId) async {
     return ErrorHandler.safeApiCall(() async {
