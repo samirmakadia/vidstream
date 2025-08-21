@@ -771,7 +771,6 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
       if (mounted) {
         setState(() {
           _user = user;
-          print('User data loaded:  ${_user!.isGuest}');
         });
       }
     } catch (e) {
@@ -786,7 +785,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
         final isLiked = await ApiRepository.instance.likes.hasUserLiked(
           userId: currentUserId,
           targetId: widget.video.id,
-          targetType: 'video',
+          targetType: 'Video',
         );
         if (mounted) {
           setState(() {
@@ -829,11 +828,10 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
         await ApiRepository.instance.likes.toggleLike(
           userId: currentUserId,
           targetId: widget.video.id,
-          targetType: 'video',
+          targetType: 'Video',
         );
         setState(() {
           _isLiked = !_isLiked;
-          // Update like count locally for immediate UI feedback
           if (_isLiked) {
             _localLikeCount++;
           } else {

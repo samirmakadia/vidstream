@@ -382,16 +382,17 @@ class ApiService {
     required String targetType,
   }) async {
     return ErrorHandler.safeApiCall(() async {
+      print('Toggling like for $targetType with ID: $targetId');
       final response = await _httpClient.post(
         '/likes/toggle',
         data: {
-          'target_id': targetId,
-          'target_type': targetType,
+          'targetId': targetId,
+          'targetType': targetType,
         },
       );
       
       if (!response.success) {
-        print(response.message);
+        print('Error toggling like: ${response.message}');
         throw response_models.ApiException(response.message);
       }
     });
