@@ -567,9 +567,13 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                               setState(() {
                                 final i = _videos.indexWhere((v) => v.id == video.id);
                                 if (i != -1) _videos[i] = _videos[i].copyWith(commentsCount: newCount);
-
                                 final j = _allVideos.indexWhere((v) => v.id == video.id);
                                 if (j != -1) _allVideos[j] = _allVideos[j].copyWith(commentsCount: newCount);
+                              });
+                            },
+                            onReported: (reportedVideo) {
+                              setState(() {
+                                _videos.removeWhere((v) => v.id == reportedVideo.id);
                               });
                             },
                           );

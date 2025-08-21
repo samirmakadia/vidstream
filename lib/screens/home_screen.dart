@@ -549,7 +549,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                         },
                         itemBuilder: (context, index) {
                           final video = _videos[index];
-                          print('$index: ${video.title}, URL: ${video.videoUrl}');
                           return VideoFeedItem(
                             key: ValueKey(video.id),
                             video: video,
@@ -567,7 +566,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                               setState(() {
                                 final i = _videos.indexWhere((v) => v.id == video.id);
                                 if (i != -1) _videos[i] = _videos[i].copyWith(commentsCount: newCount);
-
                                 final j = _allVideos.indexWhere((v) => v.id == video.id);
                                 if (j != -1) _allVideos[j] = _allVideos[j].copyWith(commentsCount: newCount);
                               });

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:flutter/services.dart';
 import 'package:vidstream/services/comment_service.dart';
 import 'package:vidstream/services/like_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:timeago/timeago.dart' as timeago;
+
+import '../models/response_model.dart';
+import '../utils/graphics.dart';
 
 class VideoActionsWidget extends StatefulWidget {
   final ApiVideo video;
@@ -175,28 +179,69 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
     await showDialog(
       context: context,
       builder: (_) => ReportDialog(
+        scaffoldContext: context,
         title: 'Report Video',
         reasons: reasons,
         isDescriptionRequired: false,
         onSubmit: ({required reason, String? description}) async {
-          final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-          if (currentUserId != null) {
-            return await ApiRepository.instance.reports.reportContent(
-              reporterId: currentUserId,
-              targetId: video.id,
-              targetType: 'video',
-              reason: reason,
-              description: description,
-            );
-
-          }
-          if (reason == 'spam' || message.contains('success')) {
-            widget.onReported?.call(video);
-          }
-          return 'Failed to submit report';
+          return await handleReport(
+            targetId: video.id,
+            targetType: 'Video',
+            reason: reason,
+            description: description,
+            onSuccess: () {
+              widget.onReported?.call(video);
+            },
+          );
         },
+
       ),
     );
+  }
+
+  Future<String> handleReport({
+    required String targetId,
+    required String targetType,
+    required String reason,
+    String? description,
+    VoidCallback? onSuccess,
+  }) async {
+    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
+
+    if (currentUserId == null) {
+      Graphics.showToast(
+        message: 'User is not logged in. Cannot submit report.',
+        isSuccess: false,
+      );
+      return '';  
+    }
+
+    try {
+      final result = await ApiRepository.instance.reports.reportContent(
+        reporterId: currentUserId,
+        targetId: targetId,
+        targetType: targetType,
+        reason: reason,
+        description: description,
+      );
+
+      Graphics.showToast(
+        message: result,
+        isSuccess: result.toLowerCase().contains('success'),
+      );
+
+      if (result.toLowerCase().contains('success')) {
+        onSuccess?.call();
+      }
+
+      return result;
+    } catch (e) {
+      Graphics.showToast(
+        message: 'Failed to submit report: $e',
+        isSuccess: false,
+      );
+      return ''; // Keep dialog open
+    }
   }
 
   @override
@@ -909,26 +954,69 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     await showDialog(
       context: context,
       builder: (_) => ReportDialog(
+        scaffoldContext: context,
         title: 'Report Comment',
         reasons: reasons,
         isDescriptionRequired: true,
         onSubmit: ({required reason, String? description}) async {
-          final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-          if (currentUserId != null) {
-            return await ApiRepository.instance.reports.reportContent(
-              reporterId: currentUserId,
-              targetId: comment.id,
-              targetType: 'Comment',
-              reason: reason,
-              description: description,
-            );
-          }
-          return 'Failed to submit report';
+          return await handleReport(
+            targetId: comment.id,
+            targetType: 'Comment',
+            reason: reason,
+            description: description,
+            onSuccess: () {
+              if (mounted) _loadComments();
+            },
+          );
         },
       ),
     );
+  }
 
-    _loadComments();
+  Future<String> handleReport({
+    required String targetId,
+    required String targetType,
+    required String reason,
+    String? description,
+    VoidCallback? onSuccess,
+  }) async {
+    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
+
+    if (currentUserId == null) {
+      Graphics.showToast(
+        message: 'User is not logged in. Cannot submit report.',
+        isSuccess: false,
+      );
+      return ''; // Keep dialog open
+    }
+
+    try {
+      final result = await ApiRepository.instance.reports.reportContent(
+        reporterId: currentUserId,
+        targetId: targetId,
+        targetType: targetType,
+        reason: reason,
+        description: description,
+      );
+
+      Graphics.showToast(
+        message: result,
+        isSuccess: result.toLowerCase().contains('success'),
+      );
+
+      if (result.toLowerCase().contains('success')) {
+        // Call optional success callback
+        onSuccess?.call();
+      }
+
+      return result;
+    } catch (e) {
+      Graphics.showToast(
+        message: 'Failed to submit report: $e',
+        isSuccess: false,
+      );
+      return ''; // Keep dialog open
+    }
   }
 
 
@@ -944,13 +1032,14 @@ class ReportDialog extends StatefulWidget {
   final Map<String, String> reasons;
   final bool isDescriptionRequired;
   final ReportSubmitCallback onSubmit;
+  final BuildContext scaffoldContext;
 
   const ReportDialog({
     super.key,
     required this.title,
     required this.reasons,
     required this.onSubmit,
-    this.isDescriptionRequired = false,
+    this.isDescriptionRequired = false, required this.scaffoldContext,
   });
 
   @override
@@ -1020,26 +1109,12 @@ class _ReportDialogState extends State<ReportDialog> {
                 reason: reasonApi,
                 description: description,
               );
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(message),
-                    backgroundColor: message.contains('success')
-                        ? Colors.green
-                        : Colors.red,
-                  ),
-                );
-              }
-              if (mounted) Navigator.pop(context);
+              print('Report submitted: $message');
+              // Close the dialog and return the message
+              if (mounted) Navigator.pop(context, message);
             } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to submit report: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
+              // Close the dialog and return error message
+              if (mounted) Navigator.pop(context, 'Failed to submit report: $e');
             }
           },
           child: const Text('Send'),

@@ -1,6 +1,8 @@
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 
+import '../models/response_model.dart';
+
 class ReportService {
   ApiRepository get _apiRepository => ApiRepository.instance;
 
@@ -20,11 +22,21 @@ class ReportService {
         reason: reason,
         description: description,
       );
-      return report?.id ?? '';
+
+      if (report != null) {
+        return 'Report submitted successfully';
+      }
+
+      return 'Report could not be submitted';
+    } on ApiException catch (e) {
+      return e.message;
     } catch (e) {
-      throw 'Failed to submit report: $e';
+      return 'Failed to submit report: $e';
     }
   }
+
+
+
 
   // Report user
   Future<String> reportUser({
