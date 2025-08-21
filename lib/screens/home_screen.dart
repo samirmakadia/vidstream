@@ -572,6 +572,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                                 if (j != -1) _allVideos[j] = _allVideos[j].copyWith(commentsCount: newCount);
                               });
                             },
+                            onReported: (reportedVideo) {
+                              setState(() {
+                                _videos.removeWhere((v) => v.id == reportedVideo.id);
+                              });
+                            },
                           );
                         },
                       ),
@@ -751,13 +756,14 @@ class VideoFeedItem extends StatefulWidget {
   final VoidCallback? onVideoDeleted;
   final void Function(int likeCount, bool isLiked)? onLikeUpdated;
   final void Function(int commentCount)? onCommentUpdated;
+  final void Function(ApiVideo video)? onReported;
 
   const VideoFeedItem({
     super.key,
     required this.video,
     required this.isActive,
     this.onVideoDeleted,
-    this.onLikeUpdated, this.onCommentUpdated,
+    this.onLikeUpdated, this.onCommentUpdated, this.onReported,
   });
 
   @override
@@ -1055,6 +1061,11 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                   onCommentUpdated: (newCount) {
                     setState(() {
                       widget.onCommentUpdated?.call(newCount);
+                    });
+                  },
+                  onReported: (reportedVideo) {
+                    setState(() {
+                      widget.onReported?.call(reportedVideo);
                     });
                   },
                 ),

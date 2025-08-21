@@ -181,7 +181,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
         onSubmit: ({required reason, String? description}) async {
           final currentUserId = ApiRepository.instance.auth.currentUser?.id;
           if (currentUserId != null) {
-            final message = await ApiRepository.instance.reports.reportContent(
+            return await ApiRepository.instance.reports.reportContent(
               reporterId: currentUserId,
               targetId: video.id,
               targetType: 'video',
@@ -189,12 +189,9 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
               description: description,
             );
 
-            // If reported successfully or reason is spam, call the callback
-            if (reason == 'spam' || message.contains('success')) {
-              widget.onReported?.call(video);
-            }
-
-            return message;
+          }
+          if (reason == 'spam' || message.contains('success')) {
+            widget.onReported?.call(video);
           }
           return 'Failed to submit report';
         },
