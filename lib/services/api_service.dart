@@ -404,23 +404,20 @@ class ApiService {
   }) async {
     final result = await ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<Map<String, dynamic>>(
-        '/likes/check',
-        queryParameters: {
-          'target_id': targetId,
-          'target_type': targetType,
-        },
+        '/likes/status/$targetType/$targetId',
         fromJson: (json) => json as Map<String, dynamic>,
       );
-      
+
       if (response.success && response.data != null) {
         return response.data!['liked'] as bool? ?? false;
       }
-      
+
       return false;
     });
-    
+
     return result ?? false;
   }
+
 
   // Comment endpoints
   Future<response_models.PaginatedResponse<ApiComment>?> getComments({

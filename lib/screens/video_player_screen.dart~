@@ -401,7 +401,6 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                   ),
                   isLiked: _isLiked,
                   onLikeToggle: _toggleLike,
-                  likeCount: _localLikeCount,
                   isLikeLoading: _isLikeLoading,
                   onVideoDeleted: widget.onVideoDeleted,
                 ),

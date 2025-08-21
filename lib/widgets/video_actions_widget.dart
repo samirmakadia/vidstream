@@ -12,6 +12,8 @@ class VideoActionsWidget extends StatelessWidget {
   final VoidCallback onLikeToggle;
   final bool isLikeLoading;
   final VoidCallback? onVideoDeleted;
+  final int likeCount;
+
 
   const VideoActionsWidget({
     super.key,
@@ -19,7 +21,7 @@ class VideoActionsWidget extends StatelessWidget {
     required this.isLiked,
     required this.onLikeToggle,
     this.isLikeLoading = false,
-    this.onVideoDeleted,
+    this.onVideoDeleted, required this.likeCount,
   });
 
   void _showComments(BuildContext context) {
@@ -227,7 +229,7 @@ class VideoActionsWidget extends StatelessWidget {
           context,
           icon: isLiked ? Icons.favorite : Icons.favorite_outline,
           color: isLiked ? Colors.red : Colors.white,
-          count: video.likesCount,
+          count: likeCount,
           onTap: isLikeLoading ? () {} : onLikeToggle,
           isLoading: isLikeLoading,
         ),

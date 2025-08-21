@@ -509,6 +509,19 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     );
   }
 
+  void _updateLikeCount(String videoId, int newCount) {
+    final i = _videos.indexWhere((v) => v.id == videoId);
+    if (i != -1) {
+      _videos[i] = _videos[i].copyWith(likesCount: newCount);
+    }
+    final j = _allVideos.indexWhere((v) => v.id == videoId);
+    if (j != -1) {
+      _allVideos[j] = _allVideos[j].copyWith(likesCount: newCount);
+    }
+    setState(() {});
+  }
+
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
@@ -538,6 +551,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                           final video = _videos[index];
                           print('$index: ${video.title}, URL: ${video.videoUrl}');
                           return VideoFeedItem(
+                            key: ValueKey(video.id),
                             video: video,
                             isActive: index == _currentIndex && _isScreenVisible,
                             onVideoDeleted: () {
@@ -545,6 +559,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                                 _videos.removeAt(index);
                                 _allVideos.removeWhere((v) => v.id == video.id);
                               });
+                            },
+                            onLikeUpdated: (newCount, isLiked) {
+                              _updateLikeCount(video.id, newCount);
                             },
                           );
                         },
@@ -723,12 +740,14 @@ class VideoFeedItem extends StatefulWidget {
   final ApiVideo video;
   final bool isActive;
   final VoidCallback? onVideoDeleted;
+  final void Function(int likeCount, bool isLiked)? onLikeUpdated;
 
   const VideoFeedItem({
     super.key,
     required this.video,
     required this.isActive,
     this.onVideoDeleted,
+    this.onLikeUpdated,
   });
 
   @override
@@ -758,7 +777,12 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   @override
   void didUpdateWidget(VideoFeedItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
+    if (oldWidget.video.id != widget.video.id ||
+        oldWidget.video.likesCount != widget.video.likesCount) {
+      _localLikeCount = widget.video.likesCount;
+    }
+
     // If video becomes active and we haven't incremented view yet
     if (widget.isActive && !oldWidget.isActive && !_hasIncrementedView) {
       _incrementViewCount();
@@ -785,7 +809,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
         final isLiked = await ApiRepository.instance.likes.hasUserLiked(
           userId: currentUserId,
           targetId: widget.video.id,
-          targetType: 'video',
+          targetType: 'Video',
         );
         if (mounted) {
           setState(() {
@@ -793,7 +817,6 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
           });
         }
       } catch (e) {
-        // Handle error silently
       }
     }
   }
@@ -823,7 +846,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
       setState(() {
         _isLikeLoading = true;
       });
-      
+
       try {
         await ApiRepository.instance.likes.toggleLike(
           userId: currentUserId,
@@ -838,6 +861,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
             _localLikeCount = (_localLikeCount > 0) ? _localLikeCount - 1 : 0;
           }
         });
+        widget.onLikeUpdated?.call(newCount, newIsLiked);
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1015,6 +1039,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                   video: widget.video,
                   isLiked: _isLiked,
                   onLikeToggle: _toggleLike,
+                  likeCount: _localLikeCount,
                   isLikeLoading: _isLikeLoading,
                   onVideoDeleted: widget.onVideoDeleted,
                 ),
