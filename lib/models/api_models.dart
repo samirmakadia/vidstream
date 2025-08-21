@@ -372,9 +372,10 @@ class ApiComment {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? parentCommentId;
-  final ApiUser? user;         // full user object
+  final ApiUser? user;
   final List<ApiComment>? replies;
-  final int? v;                // Mongo __v field (optional)
+  final int? v;
+  final bool isLiked; // Changed from nullable to non-nullable with default false
 
   ApiComment({
     required this.id,
@@ -387,6 +388,7 @@ class ApiComment {
     this.user,
     this.replies,
     this.v,
+    this.isLiked = false, // Default value
   });
 
   factory ApiComment.fromJson(Map<String, dynamic> json) {
@@ -405,6 +407,7 @@ class ApiComment {
           ? List<ApiComment>.from((json['replies'] as List).map((x) => ApiComment.fromJson(x)))
           : null,
       v: json['__v'],
+      isLiked: json['isLiked'] ?? false, // Handle like status
     );
   }
 
@@ -420,6 +423,7 @@ class ApiComment {
       if (user != null) 'user': user!.toJson(),
       if (replies != null) 'replies': replies!.map((x) => x.toJson()).toList(),
       if (v != null) '__v': v,
+      'isLiked': isLiked, // Include like status in JSON
     };
   }
 }

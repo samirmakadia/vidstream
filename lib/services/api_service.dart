@@ -866,19 +866,19 @@ class ApiService {
       final response = await _httpClient.post<Report>(
         '/reports',
         data: {
-          'report_type': reportType,
-          'target_id': targetId,
-          'target_type': targetType,
+         // 'report_type': reportType,
+          'targetId': targetId,
+          'targetType': targetType,
           'reason': reason,
-          'description': description,
+          'description': description ?? '',
         },
         fromJson: (json) => Report.fromJson(json as Map<String, dynamic>),
       );
-      
+
       if (response.success && response.data != null) {
         return response.data!;
       }
-      
+
       throw response_models.ApiException(response.message);
     });
   }

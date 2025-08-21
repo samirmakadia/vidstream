@@ -383,8 +383,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   List<ApiComment> _comments = [];
   bool _isLoading = true;
   bool _isPosting = false;
-  ApiComment? _replyingTo; // Track which comment we're replying to
-  final Map<String, bool> _commentLikes = {}; // Cache comment like states
+  ApiComment? _replyingTo;
 
   @override
   void initState() {
@@ -394,7 +393,6 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
   @override
   void dispose() {
-    Navigator.of(context).pop(_comments.length);
     _commentController.dispose();
     super.dispose();
   }
@@ -403,9 +401,6 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     try {
       _commentService.getComments(widget.videoId).listen((comments) async {
         if (mounted) {
-          // Load like states for all comments
-          await _loadCommentLikeStates(comments);
-          
           setState(() {
             _comments = comments;
             _isLoading = false;
@@ -427,23 +422,6 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     }
   }
 
-  Future<void> _loadCommentLikeStates(List<ApiComment> comments) async {
-    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    if (currentUserId == null) return;
-
-    try {
-      for (final comment in comments) {
-        final isLiked = await _likeService.hasUserLiked(
-          userId: currentUserId,
-          targetId: comment.id,
-          targetType: 'Comment',
-        );
-        _commentLikes[comment.id] = isLiked;
-      }
-    } catch (e) {
-      print('Failed to load comment like states: $e');
-    }
-  }
 
   Future<void> _addComment() async {
     final text = _commentController.text.trim();
@@ -504,11 +482,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         targetId: comment.id,
         targetType: 'Comment',
       );
-      
-      // Update local cache
-      final isLiked = _commentLikes[comment.id] ?? false;
       setState(() {
-        _commentLikes[comment.id] = !isLiked;
+
       });
       _loadComments();
     } catch (e) {
@@ -538,11 +513,24 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     _commentController.clear();
   }
 
+  int _totalCommentsWithReplies(List<ApiComment> comments) {
+    int total = 0;
+
+    for (var comment in comments) {
+      total++;
+      if (comment.replies != null && comment.replies!.isNotEmpty) {
+        total += _totalCommentsWithReplies(comment.replies!);
+      }
+    }
+
+    return total;
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        Navigator.of(context).pop(_comments.length);
+        Navigator.of(context).pop(_totalCommentsWithReplies(_comments));
         return false;
       },
       child: Padding(
@@ -582,7 +570,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                     ),
                     const Spacer(),
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(_comments.length),
+                      onPressed: () => Navigator.of(context).pop(_totalCommentsWithReplies(_comments)),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -627,13 +615,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                             itemCount: _comments.length,
                             itemBuilder: (context, index) {
                               final comment = _comments[index];
-                              return FutureBuilder<ApiUser?>(
-                                future: ApiRepository.instance.auth.getUserProfile(comment.user!.id),
-                                builder: (context, snapshot) {
-                                  final user = snapshot.data;
-                                  return _buildCommentItem(comment, user);
-                                },
-                              );
+                              return _buildCommentItem(comment);
                             },
                           ),
               ),
@@ -739,171 +721,169 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     );
   }
 
-  Widget _buildCommentItem(ApiComment comment, ApiUser? user) {
+  Widget _buildCommentItem(ApiComment comment,{bool isReply = false}) {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    final isOwner = currentUserId == comment.user!.id;
-    final isReply = comment.parentCommentId != null;
-    final isLiked = _commentLikes[comment.id] ?? false;
-    
-    return Container(
-      margin: EdgeInsets.fromLTRB(
-        isReply ? 48 : 0, // Indent replies
-        8,
-        0,
-        8,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Reply indicator line for replies
-          if (isReply)
-            Container(
-              width: 2,
-              height: 24,
-              color: Colors.grey[300],
-              margin: const EdgeInsets.only(right: 12, top: 8),
-            ),
-          CircleAvatar(
-            radius: isReply ? 12 : 16, // Smaller avatar for replies
-            backgroundImage: user?.profileImageUrl != null || user?.photoURL != null
-                ? NetworkImage(user!.profileImageUrl ?? user!.photoURL!)
-                : null,
-            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-            child: (user?.profileImageUrl == null && user?.photoURL == null)
-                ? Icon(
-                    Icons.person,
-                    size: isReply ? 12 : 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  )
-                : null,
+    final isOwner = currentUserId == comment.user?.id;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: EdgeInsets.only(
+            left: isReply ? 40 : 0,
+            top: 8,
+            bottom: 8,
+            right: 8,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isReply)
+                Container(
+                  width: 2,
+                  margin: const EdgeInsets.only(right: 8, top: 4),
+                  height: 40,
+                  color: Colors.grey[300],
+                ),
+              // Avatar
+              CircleAvatar(
+                radius: isReply ? 12 : 16,
+                backgroundImage: (comment.user!.profileImageUrl ?? comment.user!.photoURL) != null
+                    ? NetworkImage(comment.user!.profileImageUrl ?? comment.user!.photoURL!)
+                    : null,
+                backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                child: (comment.user!.profileImageUrl == null && comment.user!.photoURL == null)
+                    ? Icon(
+                  Icons.person,
+                  size: isReply ? 12 : 16,
+                  color: Theme.of(context).colorScheme.primary,
+                )
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        Text(
+                          comment.user!.displayName ?? 'Unknown User',
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: isReply ? 12 : null,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          timeago.format(comment.createdAt),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.grey[600],
+                            fontSize: isReply ? 10 : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     Text(
-                      user?.displayName ?? 'Unknown User',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: isReply ? 12 : null,
+                      comment.text,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: isReply ? 13 : null,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      timeago.format(comment.createdAt),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Colors.grey[600],
-                        fontSize: isReply ? 10 : null,
-                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => _toggleCommentLike(comment),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                comment.isLiked ? Icons.favorite : Icons.favorite_outline,
+                                size: 14,
+                                color: comment.isLiked ? Colors.red : Colors.grey[600],
+                              ),
+                              if (comment.likesCount > 0) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  comment.likesCount.toString(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        if (!isReply)
+                          GestureDetector(
+                            onTap: () => _replyToComment(comment),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.reply, size: 14, color: Colors.grey[600]),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Reply',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  comment.text,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: isReply ? 13 : null,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Like and Reply buttons
-                Row(
-                  children: [
-                    // Like button
-                    GestureDetector(
-                      onTap: () => _toggleCommentLike(comment),
+              ),
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, size: 18, color: Colors.grey[600]),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'delete':
+                      _deleteComment(comment);
+                      break;
+                    case 'report':
+                      _reportComment(comment);
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  if (isOwner)
+                    const PopupMenuItem(
+                      value: 'delete',
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            isLiked ? Icons.favorite : Icons.favorite_outline,
-                            size: 14,
-                            color: isLiked ? Colors.red : Colors.grey[600],
-                          ),
-                          if (comment.likesCount > 0) ...[
-                            const SizedBox(width: 4),
-                            Text(
-                              comment.likesCount.toString(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
+                          Icon(Icons.delete, size: 18, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete'),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    // Reply button (only for parent comments)
-                    if (!isReply)
-                      GestureDetector(
-                        onTap: () => _replyToComment(comment),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.reply,
-                              size: 14,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Reply',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
+                  if (!isOwner)
+                    const PopupMenuItem(
+                      value: 'report',
+                      child: Row(
+                        children: [
+                          Icon(Icons.report, size: 18, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text('Report Spam'),
+                        ],
                       ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, size: 18, color: Colors.grey[600]),
-            onSelected: (value) {
-              switch (value) {
-                case 'delete':
-                  _deleteComment(comment);
-                  break;
-                case 'report':
-                  _reportComment(comment);
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              if (isOwner)
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, size: 18, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete'),
-                    ],
-                  ),
-                ),
-              if (!isOwner)
-                const PopupMenuItem(
-                  value: 'report',
-                  child: Row(
-                    children: [
-                      Icon(Icons.report, size: 18, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text('Report Spam'),
-                    ],
-                  ),
-                ),
+                    ),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        ),
+
+        // Render replies recursively
+        if (comment.replies != null && comment.replies!.isNotEmpty)
+          for (var reply in comment.replies!)
+             _buildCommentItem(reply, isReply: true)
+      ],
     );
   }
 
@@ -953,68 +933,108 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   }
 
   Future<void> _reportComment(ApiComment comment) async {
-    final reasons = [
-      'Spam',
-      'Inappropriate content',
-      'Harassment',
-      'Other',
-    ];
+    final reasons = {
+      'Spam': 'spam',
+      'Inappropriate content': 'inappropriate_content',
+      'Harassment': 'harassment',
+      'Other': 'other',
+    };
 
-    String? selectedReason = await showDialog<String>(
+    String? selectedReasonDisplay;
+    final TextEditingController descriptionController = TextEditingController();
+
+    await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Report Comment'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Why are you reporting this comment?'),
-            const SizedBox(height: 16),
-            ...reasons.map((reason) => RadioListTile<String>(
-              title: Text(reason),
-              value: reason,
-              groupValue: null,
-              onChanged: (value) => Navigator.pop(context, value),
-            )),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Report Comment'),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Why are you reporting this comment?'),
+                  const SizedBox(height: 16),
+                  ...reasons.keys.map(
+                        (reason) => RadioListTile<String>(
+                      title: Text(reason),
+                      value: reason,
+                      groupValue: selectedReasonDisplay,
+                      onChanged: (value) => setState(() {
+                        selectedReasonDisplay = value;
+                      }),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 2,
+                    onChanged: (_) => setState(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      labelStyle: TextStyle(fontSize: 14),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: (selectedReasonDisplay == null ||
+                  descriptionController.text.trim().isEmpty)
+                  ? null
+                  : () async {
+                final selectedReasonApi = reasons[selectedReasonDisplay!]!;
+                final description = descriptionController.text.trim();
+
+                try {
+                  final currentUserId =
+                      ApiRepository.instance.auth.currentUser?.id;
+                  if (currentUserId != null) {
+                    await ApiRepository.instance.reports.reportContent(
+                      reporterId: currentUserId,
+                      targetId: comment.id,
+                      targetType: 'Comment',
+                      reason: selectedReasonApi,
+                      description: description,
+                    );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Report submitted successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                    Navigator.pop(context);
+                    _loadComments();
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to submit report: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Send'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
       ),
     );
-
-    if (selectedReason != null) {
-      try {
-        final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-        if (currentUserId != null) {
-          await ApiRepository.instance.reports.reportContent(
-            reporterId: currentUserId,
-            targetId: comment.id,
-            targetType: 'comment',
-            reason: selectedReason,
-          );
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Report submitted successfully'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to submit report: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
   }
+
 }

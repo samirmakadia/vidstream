@@ -23,7 +23,6 @@ class ApiUser {
   final bool isGuest;
   final bool isInMeet;
 
-  // Compatibility getter for Firebase uid
   String get uid => id;
 
   ApiUser({
@@ -51,7 +50,7 @@ class ApiUser {
 
   factory ApiUser.fromJson(Map<String, dynamic> json) {
     return ApiUser(
-      id: json['id']?.toString() ?? '',
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       email: json['email'] ?? '',
       displayName: json['display_name'] ?? json['displayName'] ?? '',
       username: json['username'],
@@ -78,7 +77,8 @@ class ApiUser {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      '_id': id, // include Mongo-style id
+      'id': id,  // also include for compatibility
       'email': email,
       'display_name': displayName,
       'username': username,
@@ -372,9 +372,10 @@ class ApiComment {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? parentCommentId;
-  final ApiUser? user;         // full user object
+  final ApiUser? user;
   final List<ApiComment>? replies;
-  final int? v;                // Mongo __v field (optional)
+  final int? v;
+  final bool? isLiked;
 
   ApiComment({
     required this.id,
@@ -386,6 +387,7 @@ class ApiComment {
     this.parentCommentId,
     this.user,
     this.replies,
+    this.isLiked,
     this.v,
   });
 
