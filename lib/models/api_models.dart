@@ -5,6 +5,7 @@ class ApiUser {
   final String id;
   final String email;
   final String displayName;
+  final String? username;
   final String? profileImageUrl;
   final String? photoURL;
   final String? bannerImageUrl;
@@ -15,7 +16,10 @@ class ApiUser {
   final DateTime updatedAt;
   final List<String> following;
   final List<String> followers;
+  final int followersCount;
+  final int followingCount;
   final int videosCount;
+  final bool isVerified;
   final bool isGuest;
   final bool isInMeet;
 
@@ -26,6 +30,7 @@ class ApiUser {
     required this.id,
     required this.email,
     required this.displayName,
+    this.username,
     this.profileImageUrl,
     this.photoURL,
     this.bannerImageUrl,
@@ -36,7 +41,10 @@ class ApiUser {
     required this.updatedAt,
     this.following = const [],
     this.followers = const [],
+    this.followersCount = 0,
+    this.followingCount = 0,
     this.videosCount = 0,
+    this.isVerified = false,
     this.isGuest = false,
     this.isInMeet = false,
   });
@@ -46,19 +54,23 @@ class ApiUser {
       id: json['id']?.toString() ?? '',
       email: json['email'] ?? '',
       displayName: json['display_name'] ?? json['displayName'] ?? '',
+      username: json['username'],
       profileImageUrl: json['profile_image_url'] ?? json['profileImageUrl'],
       photoURL: json['photo_url'] ?? json['photoURL'],
       bannerImageUrl: json['banner_image_url'] ?? json['bannerImageUrl'],
       bio: json['bio'],
-      dateOfBirth: json['date_of_birth'] != null || json['dateOfBirth'] != null 
-        ? DateTime.tryParse(json['date_of_birth'] ?? json['dateOfBirth']) 
-        : null,
+      dateOfBirth: json['date_of_birth'] != null || json['dateOfBirth'] != null
+          ? DateTime.tryParse(json['date_of_birth'] ?? json['dateOfBirth'])
+          : null,
       gender: json['gender'],
       createdAt: DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updated_at'] ?? json['updatedAt'] ?? '') ?? DateTime.now(),
       following: List<String>.from(json['following'] ?? []),
       followers: List<String>.from(json['followers'] ?? []),
+      followersCount: json['followersCount'] ?? 0,
+      followingCount: json['followingCount'] ?? 0,
       videosCount: json['videos_count'] ?? json['videosCount'] ?? 0,
+      isVerified: json['isVerified'] ?? false,
       isGuest: json['is_guest'] ?? json['isGuest'] ?? false,
       isInMeet: json['is_in_meet'] ?? json['isInMeet'] ?? false,
     );
@@ -69,6 +81,7 @@ class ApiUser {
       'id': id,
       'email': email,
       'display_name': displayName,
+      'username': username,
       'profile_image_url': profileImageUrl,
       'photo_url': photoURL,
       'banner_image_url': bannerImageUrl,
@@ -79,7 +92,10 @@ class ApiUser {
       'updated_at': updatedAt.toIso8601String(),
       'following': following,
       'followers': followers,
+      'followersCount': followersCount,
+      'followingCount': followingCount,
       'videos_count': videosCount,
+      'isVerified': isVerified,
       'is_guest': isGuest,
       'is_in_meet': isInMeet,
     };
@@ -89,6 +105,7 @@ class ApiUser {
     String? id,
     String? email,
     String? displayName,
+    String? username,
     String? profileImageUrl,
     String? photoURL,
     String? bannerImageUrl,
@@ -99,7 +116,10 @@ class ApiUser {
     DateTime? updatedAt,
     List<String>? following,
     List<String>? followers,
+    int? followersCount,
+    int? followingCount,
     int? videosCount,
+    bool? isVerified,
     bool? isGuest,
     bool? isInMeet,
   }) {
@@ -107,6 +127,7 @@ class ApiUser {
       id: id ?? this.id,
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
+      username: username ?? this.username,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       photoURL: photoURL ?? this.photoURL,
       bannerImageUrl: bannerImageUrl ?? this.bannerImageUrl,
@@ -117,7 +138,10 @@ class ApiUser {
       updatedAt: updatedAt ?? this.updatedAt,
       following: following ?? this.following,
       followers: followers ?? this.followers,
+      followersCount: followersCount ?? this.followersCount,
+      followingCount: followingCount ?? this.followingCount,
       videosCount: videosCount ?? this.videosCount,
+      isVerified: isVerified ?? this.isVerified,
       isGuest: isGuest ?? this.isGuest,
       isInMeet: isInMeet ?? this.isInMeet,
     );

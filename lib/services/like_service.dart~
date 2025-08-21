@@ -39,6 +39,7 @@ class LikeService {
   }) async {
     try {
       print('Toggling like for $targetType with ID: $targetId by user: $userId');
+      print('Toggling like for $targetType with ID: $targetId by user: $userId');
       await _apiService.toggleLike(
         targetId: targetId,
         targetType: targetType,

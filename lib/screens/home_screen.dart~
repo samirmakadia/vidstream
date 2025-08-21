@@ -771,7 +771,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
       if (mounted) {
         setState(() {
           _user = user;
-          print('User data loaded:  ${_user!.isGuest}');
+          print('User data loaded:  ${_user!.displayName}');
         });
       }
     } catch (e) {
