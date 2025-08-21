@@ -6,14 +6,14 @@ import 'package:vidstream/services/like_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-class VideoActionsWidget extends StatelessWidget {
+class VideoActionsWidget extends StatefulWidget {
   final ApiVideo video;
   final bool isLiked;
   final VoidCallback onLikeToggle;
   final bool isLikeLoading;
   final VoidCallback? onVideoDeleted;
   final int likeCount;
-
+  final void Function(int commentCount)? onCommentUpdated;
 
   const VideoActionsWidget({
     super.key,
@@ -22,15 +22,36 @@ class VideoActionsWidget extends StatelessWidget {
     required this.onLikeToggle,
     this.isLikeLoading = false,
     this.onVideoDeleted, required this.likeCount,
+    this.onCommentUpdated,
   });
 
-  void _showComments(BuildContext context) {
-    showModalBottomSheet(
+  @override
+  State<VideoActionsWidget> createState() => _VideoActionsWidgetState();
+}
+
+class _VideoActionsWidgetState extends State<VideoActionsWidget> {
+  int _commentCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _commentCount = widget.video.commentsCount;
+  }
+
+  Future<void> _showComments(BuildContext context) async {
+    final updatedCommentCount = await  showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CommentsBottomSheet(videoId: video.id),
+      builder: (context) => CommentsBottomSheet(videoId: widget.video.id),
     );
+
+    if (updatedCommentCount != null) {
+      setState(() {
+        // Update the video using copyWith
+        widget.video = widget.video.copyWith(commentsCount: updatedCommentCount);
+      });
+    }
   }
 
   void _shareVideo(BuildContext context) {
@@ -46,7 +67,7 @@ class VideoActionsWidget extends StatelessWidget {
 
   void _showVideoOptions(BuildContext context) {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    final isOwner = currentUserId == video.userId;
+    final isOwner = currentUserId == widget.video.userId;
 
     showModalBottomSheet(
       context: context,
@@ -124,7 +145,7 @@ class VideoActionsWidget extends StatelessWidget {
 
     if (confirmed == true) {
       try {
-        await ApiRepository.instance.videos.deleteVideo(video.id);
+        await ApiRepository.instance.videos.deleteVideo(widget.video.id);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -132,7 +153,7 @@ class VideoActionsWidget extends StatelessWidget {
               backgroundColor: Colors.green,
             ),
           );
-          onVideoDeleted?.call();
+          widget.onVideoDeleted?.call();
         }
       } catch (e) {
         if (context.mounted) {
@@ -194,7 +215,7 @@ class VideoActionsWidget extends StatelessWidget {
         if (currentUserId != null) {
           await ApiRepository.instance.reports.reportContent(
             reporterId: currentUserId,
-            targetId: video.id,
+            targetId: widget.video.id,
             targetType: 'video',
             reason: selectedReason,
           );
@@ -227,26 +248,26 @@ class VideoActionsWidget extends StatelessWidget {
         // Like Button
         _buildActionButton(
           context,
-          icon: isLiked ? Icons.favorite : Icons.favorite_outline,
-          color: isLiked ? Colors.red : Colors.white,
-          count: likeCount,
-          onTap: isLikeLoading ? () {} : onLikeToggle,
-          isLoading: isLikeLoading,
+          icon: widget.isLiked ? Icons.favorite : Icons.favorite_outline,
+          color: widget.isLiked ? Colors.red : Colors.white,
+          count: widget.likeCount,
+          onTap: widget.isLikeLoading ? () {} : widget.onLikeToggle,
+          isLoading: widget.isLikeLoading,
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         // Comment Button
         _buildActionButton(
           context,
           icon: Icons.comment_outlined,
           color: Colors.white,
-          count: video.commentsCount,
+          count: _commentCount,
           onTap: () => _showComments(context),
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         // Share Button
         _buildActionButton(
           context,
@@ -255,9 +276,9 @@ class VideoActionsWidget extends StatelessWidget {
           count: null,
           onTap: () => _shareVideo(context),
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         // More Options Button
         _buildActionButton(
           context,
@@ -266,9 +287,9 @@ class VideoActionsWidget extends StatelessWidget {
           count: null,
           onTap: () => _showVideoOptions(context),
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         // Views Count
         Column(
           children: [
@@ -279,7 +300,7 @@ class VideoActionsWidget extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              _formatCount(video.viewsCount),
+              _formatCount(widget.video.viewsCount),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: Colors.white.withValues(alpha: 0.8),
                 fontWeight: FontWeight.w600,
@@ -292,13 +313,13 @@ class VideoActionsWidget extends StatelessWidget {
   }
 
   Widget _buildActionButton(
-    BuildContext context, {
-    required IconData icon,
-    required Color color,
-    required int? count,
-    required VoidCallback onTap,
-    bool isLoading = false,
-  }) {
+      BuildContext context, {
+        required IconData icon,
+        required Color color,
+        required int? count,
+        required VoidCallback onTap,
+        bool isLoading = false,
+      }) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -311,18 +332,18 @@ class VideoActionsWidget extends StatelessWidget {
             ),
             child: isLoading
                 ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                    ),
-                  )
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+              ),
+            )
                 : Icon(
-                    icon,
-                    color: color,
-                    size: 28,
-                  ),
+              icon,
+              color: color,
+              size: 28,
+            ),
           ),
           if (count != null) ...[
             const SizedBox(height: 4),
@@ -349,6 +370,7 @@ class VideoActionsWidget extends StatelessWidget {
     }
   }
 }
+
 
 class CommentsBottomSheet extends StatefulWidget {
   final String videoId;
@@ -380,6 +402,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
   @override
   void dispose() {
+    Navigator.of(context).pop(_comments.length);
     _commentController.dispose();
     super.dispose();
   }
@@ -421,7 +444,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         final isLiked = await _likeService.hasUserLiked(
           userId: currentUserId,
           targetId: comment.id,
-          targetType: 'comment',
+          targetType: 'Comment',
         );
         _commentLikes[comment.id] = isLiked;
       }
@@ -450,11 +473,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       await _commentService.createComment(
         videoId: widget.videoId,
         text: text,
-        parentCommentId: _replyingTo?.id, // Set parent if replying
+        parentCommentId: _replyingTo?.id,
       );
       _commentController.clear();
       FocusScope.of(context).unfocus();
-      
+      _loadComments();
       // Clear reply state
       if (_replyingTo != null) {
         setState(() {
@@ -487,7 +510,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       await _likeService.toggleLike(
         userId: currentUserId,
         targetId: comment.id,
-        targetType: 'comment',
+        targetType: 'Comment',
       );
       
       // Update local cache
@@ -495,6 +518,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       setState(() {
         _commentLikes[comment.id] = !isLiked;
       });
+      _loadComments();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -511,7 +535,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     setState(() {
       _replyingTo = comment;
     });
-    _commentController.text = '@${comment.userId} ';
+    _commentController.text = '@${comment.user!.displayName} ';
     FocusScope.of(context).requestFocus(FocusNode());
   }
 
@@ -524,199 +548,208 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
-      child: Column(
-        children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 8),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop(_comments.length);
+        return false;
+      },
+      child: Padding(
+        padding: MediaQuery.of(context).viewInsets,
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
           ),
-          
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Text(
-                  'Comments',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
-          
-          const Divider(height: 1),
-          
-          // Comments List
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _comments.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.comment_outlined,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No comments yet',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Be the first to comment!',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.grey[500],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _comments.length,
-                        itemBuilder: (context, index) {
-                          final comment = _comments[index];
-                          return FutureBuilder<ApiUser?>(
-                            future: ApiRepository.instance.auth.getUserProfile(comment.userId),
-                            builder: (context, snapshot) {
-                              final user = snapshot.data;
-                              return _buildCommentItem(comment, user);
-                            },
-                          );
-                        },
-                      ),
-          ),
-          
-          // Comment Input
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              border: Border(
-                top: BorderSide(color: Colors.grey[300]!),
               ),
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  // Reply indicator
-                  if (_replyingTo != null)
-                    Container(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.reply,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Replying to comment',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                          ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: _cancelReply,
-                            child: Icon(
-                              Icons.close,
-                              size: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Text(
+                      'Comments',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  // Input field
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _commentController,
-                          decoration: InputDecoration(
-                            hintText: _replyingTo != null ? 'Write a reply...' : 'Add a comment...',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                          ),
-                          maxLines: null,
-                          textCapitalization: TextCapitalization.sentences,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _isPosting
-                          ? Container(
-                              padding: const EdgeInsets.all(12),
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Theme.of(context).colorScheme.primary,
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(_comments.length),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Divider(height: 1),
+
+              // Comments List
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _comments.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.comment_outlined,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No comments yet',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Colors.grey[600],
                                   ),
                                 ),
-                              ),
-                            )
-                          : IconButton(
-                              onPressed: _addComment,
-                              icon: Icon(
-                                Icons.send,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Be the first to comment!',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
                             ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: _comments.length,
+                            itemBuilder: (context, index) {
+                              final comment = _comments[index];
+                              return FutureBuilder<ApiUser?>(
+                                future: ApiRepository.instance.auth.getUserProfile(comment.user!.id),
+                                builder: (context, snapshot) {
+                                  final user = snapshot.data;
+                                  return _buildCommentItem(comment, user);
+                                },
+                              );
+                            },
+                          ),
+              ),
+
+              // Comment Input
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  border: Border(
+                    top: BorderSide(color: Colors.grey[300]!),
+                  ),
+                ),
+                child: SafeArea(
+                  child: Column(
+                    children: [
+                      // Reply indicator
+                      if (_replyingTo != null)
+                        Container(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.reply,
+                                size: 16,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Replying to comment',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: _cancelReply,
+                                child: Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      // Input field
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _commentController,
+                              decoration: InputDecoration(
+                                hintText: _replyingTo != null ? 'Write a reply...' : 'Add a comment...',
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                              maxLines: null,
+                              textCapitalization: TextCapitalization.sentences,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _isPosting
+                              ? Container(
+                                  padding: const EdgeInsets.all(12),
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : IconButton(
+                                  onPressed: _addComment,
+                                  icon: Icon(
+                                    Icons.send,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildCommentItem(ApiComment comment, ApiUser? user) {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    final isOwner = currentUserId == comment.userId;
+    final isOwner = currentUserId == comment.user!.id;
     final isReply = comment.parentCommentId != null;
     final isLiked = _commentLikes[comment.id] ?? false;
     
@@ -905,6 +938,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     if (confirmed == true) {
       try {
         await _commentService.deleteComment(comment.id, widget.videoId);
+        _loadComments();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

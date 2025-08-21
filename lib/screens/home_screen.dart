@@ -563,6 +563,15 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                             onLikeUpdated: (newCount, isLiked) {
                               _updateLikeCount(video.id, newCount);
                             },
+                            onCommentUpdated: (newCount) {
+                              setState(() {
+                                final i = _videos.indexWhere((v) => v.id == video.id);
+                                if (i != -1) _videos[i] = _videos[i].copyWith(commentsCount: newCount);
+
+                                final j = _allVideos.indexWhere((v) => v.id == video.id);
+                                if (j != -1) _allVideos[j] = _allVideos[j].copyWith(commentsCount: newCount);
+                              });
+                            },
                           );
                         },
                       ),
@@ -741,13 +750,14 @@ class VideoFeedItem extends StatefulWidget {
   final bool isActive;
   final VoidCallback? onVideoDeleted;
   final void Function(int likeCount, bool isLiked)? onLikeUpdated;
+  final void Function(int commentCount)? onCommentUpdated;
 
   const VideoFeedItem({
     super.key,
     required this.video,
     required this.isActive,
     this.onVideoDeleted,
-    this.onLikeUpdated,
+    this.onLikeUpdated, this.onCommentUpdated,
   });
 
   @override
@@ -1042,6 +1052,11 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                   likeCount: _localLikeCount,
                   isLikeLoading: _isLikeLoading,
                   onVideoDeleted: widget.onVideoDeleted,
+                  onCommentUpdated: (newCount) {
+                    setState(() {
+                      widget.onCommentUpdated?.call(newCount);
+                    });
+                  },
                 ),
               ],
             ),

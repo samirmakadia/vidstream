@@ -23,7 +23,6 @@ class ApiUser {
   final bool isGuest;
   final bool isInMeet;
 
-  // Compatibility getter for Firebase uid
   String get uid => id;
 
   ApiUser({
@@ -51,7 +50,7 @@ class ApiUser {
 
   factory ApiUser.fromJson(Map<String, dynamic> json) {
     return ApiUser(
-      id: json['id']?.toString() ?? '',
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       email: json['email'] ?? '',
       displayName: json['display_name'] ?? json['displayName'] ?? '',
       username: json['username'],
@@ -78,7 +77,8 @@ class ApiUser {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      '_id': id, // include Mongo-style id
+      'id': id,  // also include for compatibility
       'email': email,
       'display_name': displayName,
       'username': username,
@@ -367,19 +367,18 @@ class Dimensions {
 class ApiComment {
   final String id;
   final String videoId;
-  final String userId;
   final String text;
   final int likesCount;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? parentCommentId;
-  final ApiUser? user;
+  final ApiUser? user;         // full user object
   final List<ApiComment>? replies;
+  final int? v;                // Mongo __v field (optional)
 
   ApiComment({
     required this.id,
     required this.videoId,
-    required this.userId,
     required this.text,
     this.likesCount = 0,
     required this.createdAt,
@@ -387,37 +386,40 @@ class ApiComment {
     this.parentCommentId,
     this.user,
     this.replies,
+    this.v,
   });
 
   factory ApiComment.fromJson(Map<String, dynamic> json) {
     return ApiComment(
-      id: json['id']?.toString() ?? '',
-      videoId: json['video_id']?.toString() ?? json['videoId']?.toString() ?? '',
-      userId: json['user_id']?.toString() ?? json['userId']?.toString() ?? '',
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+      videoId: json['videoId']?.toString() ?? json['video_id']?.toString() ?? '',
       text: json['text'] ?? '',
-      likesCount: json['likes_count'] ?? json['likesCount'] ?? 0,
-      createdAt: DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at'] ?? json['updatedAt'] ?? '') ?? DateTime.now(),
-      parentCommentId: json['parent_comment_id']?.toString() ?? json['parentCommentId']?.toString(),
-      user: json['user'] != null ? ApiUser.fromJson(json['user']) : null,
-      replies: json['replies'] != null 
-        ? List<ApiComment>.from(json['replies'].map((x) => ApiComment.fromJson(x)))
-        : null,
+      likesCount: json['likesCount'] ?? json['likes_count'] ?? 0,
+      createdAt: DateTime.tryParse(json['createdAt'] ?? json['created_at'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updatedAt'] ?? json['updated_at'] ?? '') ?? DateTime.now(),
+      parentCommentId: json['parentCommentId']?.toString() ?? json['parent_comment_id']?.toString(),
+      user: json['userId'] != null
+          ? ApiUser.fromJson(json['userId'] as Map<String, dynamic>)
+          : (json['user'] != null ? ApiUser.fromJson(json['user']) : null),
+      replies: json['replies'] != null
+          ? List<ApiComment>.from((json['replies'] as List).map((x) => ApiComment.fromJson(x)))
+          : null,
+      v: json['__v'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'video_id': videoId,
-      'user_id': userId,
+      'videoId': videoId,
       'text': text,
-      'likes_count': likesCount,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-      'parent_comment_id': parentCommentId,
+      'likesCount': likesCount,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'parentCommentId': parentCommentId,
       if (user != null) 'user': user!.toJson(),
       if (replies != null) 'replies': replies!.map((x) => x.toJson()).toList(),
+      if (v != null) '__v': v,
     };
   }
 }
