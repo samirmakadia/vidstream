@@ -549,10 +549,13 @@ class ApiService {
           'page': page,
           'limit': limit,
         },
-        fromJson: (json) => response_models.PaginatedResponse.fromJson(
-          json as Map<String, dynamic>,
-          (item) => ApiUser.fromJson(item as Map<String, dynamic>),
-        ),
+        fromJson: (json) {
+          final followerJson = (json as Map<String, dynamic>)['followers'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': followerJson}, // wrap in 'data' to match your PaginatedResponse
+                (item) => ApiUser.fromJson(item as Map<String, dynamic>),
+          );
+        },
       );
       
       if (response.success && response.data != null) {
@@ -803,15 +806,18 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<response_models.PaginatedResponse<ApiUser>>(
-        '/users/blocked',
+        '/blocks',
         queryParameters: {
           'page': page,
           'limit': limit,
         },
-        fromJson: (json) => response_models.PaginatedResponse.fromJson(
-          json as Map<String, dynamic>,
-          (item) => ApiUser.fromJson(item as Map<String, dynamic>),
-        ),
+        fromJson: (json) {
+          final blockUserJson = (json as Map<String, dynamic>)['blockedUsers'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': blockUserJson}, // wrap in 'data' to match your PaginatedResponse
+                (item) => ApiUser.fromJson(item as Map<String, dynamic>),
+          );
+        },
       );
       
       if (response.success && response.data != null) {
