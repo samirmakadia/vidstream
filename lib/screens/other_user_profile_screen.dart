@@ -97,7 +97,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
       List<ApiVideo> videos = [];
       try {
         videos =
-            await ApiRepository.instance.videos.getUserVideos(widget.userId);
+            await ApiRepository.instance.videos.getUserPostedVideos(widget.userId);
       } catch (e) {
         print('Failed to load user videos: $e');
       }

@@ -223,7 +223,7 @@ class ApiService {
   // Video endpoints
   Future<response_models.PaginatedResponse<ApiVideo>?> getVideos({
     int page = 1,
-    int limit = 20,
+    int limit = 30,
     String? category,
     String? userId,
   }) async {
@@ -243,6 +243,34 @@ class ApiService {
           final videosJson = (json as Map<String, dynamic>)['videos'] as List<dynamic>? ?? [];
           return response_models.PaginatedResponse.fromJson(
             {'data': videosJson}, // wrap in 'data' to match your PaginatedResponse
+                (item) => ApiVideo.fromJson(item as Map<String, dynamic>),
+          );
+        },
+      );
+      if (response.success && response.data != null) {
+        return response.data!;
+      }
+
+      throw response_models.ApiException(response.message);
+    });
+  }
+
+  Future<response_models.PaginatedResponse<ApiVideo>?> getPostedVideos({
+    required String? userId,
+    int page = 1,
+    int limit = 30,
+  }) async {
+    return ErrorHandler.safeApiCall(() async {
+      final response = await _httpClient.get<response_models.PaginatedResponse<ApiVideo>>(
+        '/videos/user/$userId',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+        fromJson: (json) {
+          final postedVideosJson = (json as Map<String, dynamic>)['videos'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': postedVideosJson}, // wrap in 'data' to match your PaginatedResponse
                 (item) => ApiVideo.fromJson(item as Map<String, dynamic>),
           );
         },
@@ -962,7 +990,7 @@ class ApiService {
 
   Future<response_models.PaginatedResponse<Report>?> getUserReports({
     int page = 1,
-    int limit = 20,
+    int limit = 30,
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<response_models.PaginatedResponse<Report>>(
@@ -971,10 +999,13 @@ class ApiService {
           'page': page,
           'limit': limit,
         },
-        fromJson: (json) => response_models.PaginatedResponse.fromJson(
-          json as Map<String, dynamic>,
-          (item) => Report.fromJson(item as Map<String, dynamic>),
-        ),
+        fromJson: (json) {
+          final reportJson = (json as Map<String, dynamic>)['reports'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': reportJson}, // wrap in 'data' to match your PaginatedResponse
+                (item) => Report.fromJson(item as Map<String, dynamic>),
+          );
+        },
       );
       
       if (response.success && response.data != null) {

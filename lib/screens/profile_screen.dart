@@ -83,7 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         List<ApiVideo> likedVideos = [];
 
         try {
-          videos = await ApiRepository.instance.videos.getUserVideos(currentUserId);
+          videos = await ApiRepository.instance.videos.getUserPostedVideos(currentUserId);
           print('Loaded ${videos.length} user videos');
         } catch (videoError) {
           print('Failed to load user videos: $videoError');

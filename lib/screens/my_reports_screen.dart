@@ -16,6 +16,28 @@ class MyReportsScreen extends StatefulWidget {
 
 class _MyReportsScreenState extends State<MyReportsScreen> {
   final ReportService _reportService = ReportService();
+  List<Report> _reports = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchReports();
+  }
+  Future<void> _fetchReports() async {
+    setState(() => _isLoading = true);
+    try {
+      final fetchedReports =
+      await _reportService.getUserReports(widget.currentUserId);
+      setState(() {
+        _reports = fetchedReports;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Failed to fetch reports: $e');
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -404,53 +426,71 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   }
 
   Future<void> _deleteReport(Report report) async {
+    setState(() => _isLoading = true);
     try {
-      print('🗑️ Delete report button pressed for report: ${report.id}');
-      print('👤 Current user ID: ${widget.currentUserId}');
-      print('📄 Report details: ${report.toJson()}');
-      
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          );
-        },
-      );
-
       await _reportService.deleteReport(report.id);
-
-      // Hide loading indicator
-      if (mounted) {
-        Navigator.of(context).pop();
-        
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Report deleted successfully'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      setState(() {
+        _reports.removeWhere((r) => r.id == report.id);
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Report deleted successfully')),
+      );
     } catch (e) {
-      print('❌ Delete report error in UI: ${e.toString()}');
-      
-      // Hide loading indicator
-      if (mounted) {
-        Navigator.of(context).pop();
-        
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to delete report: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete report: $e')),
+      );
     }
   }
+
+  // Future<void> _deleteReport(Report report) async {
+  //   try {
+  //     print('🗑️ Delete report button pressed for report: ${report.id}');
+  //     print('👤 Current user ID: ${widget.currentUserId}');
+  //     print('📄 Report details: ${report.toJson()}');
+  //
+  //     // Show loading indicator
+  //     showDialog(
+  //       context: context,
+  //       barrierDismissible: false,
+  //       builder: (BuildContext context) {
+  //         return const Center(
+  //           child: CircularProgressIndicator(color: Colors.white),
+  //         );
+  //       },
+  //     );
+  //
+  //     await _reportService.deleteReport(report.id);
+  //
+  //     // Hide loading indicator
+  //     if (mounted) {
+  //       Navigator.of(context).pop();
+  //       // Show success message
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: const Text('Report deleted successfully'),
+  //           backgroundColor: Colors.green,
+  //           behavior: SnackBarBehavior.floating,
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print('❌ Delete report error in UI: ${e.toString()}');
+  //
+  //     // Hide loading indicator
+  //     if (mounted) {
+  //       Navigator.of(context).pop();
+  //
+  //       // Show error message
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Failed to delete report: ${e.toString()}'),
+  //           backgroundColor: Colors.red,
+  //           behavior: SnackBarBehavior.floating,
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 }

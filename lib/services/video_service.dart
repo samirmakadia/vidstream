@@ -68,6 +68,16 @@ class VideoService {
     }
   }
 
+  Future<List<ApiVideo>> getUserPostedVideos(String userId) async {
+    try {
+      final response = await _apiService.getPostedVideos(userId: userId);
+      return response?.data ?? [];
+    } catch (e) {
+      print('Failed to get user videos: $e');
+      return [];
+    }
+  }
+
   // Get videos by user
   Stream<List<ApiVideo>> getVideosByUser(String userId, {int limit = 20}) {
     final controller = StreamController<List<ApiVideo>>();

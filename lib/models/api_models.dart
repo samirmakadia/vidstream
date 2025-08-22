@@ -676,7 +676,7 @@ class Report {
 
   factory Report.fromJson(Map<String, dynamic> json) {
     return Report(
-      id: json['id']?.toString() ?? '',
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       reporterId: json['reporter_id']?.toString() ?? json['reporterId']?.toString() ?? '',
       targetId: json['target_id']?.toString() ?? json['targetId']?.toString() ?? '',
       targetType: json['target_type'] ?? json['targetType'] ?? '',
