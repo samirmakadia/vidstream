@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:flutter/services.dart';
 import 'package:vidstream/services/comment_service.dart';
 import 'package:vidstream/services/like_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:timeago/timeago.dart' as timeago;
-
-import '../models/response_model.dart';
 import '../utils/graphics.dart';
 
 class VideoActionsWidget extends StatefulWidget {
@@ -53,7 +50,6 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
   }
 
   void _shareVideo(BuildContext context) {
-    // Copy video link to clipboard
     Clipboard.setData(ClipboardData(text: 'Check out this video on VidStream!'));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

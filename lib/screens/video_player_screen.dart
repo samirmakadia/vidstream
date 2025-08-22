@@ -139,9 +139,8 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   @override
   void didUpdateWidget(VideoFeedItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
-    // If video becomes active and we haven't incremented view yet
-    if (widget.isActive && !oldWidget.isActive && !_hasIncrementedView) {
+
+    if (!widget.isActive && oldWidget.isActive) {
       _incrementViewCount();
     }
   }
@@ -268,48 +267,28 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   }
 
   Future<void> _incrementViewCount() async {
-    if (_hasIncrementedView) return;
-
-    try {
-      // 1. Get video duration and current position
-      final videoController = _videoKey.currentState?.controller;
-      int watchTime = 0;
-      double watchPercentage = 0;
-
-      if (videoController != null && videoController.value.isInitialized) {
-        final currentPosition = videoController.value.position;
-        final totalDuration = videoController.value.duration;
-
-        watchTime = currentPosition.inSeconds;
-        if (totalDuration.inSeconds > 0) {
-          watchPercentage = (watchTime / totalDuration.inSeconds) * 100;
-        } else {
-          watchPercentage = 0.0;
-        }
-      }
-
-      // 2. Increment local view count
-      setState(() {
-        _localViewCount++;
-        _hasIncrementedView = true;
-      });
-
-      // 3. Call API with actual watchTime and watchPercentage
-      await ApiRepository.instance.videos.incrementViewCount(
-        widget.video.id,
-        watchTime: watchTime,
-        watchPercentage: watchPercentage,
-      );
-
-    } catch (e) {
-      print('Failed to increment view count: $e');
-      if (mounted) {
-        setState(() {
-          _localViewCount = widget.video.viewsCount;
-          _hasIncrementedView = false;
-        });
-      }
+    final videoController = _videoKey.currentState?.controller;
+    if (videoController == null) {
+      return;
     }
+    if (!videoController.value.isInitialized) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) _incrementViewCount();
+      });
+      return;
+    }
+
+    final currentPosition = videoController.value.position;
+    final totalDuration = videoController.value.duration;
+
+    final watchTime = currentPosition.inSeconds;
+    final watchPercentage = totalDuration.inSeconds > 0 ? (watchTime / totalDuration.inSeconds) * 100 : 0.0;
+
+    await ApiRepository.instance.videos.incrementViewCount(
+      widget.video.id,
+      watchTime: watchTime,
+      watchPercentage: watchPercentage.round().toDouble(),
+    );
   }
 
 

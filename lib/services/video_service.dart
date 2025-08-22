@@ -274,7 +274,8 @@ class VideoService {
         country: country,
         region: region,
         city: city,
-        coordinates: [longitude ?? 0, latitude ?? 0],
+        longitude: longitude,
+        latitude: latitude,
       );
     } catch (e, stack) {
     }

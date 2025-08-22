@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:vidstream/repositories/api_repository.dart';
@@ -789,15 +791,12 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   bool _isLikeLoading = false;
   bool _isFollowLoading = false;
   int _localLikeCount = 0;
-  int _localViewCount = 0;
-  bool _hasIncrementedView = false;
   final _videoKey = GlobalKey<VideoPlayerWidgetState>();
 
   @override
   void initState() {
     super.initState();
     _localLikeCount = widget.video.likesCount;
-    _localViewCount = widget.video.viewsCount;
      _checkLikeStatus();
    }
 
@@ -808,12 +807,9 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
         oldWidget.video.likesCount != widget.video.likesCount) {
       _localLikeCount = widget.video.likesCount;
     }
-    // if (widget.isActive && !oldWidget.isActive && !_hasIncrementedView) {
-    //   _incrementViewCount();
-    // }
 
     if (!widget.isActive && oldWidget.isActive) {
-      _incrementViewCount(isStopped: true);
+      _incrementViewCount();
     }
   }
 
@@ -892,9 +888,12 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
         );
         if (widget.video.user != null) {
           final updatedUser = widget.video.user!.copyWith(
-            followersCount: widget.video.user!.isFollow
-                ? widget.video.user!.followersCount - 1
-                : widget.video.user!.followersCount + 1,
+            followersCount: max(
+              0,
+              widget.video.user!.isFollow
+                  ? widget.video.user!.followersCount - 1
+                  : widget.video.user!.followersCount + 1,
+            ),
             isFollow: !widget.video.user!.isFollow,
           );
 
@@ -919,14 +918,14 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     }
   }
 
-  Future<void> _incrementViewCount({bool isStopped = false}) async {
+  Future<void> _incrementViewCount() async {
     final videoController = _videoKey.currentState?.controller;
     if (videoController == null) {
       return;
     }
     if (!videoController.value.isInitialized) {
       Future.delayed(const Duration(milliseconds: 200), () {
-        if (mounted) _incrementViewCount(isStopped: isStopped);
+        if (mounted) _incrementViewCount();
       });
       return;
     }
@@ -937,14 +936,6 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     final watchTime = currentPosition.inSeconds;
     final watchPercentage = totalDuration.inSeconds > 0 ? (watchTime / totalDuration.inSeconds) * 100 : 0.0;
 
-    if (!isStopped) {
-      if (_hasIncrementedView) return;
-      setState(() {
-        _localViewCount++;
-        _hasIncrementedView = true;
-      });
-    } else {
-    }
     await ApiRepository.instance.videos.incrementViewCount(
       widget.video.id,
       watchTime: watchTime,

@@ -296,10 +296,14 @@ class ApiService {
       final response = await _httpClient.post<ApiVideo>(
         '/videos',
         data: body,
-        fromJson: (json) => ApiVideo.fromJson(json['data'] as Map<String, dynamic>),
+        fromJson: (json) {
+          final data = json;
+          if (data == null || data is! Map<String, dynamic>) {
+            throw Exception('No video data returned from API');
+          }
+          return ApiVideo.fromJson(data);
+        },
       );
-
-      print('Upload video response: ${response.data}');
 
       if (response.success) {
         if (response.data != null) return response.data!;
@@ -551,8 +555,7 @@ class ApiService {
     required String sessionId,
     required String country,
     required String region,
-    required String city,
-    required List<double> coordinates, // [lng, lat]
+    required String city, double? longitude, double? latitude,
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final body = {
@@ -564,11 +567,8 @@ class ApiService {
           "country": country,
           "region": region,
           "city": city,
-          "coordinates": {
-            "type": "Point",
-            "coordinates": coordinates,
-            "index": "2dsphere",
-          }
+          "lng": longitude,
+          "lat": latitude
         }
       };
 
