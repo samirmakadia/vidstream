@@ -202,7 +202,7 @@ class ApiService {
       final response = await _httpClient.get<response_models.PaginatedResponse<ApiUser>>(
         '/users/search',
         queryParameters: {
-          'q': query,
+          'query': query,
           'page': page,
           'limit': limit,
         },
@@ -356,7 +356,7 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final queryParams = <String, dynamic>{
-        'q': query,
+        'query': query,
         'page': page,
         'limit': limit,
       };

@@ -3,7 +3,9 @@ import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/services/search_service.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
-import 'package:vidstream/widgets/user_info_widget.dart';
+
+import '../utils/utils.dart';
+import '../widgets/custom_image_widget.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -208,6 +210,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               // Tabs
               TabBar(
                 controller: _tabController,
+                dividerColor: Colors.grey.shade300,
                 tabs: [
                   Tab(
                     child: Row(
@@ -297,25 +300,34 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-        
+
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 0.7,
-              ),
-              itemCount: _videos.length,
-              itemBuilder: (context, index) {
-                final video = _videos[index];
-                return _buildVideoGridItem(video);
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final spacing = 8 * (3 - 1); // total horizontal spacing between items
+                final itemWidth = (constraints.maxWidth - spacing - 32) / 3; // subtract padding & spacing
+                final itemHeight = itemWidth / 0.7; // because childAspectRatio = 0.7
+
+                return GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                    childAspectRatio: 0.7,
+                  ),
+                  itemCount: _videos.length,
+                  itemBuilder: (context, index) {
+                    final video = _videos[index];
+                    return _buildVideoGridItem(video, itemWidth, itemHeight);
+                  },
+                );
               },
             ),
           ),
-        ),
+        )
+
       ],
     );
   }
@@ -396,7 +408,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildVideoGridItem(ApiVideo video) {
+  Widget _buildVideoGridItem(ApiVideo video, double width, double height) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -421,49 +433,13 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
             fit: StackFit.expand,
             children: [
               // Thumbnail
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: video.thumbnailUrl.isNotEmpty
-                    ? Image.network(
-                        video.thumbnailUrl,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                    : null,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                            child: Icon(
-                              Icons.broken_image,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              size: 32,
-                            ),
-                          );
-                        },
-                      )
-                    : Container(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                        child: Icon(
-                          Icons.video_library,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          size: 32,
-                        ),
-                      ),
+              CustomImageWidget(
+                imageUrl: video.thumbnailUrl,
+                height: height,
+                width: width,
+                cornerRadius: 12,
               ),
-              
+
               // Play button
               Center(
                 child: Container(
@@ -479,7 +455,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                   ),
                 ),
               ),
-              
+
               // Video stats
               Positioned(
                 bottom: 6,
@@ -708,6 +684,7 @@ class UserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('Building UserCard for user: ${user.profileImageUrl}');
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
@@ -717,24 +694,19 @@ class UserCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Profile Image
-              CircleAvatar(
-                radius: 25,
-                backgroundImage: user.profileImageUrl?.isNotEmpty == true
-                    ? NetworkImage(user.profileImageUrl!)
-                    : null,
-                child: user.profileImageUrl?.isEmpty != false
-                    ? Text(
-                        user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    : null,
+              CustomImageWidget(
+                imageUrl: user.profileImageUrl ?? '',
+                height: 50,
+                width: 50,
+                cornerRadius: 25,
+                isUserInitial: true,
+                initials: Utils.getInitials(user.displayName),
+                initialsBgColor: Colors.red.shade50,
+                initialsTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              
               const SizedBox(width: 16),
-              
               // User Info
               Expanded(
                 child: Column(
