@@ -125,6 +125,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   int _localLikeCount = 0;
   int _localViewCount = 0;
   bool _hasIncrementedView = false;
+  final _videoKey = GlobalKey<VideoPlayerWidgetState>();
 
   @override
   void initState() {
@@ -268,20 +269,40 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
 
   Future<void> _incrementViewCount() async {
     if (_hasIncrementedView) return;
-    
+
     try {
-      // Immediately update local view count for UI feedback
+      // 1. Get video duration and current position
+      final videoController = _videoKey.currentState?.controller;
+      int watchTime = 0;
+      double watchPercentage = 0;
+
+      if (videoController != null && videoController.value.isInitialized) {
+        final currentPosition = videoController.value.position;
+        final totalDuration = videoController.value.duration;
+
+        watchTime = currentPosition.inSeconds;
+        if (totalDuration.inSeconds > 0) {
+          watchPercentage = (watchTime / totalDuration.inSeconds) * 100;
+        } else {
+          watchPercentage = 0.0;
+        }
+      }
+
+      // 2. Increment local view count
       setState(() {
         _localViewCount++;
         _hasIncrementedView = true;
       });
-      
-      // Update view count in Firebase
-      await ApiRepository.instance.videos.incrementViewCount(widget.video.id);
+
+      // 3. Call API with actual watchTime and watchPercentage
+      await ApiRepository.instance.videos.incrementViewCount(
+        widget.video.id,
+        watchTime: watchTime,
+        watchPercentage: watchPercentage,
+      );
+
     } catch (e) {
-      // Silently handle error - view count increment is not critical
       print('Failed to increment view count: $e');
-      // Revert local count on error
       if (mounted) {
         setState(() {
           _localViewCount = widget.video.viewsCount;
@@ -291,18 +312,18 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Video Player
         VideoPlayerWidget(
+          key: _videoKey,
           videoUrl: widget.video.videoUrl,
           isActive: widget.isActive,
         ),
         
-        // Video Info and Actions Overlay
         Positioned(
           bottom: 100,
           left: 0,

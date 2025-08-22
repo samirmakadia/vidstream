@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/widgets/video_player_widget.dart';
@@ -22,7 +23,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   List<ApiVideo> _allVideos = [];
   bool _isLoading = true;
   int _currentIndex = 0;
-  bool _isSearchVisible = false;
   bool _isSearching = false;
   List<String> _selectedTags = [];
   Timer? _searchDebounce;
@@ -53,6 +53,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   @override
   void initState() {
     super.initState();
+    _requestLocationPermission();
     WidgetsBinding.instance.addObserver(this);
     _searchAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -74,6 +75,14 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     _searchAnimationController.dispose();
     _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  Future<void> _requestLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
   }
 
   @override
@@ -104,7 +113,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     try {
       final videos = await ApiRepository.instance.videos.getVideosOnce();
       setState(() {
-        print('Loaded ${videos.length} videos');
         _videos = videos;
         _allVideos = videos;
         _isLoading = false;
@@ -521,7 +529,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     setState(() {});
   }
 
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -784,6 +791,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   int _localLikeCount = 0;
   int _localViewCount = 0;
   bool _hasIncrementedView = false;
+  final _videoKey = GlobalKey<VideoPlayerWidgetState>();
 
   @override
   void initState() {
@@ -796,15 +804,16 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   @override
   void didUpdateWidget(VideoFeedItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (oldWidget.video.id != widget.video.id ||
         oldWidget.video.likesCount != widget.video.likesCount) {
       _localLikeCount = widget.video.likesCount;
     }
+    // if (widget.isActive && !oldWidget.isActive && !_hasIncrementedView) {
+    //   _incrementViewCount();
+    // }
 
-    // If video becomes active and we haven't incremented view yet
-    if (widget.isActive && !oldWidget.isActive && !_hasIncrementedView) {
-      _incrementViewCount();
+    if (!widget.isActive && oldWidget.isActive) {
+      _incrementViewCount(isStopped: true);
     }
   }
 
@@ -910,29 +919,37 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     }
   }
 
-  Future<void> _incrementViewCount() async {
-    if (_hasIncrementedView) return;
-    
-    try {
-      // Immediately update local view count for UI feedback
+  Future<void> _incrementViewCount({bool isStopped = false}) async {
+    final videoController = _videoKey.currentState?.controller;
+    if (videoController == null) {
+      return;
+    }
+    if (!videoController.value.isInitialized) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) _incrementViewCount(isStopped: isStopped);
+      });
+      return;
+    }
+
+    final currentPosition = videoController.value.position;
+    final totalDuration = videoController.value.duration;
+
+    final watchTime = currentPosition.inSeconds;
+    final watchPercentage = totalDuration.inSeconds > 0 ? (watchTime / totalDuration.inSeconds) * 100 : 0.0;
+
+    if (!isStopped) {
+      if (_hasIncrementedView) return;
       setState(() {
         _localViewCount++;
         _hasIncrementedView = true;
       });
-      
-      // Update view count in repository
-      await ApiRepository.instance.videos.incrementViewCount(widget.video.id);
-    } catch (e) {
-      // Silently handle error - view count increment is not critical
-      print('Failed to increment view count: $e');
-      // Revert local count on error
-      if (mounted) {
-        setState(() {
-          _localViewCount = widget.video.viewsCount;
-          _hasIncrementedView = false;
-        });
-      }
+    } else {
     }
+    await ApiRepository.instance.videos.incrementViewCount(
+      widget.video.id,
+      watchTime: watchTime,
+      watchPercentage: watchPercentage.round().toDouble(),
+    );
   }
 
   @override
@@ -940,13 +957,12 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Video Player
         VideoPlayerWidget(
+          key: _videoKey,
           videoUrl: widget.video.videoUrl,
           isActive: widget.isActive,
         ),
         
-        // Video Info and Actions Overlay
         Positioned(
           bottom: 100,
           left: 0,

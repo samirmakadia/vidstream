@@ -29,7 +29,6 @@ dependencies:
   firebase_messaging: ^15.1.2
   device_info_plus: ^10.1.2
   fluttertoast: ^8.2.12
-  geocoding: ^3.0.0
 
 dev_dependencies:
   flutter_test:

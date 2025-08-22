@@ -537,7 +537,7 @@ class ApiService {
           "city": city,
           "coordinates": {
             "type": "Point",
-            "coordinates": coordinates,
+            "coordinates": coordinates,  
             "index": "2dsphere",
           }
         }
@@ -560,12 +560,17 @@ class ApiService {
   Future<bool> checkIfFollowing(String userId) async {
     final result = await ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<Map<String, dynamic>>(
-        '/follows/$userId/status',
+        '/follows/$userId/following',
+        queryParameters: {
+          'page': 1,
+          'limit': 20,
+        },
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
       if (response.success && response.data != null) {
-        return response.data!['following'] as bool? ?? false;
+        final followingList = response.data!['following'] as List<dynamic>? ?? [];
+        return followingList.isNotEmpty;
       }
 
       return false;
@@ -785,33 +790,31 @@ class ApiService {
   }
 
   // Block system methods
-  Future<void> blockUser(
-      String checkedId,
-  ) async {
+  Future<void> blockUser({
+    required String checkerId,
+    required String checkedId,
+  }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.post(
-        '/blocks/toggle',
+        '/users/block',
         data: {
-          'userId': checkedId,
+          'blocked_user_id': checkedId,
         },
       );
-
+      
       if (!response.success) {
         throw response_models.ApiException(response.message);
       }
     });
   }
 
-  Future<void> unblockUser(
-     String checkedId
-  ) async {
+  Future<void> unblockUser({
+    required String checkerId,
+    required String checkedId,
+  }) async {
     return ErrorHandler.safeApiCall(() async {
-      final response = await _httpClient.post('/blocks/toggle',
-        data: {
-          'userId': checkedId,
-        },
-      );
-
+      final response = await _httpClient.delete('/users/block/$checkedId');
+      
       if (!response.success) {
         throw response_models.ApiException(response.message);
       }

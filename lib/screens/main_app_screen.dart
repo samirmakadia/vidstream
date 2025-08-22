@@ -5,6 +5,8 @@ import 'package:vidstream/screens/create_post_screen.dart';
 import 'package:vidstream/screens/meet_screen.dart';
 import 'package:vidstream/screens/chat_list_screen.dart';
 
+import '../manager/session_manager.dart';
+
 class MainAppScreen extends StatefulWidget {
   const MainAppScreen({super.key});
 

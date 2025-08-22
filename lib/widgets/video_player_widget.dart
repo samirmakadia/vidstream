@@ -13,11 +13,11 @@ class VideoPlayerWidget extends StatefulWidget {
   });
 
   @override
-  State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
+  State<VideoPlayerWidget> createState() => VideoPlayerWidgetState();
 }
 
-class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindingObserver {
-  VideoPlayerController? _controller;
+class VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindingObserver {
+  VideoPlayerController? controller;
   bool _isInitialized = false;
   bool _hasError = false;
   int _retryCount = 0;
@@ -55,8 +55,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   }
 
   void _disposeController() {
-    _controller?.dispose();
-    _controller = null;
+    controller?.dispose();
+    controller = null;
     _isInitialized = false;
     _hasError = false;
     _retryCount = 0;
@@ -68,12 +68,12 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
       if (widget.videoUrl.isEmpty) {
         throw Exception('Video URL is empty');
       }
-      
-      _controller = VideoPlayerController.networkUrl(
+
+      controller = VideoPlayerController.networkUrl(
         Uri.parse(widget.videoUrl),
       );
       
-      await _controller!.initialize();
+      await controller!.initialize();
       
       if (mounted) {
         setState(() {
@@ -82,11 +82,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
         });
         
         // Set looping and handle active state
-        _controller!.setLooping(true);
+        controller!.setLooping(true);
         _handleActiveStateChange();
         
         // Add listener for when video ends
-        _controller!.addListener(_videoListener);
+        controller!.addListener(_videoListener);
       }
     } catch (e) {
       print('Video initialization error: $e');
@@ -111,24 +111,24 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   }
 
   void _videoListener() {
-    if (_controller != null && mounted) {
-      final position = _controller!.value.position;
-      final duration = _controller!.value.duration;
+    if (controller != null && mounted) {
+      final position = controller!.value.position;
+      final duration = controller!.value.duration;
       
       // Only handle completion if we're near the end and video is actually playing
       if (position.inMilliseconds > 0 && 
           duration.inMilliseconds > 0 && 
           position.inMilliseconds >= duration.inMilliseconds - 100) {
         // Video completed - just restart without triggering listener again
-        _controller!.removeListener(_videoListener);
-        _controller!.seekTo(Duration.zero).then((_) {
+        controller!.removeListener(_videoListener);
+        controller!.seekTo(Duration.zero).then((_) {
           if (mounted && widget.isActive) {
-            _controller!.play();
+            controller!.play();
           }
           // Re-add listener after a short delay
           Future.delayed(const Duration(milliseconds: 100), () {
-            if (mounted && _controller != null) {
-              _controller!.addListener(_videoListener);
+            if (mounted && controller != null) {
+              controller!.addListener(_videoListener);
             }
           });
         });
@@ -137,11 +137,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   }
 
   void _handleActiveStateChange() {
-    if (_controller != null && _isInitialized) {
+    if (controller != null && _isInitialized) {
       if (widget.isActive && !_isManuallyPaused) {
-        _controller!.play();
+        controller!.play();
       } else {
-        _controller!.pause();
+        controller!.pause();
       }
     }
   }
@@ -150,37 +150,37 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     
-    if (_controller == null || !_isInitialized) return;
+    if (controller == null || !_isInitialized) return;
     
     switch (state) {
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
         // App is going to background or being inactive
-        _wasPlayingBeforeBackground = _controller!.value.isPlaying;
-        _controller!.pause();
+        _wasPlayingBeforeBackground = controller!.value.isPlaying;
+        controller!.pause();
         break;
       case AppLifecycleState.resumed:
         // App is coming back to foreground
         if (_wasPlayingBeforeBackground && widget.isActive && !_isManuallyPaused) {
-          _controller!.play();
+          controller!.play();
         }
         break;
       case AppLifecycleState.hidden:
         // Handle hidden state (platform specific)
-        _wasPlayingBeforeBackground = _controller!.value.isPlaying;
-        _controller!.pause();
+        _wasPlayingBeforeBackground = controller!.value.isPlaying;
+        controller!.pause();
         break;
     }
   }
 
   void _togglePlayPause() {
-    if (_controller != null && _isInitialized) {
-      if (_controller!.value.isPlaying) {
-        _controller!.pause();
+    if (controller != null && _isInitialized) {
+      if (controller!.value.isPlaying) {
+        controller!.pause();
         _isManuallyPaused = true;
       } else {
-        _controller!.play();
+        controller!.play();
         _isManuallyPaused = false;
       }
       
@@ -223,8 +223,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
           children: [
             Center(
               child: AspectRatio(
-                aspectRatio: _controller!.value.aspectRatio,
-                child: VideoPlayer(_controller!),
+                aspectRatio: controller!.value.aspectRatio,
+                child: VideoPlayer(controller!),
               ),
             ),
             
@@ -241,7 +241,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      _controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                      controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
                       size: 48,
                       color: Colors.white,
                     ),

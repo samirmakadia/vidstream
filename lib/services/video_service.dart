@@ -1,7 +1,14 @@
+import 'dart:convert';
+
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/services/api_service.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'dart:async';
+import 'package:http/http.dart' as http;
+
+import '../manager/session_manager.dart';
 
 class VideoService {
   final ApiService _apiService = ApiService();
@@ -201,13 +208,61 @@ class VideoService {
   }
 
   // Increment view count
-  Future<void> incrementViewCount(String videoId) async {
+  Future<void> incrementViewCount(String videoId, {required int watchTime, required double watchPercentage}) async {
     try {
-      // TODO: Implement view count increment API call
-      // For now, we'll call a placeholder endpoint
-      print('Incrementing view count for video: $videoId');
-    } catch (e) {
-      throw 'Failed to increment view count: ${e.toString()}';
+      String country = "Unknown";
+      String region = "Unknown";
+      String city = "Unknown";
+      double? latitude;
+      double? longitude;
+
+      try {
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+
+        if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+          throw Exception("Location permission denied");
+        }
+
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+
+        latitude = position.latitude;
+        longitude = position.longitude;
+        List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+        Placemark place = placemarks.first;
+        country = place.country ?? "Unknown";
+        region = place.administrativeArea ?? "Unknown";
+        city = place.locality ?? "Unknown";
+
+      } catch (e) {
+        final response = await http.get(Uri.parse("https://ipapi.co/json/"));
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          country = data["country_name"] ?? "Unknown";
+          region = data["region"] ?? "Unknown";
+          city = data["city"] ?? "Unknown";
+          latitude = double.tryParse(data["latitude"]?.toString() ?? "");
+          longitude = double.tryParse(data["longitude"]?.toString() ?? "");
+        }
+      }
+
+      final sessionId = SessionManager().sessionId;
+
+      await _apiService.trackVideoView(
+        videoId: videoId,
+        watchTime: watchTime,
+        watchPercentage: watchPercentage,
+        sessionId: sessionId,
+        country: country,
+        region: region,
+        city: city,
+        coordinates: [longitude ?? 0, latitude ?? 0],
+      );
+    } catch (e, stack) {
     }
   }
 
@@ -217,7 +272,6 @@ class VideoService {
       final response = await _apiService.searchVideos(query: query, limit: limit);
       return response?.data ?? [];
     } catch (e) {
-      print('Failed to search videos: $e');
       return [];
     }
   }
