@@ -397,110 +397,117 @@ Error Diagnostics:
       elevation: 0,
       clipBehavior: Clip.none,
       actions: [
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert, color: Colors.white),
-          onSelected: (value) {
-            switch (value) {
-              case 'settings':
-                _navigateToSettings();
-                break;
-              case 'sample':
-                _createSampleVideos();
-                break;
-              case 'likes':
-                _createSampleLikes();
-                break;
-              case 'refresh':
-                _refreshLikedVideos();
-                break;
-              case 'follows':
-                _createSampleFollows();
-                break;    
-              case 'debug':
-                _showDebugInfo();
-                break;
-              case 'logout':
-                _signOut();
-                break;
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'settings',
-              child: Row(
-                children: [
-                  Icon(Icons.settings, size: 20),
-                  SizedBox(width: 8),
-                  Text('Settings'),
-                ],
-              ),
-            ),
-            if (_userVideos.isEmpty) ...[
-              const PopupMenuItem(
-                value: 'sample',
-                child: Row(
-                  children: [
-                    Icon(Icons.video_library, size: 20),
-                    SizedBox(width: 8),
-                    Text('Add Sample Videos'),
-                  ],
-                ),
-              ),
-            ],
-            if (_likedVideos.isEmpty) ...[
-              const PopupMenuItem(
-                value: 'likes',
-                child: Row(
-                  children: [
-                    Icon(Icons.favorite, size: 20),
-                    SizedBox(width: 8),
-                    Text('Add Sample Likes'),
-                  ],
-                ),
-              ),
-            ],
-            const PopupMenuItem(
-              value: 'refresh',
-              child: Row(
-                children: [
-                  Icon(Icons.refresh, size: 20),
-                  SizedBox(width: 8),
-                  Text('Refresh Liked Videos'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'follows',
-              child: Row(
-                children: [
-                  Icon(Icons.people, size: 20),
-                  SizedBox(width: 8),
-                  Text('Add Sample Follows'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'debug',
-              child: Row(
-                children: [
-                  Icon(Icons.bug_report, size: 20),
-                  SizedBox(width: 8),
-                  Text('Debug Info'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'logout',
-              child: Row(
-                children: [
-                  Icon(Icons.logout, size: 20),
-                  SizedBox(width: 8),
-                  Text('Sign Out'),
-                ],
-              ),
-            ),
-          ],
-        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 16,),
+          child: GestureDetector(
+            onTap: _navigateToSettings,
+            child: Icon(Icons.settings, color: Colors.white, size: 26),
+          ),
+        )
+        // PopupMenuButton<String>(
+        //   icon: const Icon(Icons.more_vert, color: Colors.white),
+        //   onSelected: (value) {
+        //     switch (value) {
+        //       case 'settings':
+        //         _navigateToSettings();
+        //         break;
+        //       case 'sample':
+        //         _createSampleVideos();
+        //         break;
+        //       case 'likes':
+        //         _createSampleLikes();
+        //         break;
+        //       case 'refresh':
+        //         _refreshLikedVideos();
+        //         break;
+        //       case 'follows':
+        //         _createSampleFollows();
+        //         break;
+        //       case 'debug':
+        //         _showDebugInfo();
+        //         break;
+        //       case 'logout':
+        //         _signOut();
+        //         break;
+        //     }
+        //   },
+        //   itemBuilder: (context) => [
+        //     const PopupMenuItem(
+        //       value: 'settings',
+        //       child: Row(
+        //         children: [
+        //           Icon(Icons.settings, size: 20),
+        //           SizedBox(width: 8),
+        //           Text('Settings'),
+        //         ],
+        //       ),
+        //     ),
+        //     if (_userVideos.isEmpty) ...[
+        //       const PopupMenuItem(
+        //         value: 'sample',
+        //         child: Row(
+        //           children: [
+        //             Icon(Icons.video_library, size: 20),
+        //             SizedBox(width: 8),
+        //             Text('Add Sample Videos'),
+        //           ],
+        //         ),
+        //       ),
+        //     ],
+        //     if (_likedVideos.isEmpty) ...[
+        //       const PopupMenuItem(
+        //         value: 'likes',
+        //         child: Row(
+        //           children: [
+        //             Icon(Icons.favorite, size: 20),
+        //             SizedBox(width: 8),
+        //             Text('Add Sample Likes'),
+        //           ],
+        //         ),
+        //       ),
+        //     ],
+        //     const PopupMenuItem(
+        //       value: 'refresh',
+        //       child: Row(
+        //         children: [
+        //           Icon(Icons.refresh, size: 20),
+        //           SizedBox(width: 8),
+        //           Text('Refresh Liked Videos'),
+        //         ],
+        //       ),
+        //     ),
+        //     const PopupMenuItem(
+        //       value: 'follows',
+        //       child: Row(
+        //         children: [
+        //           Icon(Icons.people, size: 20),
+        //           SizedBox(width: 8),
+        //           Text('Add Sample Follows'),
+        //         ],
+        //       ),
+        //     ),
+        //     const PopupMenuItem(
+        //       value: 'debug',
+        //       child: Row(
+        //         children: [
+        //           Icon(Icons.bug_report, size: 20),
+        //           SizedBox(width: 8),
+        //           Text('Debug Info'),
+        //         ],
+        //       ),
+        //     ),
+        //     const PopupMenuItem(
+        //       value: 'logout',
+        //       child: Row(
+        //         children: [
+        //           Icon(Icons.logout, size: 20),
+        //           SizedBox(width: 8),
+        //           Text('Sign Out'),
+        //         ],
+        //       ),
+        //     ),
+        //   ],
+        // ),
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: ClipRect(
@@ -753,22 +760,22 @@ Error Diagnostics:
             ),
             const SizedBox(height: 16),
             // Settings Button
-            SizedBox(
-              width: double.infinity,
-              height: 45,
-              child: ElevatedButton.icon(
-                onPressed: _navigateToSettings,
-                icon: const Icon(Icons.settings, size: 18),
-                label: const Text('Settings'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[800],
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                ),
-              ),
-            ),
+            // SizedBox(
+            //   width: double.infinity,
+            //   height: 45,
+            //   child: ElevatedButton.icon(
+            //     onPressed: _navigateToSettings,
+            //     icon: const Icon(Icons.settings, size: 18),
+            //     label: const Text('Settings'),
+            //     style: ElevatedButton.styleFrom(
+            //       backgroundColor: Colors.grey[800],
+            //       foregroundColor: Colors.white,
+            //       shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(22),
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),

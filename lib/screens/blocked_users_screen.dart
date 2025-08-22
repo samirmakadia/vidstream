@@ -218,11 +218,12 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         ),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        dense: true,
         leading: GestureDetector(
           onTap: () => _navigateToUserProfile(user),
           child: CircleAvatar(
-            radius: 24,
+            radius: 20,
             backgroundImage: user.profileImageUrl != null || user.photoURL != null
                 ? NetworkImage(user.profileImageUrl ?? user.photoURL!)
                 : null,
@@ -231,7 +232,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                 ? const Icon(
                     Icons.person,
                     color: Colors.white,
-                    size: 24,
+                    size: 22,
                   )
                 : null,
           ),
@@ -241,6 +242,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
           child: Text(
             user.displayName,
             style: const TextStyle(
+              fontSize: 15,
               color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
@@ -250,6 +252,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
             ? Text(
                 user.bio!,
                 style: TextStyle(
+                  fontSize: 12,
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
                 maxLines: 1,
@@ -260,7 +263,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.red.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
@@ -275,8 +278,8 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
             PopupMenuButton<String>(
+              padding: EdgeInsets.zero,
               icon: Icon(
                 Icons.more_vert,
                 color: Colors.white.withValues(alpha: 0.7),

@@ -94,7 +94,7 @@ class FollowService {
   Future<int> getFollowerCount(String userId) async {
     try {
       final response = await _apiRepository.api.getUserFollowers(userId: userId);
-      return response?.totalItems ?? 0;
+      return response?.data.length ?? 0;
     } catch (e) {
       print('Error getting follower count: $e');
       return 0;
