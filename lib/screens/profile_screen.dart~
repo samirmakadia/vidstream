@@ -217,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       );
       
       await DemoDataService.createSampleLikes();
-      await _loadUserProfile();
+      await _loadUserProfile(); // Refresh to show liked videos
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

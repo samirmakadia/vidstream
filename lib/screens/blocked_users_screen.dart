@@ -36,21 +36,22 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
       if (mounted) {
         setState(() {
           _blockedUsers = blockedUsers.map((user) => ApiUser(
-            id: user?.uid ?? '',
-            email: user?.email ?? '',
-            displayName: user?.displayName ?? '',
-            profileImageUrl: user?.profileImageUrl,
-            photoURL: user?.photoURL,
-            bannerImageUrl: user?.bannerImageUrl,
-            bio: user?.bio,
-            dateOfBirth: user?.dateOfBirth,
-            gender: user?.gender,
-            createdAt: user?.createdAt ?? DateTime.now(),
-            updatedAt: user?.updatedAt ?? DateTime.now(),
-            following: user?.following ?? [],
-            followers: user?.followers ?? [],
-            videosCount: user?.videosCount ?? 0,
-            isGuest: user?.isGuest ?? false,
+            id: user.uid ?? '',
+            email: user.email ?? '',
+            displayName: user.displayName ?? '',
+            profileImageUrl: user.profileImageUrl,
+            photoURL: user.photoURL,
+            bannerImageUrl: user.bannerImageUrl,
+            bio: user.bio,
+            dateOfBirth: user.dateOfBirth,
+            gender: user.gender,
+            createdAt: user.createdAt ?? DateTime.now(),
+            updatedAt: user.updatedAt ?? DateTime.now(),
+            following: user.following ?? [],
+            followers: user.followers ?? [],
+            videosCount: user.videosCount ?? 0,
+            isGuest: user.isGuest ?? false,
+            isFollow: user.isFollow ?? false,
           )).toList();
           _isLoading = false;
         });

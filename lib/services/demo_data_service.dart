@@ -188,6 +188,7 @@ class DemoDataService {
           createdAt: DateTime.now().subtract(const Duration(days: 30)),
           updatedAt: DateTime.now().subtract(const Duration(days: 30)),
           isGuest: false,
+          isFollow: false,
         ),
         ApiUser(
           id: 'demo_user_2',
@@ -198,6 +199,7 @@ class DemoDataService {
           createdAt: DateTime.now().subtract(const Duration(days: 25)),
           updatedAt: DateTime.now().subtract(const Duration(days: 25)),
           isGuest: false,
+          isFollow: false,
         ),
         ApiUser(
           id: 'demo_user_3',
@@ -208,6 +210,7 @@ class DemoDataService {
           createdAt: DateTime.now().subtract(const Duration(days: 20)),
           updatedAt: DateTime.now().subtract(const Duration(days: 20)),
           isGuest: false,
+          isFollow: false,
         ),
         ApiUser(
           id: 'demo_user_4',
@@ -217,6 +220,7 @@ class DemoDataService {
           createdAt: DateTime.now().subtract(const Duration(days: 15)),
           updatedAt: DateTime.now().subtract(const Duration(days: 15)),
           isGuest: false,
+          isFollow: false,
         ),
       ];
 

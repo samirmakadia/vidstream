@@ -4,7 +4,6 @@ import 'package:vidstream/screens/other_user_profile_screen.dart';
 
 class UserInfoWidget extends StatelessWidget {
   final ApiUser user;
-  final bool isFollowing;
   final VoidCallback onFollowToggle;
   final bool showFollowButton;
   final bool isFollowLoading;
@@ -13,7 +12,6 @@ class UserInfoWidget extends StatelessWidget {
   const UserInfoWidget({
     super.key,
     required this.user,
-    required this.isFollowing,
     required this.onFollowToggle,
     this.showFollowButton = true,
     this.isFollowLoading = false,
@@ -91,7 +89,7 @@ class UserInfoWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${user.followers.length} followers',
+                    '${user.followersCount} followers',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Colors.white.withValues(alpha: 0.8),
                     ),
@@ -108,7 +106,7 @@ class UserInfoWidget extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: isFollowLoading ? null : onFollowToggle,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isFollowing 
+                    backgroundColor: user.isFollow
                         ? Colors.white.withValues(alpha: 0.2)
                         : Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
@@ -116,7 +114,7 @@ class UserInfoWidget extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
-                      side: isFollowing 
+                      side: user.isFollow
                           ? BorderSide(color: Colors.white.withValues(alpha: 0.3))
                           : BorderSide.none,
                     ),
@@ -131,7 +129,7 @@ class UserInfoWidget extends StatelessWidget {
                           ),
                         )
                       : Text(
-                          isFollowing ? 'Following' : 'Follow',
+                          user.isFollow  ? 'Following' : 'Follow',
                           style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,

@@ -575,6 +575,14 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                                 _videos.removeWhere((v) => v.id == reportedVideo.id);
                               });
                             },
+                            onFollowUpdated: (updatedUser) {   // ✅ new callback
+                              setState(() {
+                                final i = _videos.indexWhere((v) => v.id == video.id);
+                                if (i != -1) _videos[i] = _videos[i].copyWith(user: updatedUser);
+                                final j = _allVideos.indexWhere((v) => v.id == video.id);
+                                if (j != -1) _allVideos[j] = _allVideos[j].copyWith(user: updatedUser);
+                              });
+                            },
                           );
                         },
                       ),
@@ -755,13 +763,14 @@ class VideoFeedItem extends StatefulWidget {
   final void Function(int likeCount, bool isLiked)? onLikeUpdated;
   final void Function(int commentCount)? onCommentUpdated;
   final void Function(ApiVideo video)? onReported;
+  final void Function(ApiUser updatedUser)? onFollowUpdated;
 
   const VideoFeedItem({
     super.key,
     required this.video,
     required this.isActive,
     this.onVideoDeleted,
-    this.onLikeUpdated, this.onCommentUpdated, this.onReported,
+    this.onLikeUpdated, this.onCommentUpdated, this.onReported, this.onFollowUpdated,
   });
 
   @override
@@ -769,9 +778,7 @@ class VideoFeedItem extends StatefulWidget {
 }
 
 class _VideoFeedItemState extends State<VideoFeedItem> {
-  ApiUser? _user;
   bool _isLiked = false;
-  bool _isFollowing = false;
   bool _isLikeLoading = false;
   bool _isFollowLoading = false;
   int _localLikeCount = 0;
@@ -783,10 +790,8 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     super.initState();
     _localLikeCount = widget.video.likesCount;
     _localViewCount = widget.video.viewsCount;
-    _loadUserData();
-    _checkLikeStatus();
-    _checkFollowStatus();
-  }
+     _checkLikeStatus();
+   }
 
   @override
   void didUpdateWidget(VideoFeedItem oldWidget) {
@@ -803,18 +808,6 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     }
   }
 
-  Future<void> _loadUserData() async {
-    try {
-      final user = await ApiRepository.instance.auth.getUserProfile(widget.video.userId);
-      if (mounted) {
-        setState(() {
-          _user = user;
-        });
-      }
-    } catch (e) {
-      // Handle error silently
-    }
-  }
 
   Future<void> _checkLikeStatus() async {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
@@ -831,25 +824,6 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
           });
         }
       } catch (e) {
-      }
-    }
-  }
-
-  Future<void> _checkFollowStatus() async {
-    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    if (currentUserId != null && currentUserId != widget.video.userId) {
-      try {
-        final isFollowing = await ApiRepository.instance.follows.isFollowing(
-          followerId: currentUserId,
-          followedId: widget.video.userId,
-        );
-        if (mounted) {
-          setState(() {
-            _isFollowing = isFollowing;
-          });
-        }
-      } catch (e) {
-        // Handle error silently
       }
     }
   }
@@ -907,17 +881,16 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
           followerId: currentUserId,
           followedId: widget.video.userId,
         );
-        setState(() {
-          _isFollowing = !_isFollowing;
-          // Update user follower count locally for immediate UI feedback
-          if (_user != null) {
-            if (_isFollowing) {
-              _user!.followers.add(currentUserId);
-            } else {
-              _user!.followers.remove(currentUserId);
-            }
-          }
-        });
+        if (widget.video.user != null) {
+          final updatedUser = widget.video.user!.copyWith(
+            followersCount: widget.video.user!.isFollow
+                ? widget.video.user!.followersCount - 1
+                : widget.video.user!.followersCount + 1,
+            isFollow: !widget.video.user!.isFollow,
+          );
+
+          widget.onFollowUpdated?.call(updatedUser);
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -989,10 +962,9 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // User Info
-                      if (_user != null)
+                      if (widget.video.user != null)
                         UserInfoWidget(
-                          user: _user!,
-                          isFollowing: _isFollowing,
+                          user: widget.video.user!,
                           onFollowToggle: _toggleFollow,
                           showFollowButton: ApiRepository.instance.auth.currentUser?.id != widget.video.userId,
                           isFollowLoading: _isFollowLoading,

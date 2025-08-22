@@ -22,6 +22,7 @@ class ApiUser {
   final bool isVerified;
   final bool isGuest;
   final bool isInMeet;
+  final bool isFollow;
 
   String get uid => id;
 
@@ -34,6 +35,7 @@ class ApiUser {
     this.photoURL,
     this.bannerImageUrl,
     this.bio,
+    required this.isFollow,
     this.dateOfBirth,
     this.gender,
     required this.createdAt,
@@ -71,14 +73,15 @@ class ApiUser {
       videosCount: json['videos_count'] ?? json['videosCount'] ?? 0,
       isVerified: json['isVerified'] ?? false,
       isGuest: json['is_guest'] ?? json['isGuest'] ?? false,
+      isFollow: json['isFollow'] ?? json['isFollow'] ?? false,
       isInMeet: json['is_in_meet'] ?? json['isInMeet'] ?? false,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      '_id': id, // include Mongo-style id
-      'id': id,  // also include for compatibility
+      '_id': id,
+      'id': id,
       'email': email,
       'display_name': displayName,
       'username': username,
@@ -97,6 +100,7 @@ class ApiUser {
       'videos_count': videosCount,
       'isVerified': isVerified,
       'is_guest': isGuest,
+      'isFollow': isFollow,
       'is_in_meet': isInMeet,
     };
   }
@@ -121,6 +125,7 @@ class ApiUser {
     int? videosCount,
     bool? isVerified,
     bool? isGuest,
+    bool? isFollow,
     bool? isInMeet,
   }) {
     return ApiUser(
@@ -143,6 +148,7 @@ class ApiUser {
       videosCount: videosCount ?? this.videosCount,
       isVerified: isVerified ?? this.isVerified,
       isGuest: isGuest ?? this.isGuest,
+      isFollow: isFollow ?? this.isFollow,
       isInMeet: isInMeet ?? this.isInMeet,
     );
   }
