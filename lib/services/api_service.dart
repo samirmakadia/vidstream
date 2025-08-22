@@ -376,6 +376,35 @@ class ApiService {
     });
   }
 
+  Future<response_models.PaginatedResponse<ApiVideo>?> getUserLikedVideos({
+    required String userId,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    return ErrorHandler.safeApiCall(() async {
+      final response = await _httpClient.get<response_models.PaginatedResponse<ApiVideo>>(
+        '/videos/liked/$userId',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+        fromJson: (json) {
+          final videoJson = (json as Map<String, dynamic>)['videos'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': videoJson}, // wrap in 'data' to match your PaginatedResponse
+                (item) => ApiVideo.fromJson(item as Map<String, dynamic>),
+          );
+        },
+      );
+
+      if (response.success && response.data != null) {
+        return response.data!;
+      }
+
+      throw response_models.ApiException(response.message);
+    });
+  }
+
   // Like endpoints
   Future<void> toggleLike({
     required String targetId,

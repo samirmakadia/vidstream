@@ -187,6 +187,20 @@ class VideoService {
     }
   }
 
+  Future<ApiCommonFile?> uploadCommonImageFile({
+    required String filePath,
+    String type = "post",
+  }) async {
+    try {
+      return await _apiService.uploadCommonImageFile(
+        imagePath: filePath,
+        type: type,
+      );
+    } catch (e) {
+      throw 'Failed to upload file: ${e.toString()}';
+    }
+  }
+
 
   // Update video (placeholder - implement based on your API)
   Future<void> updateVideo(ApiVideo video) async {
@@ -292,10 +306,8 @@ class VideoService {
   // Get videos that user has liked
   Future<List<ApiVideo>> getUserLikedVideos(String userId) async {
     try {
-      // TODO: Implement liked videos API call
-      // For now, return empty list
-      print('Getting liked videos not implemented yet');
-      return [];
+      final response = await _apiService.getUserLikedVideos(userId: userId);
+      return response?.data ?? [];
     } catch (e) {
       print('Failed to get liked videos: $e');
       return [];
