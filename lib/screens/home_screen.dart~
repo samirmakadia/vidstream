@@ -524,7 +524,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    super.build(context);
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -549,7 +549,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                         },
                         itemBuilder: (context, index) {
                           final video = _videos[index];
-                          print('$index: ${video.title}, URL: ${video.videoUrl}');
                           return VideoFeedItem(
                             key: ValueKey(video.id),
                             video: video,

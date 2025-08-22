@@ -220,6 +220,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
           } else {
             _localLikeCount = (_localLikeCount > 0) ? _localLikeCount - 1 : 0;
           }
+          print('Like status toggled. New like count: $_localLikeCount');
         });
       } catch (e) {
         if (mounted) {

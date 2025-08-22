@@ -221,7 +221,7 @@ class AuthService {
       }
       if (!_authStateController.isClosed) {
         _authStateController.add(_currentUser);
-      }
+      } 
       
       return _currentUser;
     } catch (e) {

@@ -524,7 +524,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    super.build(context);
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -875,6 +875,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
             _localLikeCount = (_localLikeCount > 0) ? _localLikeCount - 1 : 0;
           }
         });
+        print('Toggled like for video ${widget.video.id}: isLiked=$_isLiked, newCount=$_localLikeCount');
         widget.onLikeUpdated?.call(_localLikeCount, _isLiked);
       } catch (e) {
         if (mounted) {

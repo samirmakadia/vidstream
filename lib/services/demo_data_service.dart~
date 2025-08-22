@@ -145,7 +145,7 @@ class DemoDataService {
       final videos = await ApiRepository.instance.videos.getVideosOnce(limit: 5);
       
       if (videos.isNotEmpty) {
-        for (final video in videos.take(3)) {
+        for (final video in videos.take(3)) { // Like first 3 videos
           try {
             // await ApiRepository.instance.likes.toggleLike(
             //   userId: currentUserId,
