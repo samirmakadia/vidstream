@@ -14,7 +14,7 @@ class BlockService {
     }
 
     try {
-      await _apiRepository.api.blockUser(checkerId: blockerId, checkedId: blockedId);
+      await _apiRepository.api.blockUser(blockedId);
     } catch (e) {
       throw 'Failed to block user: $e';
     }
@@ -26,7 +26,7 @@ class BlockService {
     required String blockedId,
   }) async {
     try {
-      await _apiRepository.api.unblockUser(checkerId: blockerId, checkedId: blockedId);
+      await _apiRepository.api.unblockUser(blockedId);
     } catch (e) {
       throw 'Failed to unblock user: $e';
     }

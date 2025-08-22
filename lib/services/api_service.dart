@@ -748,31 +748,33 @@ class ApiService {
   }
 
   // Block system methods
-  Future<void> blockUser({
-    required String checkerId,
-    required String checkedId,
-  }) async {
+  Future<void> blockUser(
+      String checkedId,
+  ) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.post(
-        '/users/block',
+        '/blocks/toggle',
         data: {
-          'blocked_user_id': checkedId,
+          'userId': checkedId,
         },
       );
-      
+
       if (!response.success) {
         throw response_models.ApiException(response.message);
       }
     });
   }
 
-  Future<void> unblockUser({
-    required String checkerId,
-    required String checkedId,
-  }) async {
+  Future<void> unblockUser(
+     String checkedId
+  ) async {
     return ErrorHandler.safeApiCall(() async {
-      final response = await _httpClient.delete('/users/block/$checkedId');
-      
+      final response = await _httpClient.post('/blocks/toggle',
+        data: {
+          'userId': checkedId,
+        },
+      );
+
       if (!response.success) {
         throw response_models.ApiException(response.message);
       }
