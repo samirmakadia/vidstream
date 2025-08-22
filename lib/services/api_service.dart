@@ -518,17 +518,12 @@ class ApiService {
   Future<bool> checkIfFollowing(String userId) async {
     final result = await ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<Map<String, dynamic>>(
-        '/follows/$userId/following',
-        queryParameters: {
-          'page': 1,
-          'limit': 20,
-        },
+        '/follows/$userId/status',
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
       if (response.success && response.data != null) {
-        final followingList = response.data!['following'] as List<dynamic>? ?? [];
-        return followingList.isNotEmpty;
+        return response.data!['following'] as bool? ?? false;
       }
 
       return false;

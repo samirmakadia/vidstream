@@ -162,8 +162,8 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
     return GestureDetector(
       onTap: () => _navigateToUserProfile(user),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: Colors.grey[900],
           borderRadius: BorderRadius.circular(12),
@@ -172,8 +172,8 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           children: [
             // Profile Picture
             Container(
-              width: 50,
-              height: 50,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
@@ -187,7 +187,7 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
                 child: (user.profileImageUrl == null && user.photoURL == null)
                     ? Icon(
                         Icons.person,
-                        size: 28,
+                        size: 24,
                         color: Colors.white,
                       )
                     : null,
@@ -208,25 +208,19 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
                           user.displayName ?? 'Unknown User',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Colors.white.withValues(alpha: 0.5),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 4),
                   if (user.bio != null && user.bio!.isNotEmpty) ...[
                     Text(
                       user.bio!,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 14,
+                        fontSize: 12,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -236,22 +230,87 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
                       user.isGuest == true ? 'Guest User' : 'VidStream User',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 14,
+                        fontSize: 12,
                       ),
                     ),
                   ],
                 ],
               ),
             ),
-            
-            // Follow Button (only show if not current user)
-            if (!isCurrentUser) ...[
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () {}, // Prevent navigation when tapping follow button
-                child: _buildFollowButton(user.id),
+
+            // Follow/Unfollow popup menu
+            if (!isCurrentUser)
+              FutureBuilder<bool>(
+                future: _followService.isFollowing(
+                  followerId: _currentUserId!,
+                  followedId: user.id,
+                ),
+                builder: (context, snapshot) {
+                  final isFollowing = snapshot.data ?? false;
+                  final isLoading = snapshot.connectionState == ConnectionState.waiting;
+
+                  return PopupMenuButton<String>(
+                    icon: Icon(
+                      Icons.more_vert,
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
+                    color: Colors.grey[800],
+                    onSelected: (String value) async {
+                      switch (value) {
+                        case 'toggle_follow':
+                          if (!isLoading) {
+                            await _toggleFollow(user.id);
+                            setState(() {});
+                          }
+                          break;
+                        case 'view_profile':
+                          _navigateToUserProfile(user);
+                          break;
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem<String>(
+                        value: 'view_profile',
+                        child: ListTile(
+                          leading: Icon(Icons.person, color: Colors.blue),
+                          title: Text(
+                            'View Profile',
+                            style: TextStyle(color: Colors.blue),
+                          ),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'toggle_follow',
+                        child: ListTile(
+                          leading: Icon(
+                            isFollowing ? Icons.person_remove : Icons.person_add,
+                            color: isFollowing ? Colors.red : Colors.green,
+                          ),
+                          title: Text(
+                            isLoading
+                                ? 'Loading...'
+                                : isFollowing
+                                ? 'Unfollow'
+                                : 'Follow',
+                            style: TextStyle(
+                              color: isFollowing ? Colors.red : Colors.green,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-            ],
+            // if (!isCurrentUser) ...[
+            //   const SizedBox(width: 12),
+            //   GestureDetector(
+            //     onTap: () {}, // Prevent navigation when tapping follow button
+            //     child: _buildFollowButton(user.id),
+            //   ),
+            // ],
           ],
         ),
       ),
