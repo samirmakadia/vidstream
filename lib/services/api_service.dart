@@ -1028,10 +1028,13 @@ class ApiService {
           'page': page,
           'limit': limit,
         },
-        fromJson: (json) => response_models.PaginatedResponse.fromJson(
-          json as Map<String, dynamic>,
-          (item) => ApiVideo.fromJson(item as Map<String, dynamic>),
-        ),
+        fromJson: (json) {
+          final videosJson = (json as Map<String, dynamic>)['videos'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': videosJson},
+                (item) => ApiVideo.fromJson(item as Map<String, dynamic>),
+          );
+        },
       );
       
       if (response.success && response.data != null) {
@@ -1053,10 +1056,13 @@ class ApiService {
           'page': page,
           'limit': limit,
         },
-        fromJson: (json) => response_models.PaginatedResponse.fromJson(
-          json as Map<String, dynamic>,
-          (item) => ApiUser.fromJson(item as Map<String, dynamic>),
-        ),
+        fromJson: (json) {
+          final videosJson = (json as Map<String, dynamic>)['users'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': videosJson},
+                (item) => ApiUser.fromJson(item as Map<String, dynamic>),
+          );
+        },
       );
       
       if (response.success && response.data != null) {
