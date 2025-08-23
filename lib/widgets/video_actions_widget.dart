@@ -167,8 +167,8 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
       'Spam': 'spam',
       'Inappropriate content': 'inappropriate_content',
       'Harassment': 'harassment',
-      'Violence': 'violence',
-      'Copyright violation': 'copyright_violation',
+      'Copyright': 'copyright',
+      'Fake Account': 'fake_account',
       'Other': 'other',
     };
 
@@ -944,6 +944,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       'Spam': 'spam',
       'Inappropriate content': 'inappropriate_content',
       'Harassment': 'harassment',
+      'Fake Account': 'fake_account',
       'Other': 'other',
     };
 

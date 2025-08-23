@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:vidstream/services/report_service.dart';
 import 'package:vidstream/models/api_models.dart';
 
+import '../widgets/common_snackbar.dart';
+
 class MyReportsScreen extends StatefulWidget {
   final String currentUserId;
 
@@ -34,9 +36,62 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('❌ Failed to fetch reports: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _deleteReport(Report report) async {
+    setState(() => _isLoading = true);
+    try {
+      await _reportService.deleteReport(report.id);
+      await _fetchReports(); // refresh after delete
+      if (mounted) {
+        AppSnackBar.showSuccess(context, 'Report deleted successfully');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        AppSnackBar.showError(context, 'Failed to delete report: $e');
+      }
+    }
+  }
+
+  void _showDeleteConfirmation(Report report) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Delete Report',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Text(
+            'Are you sure you want to delete this report?\n\nThis action cannot be undone.',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteReport(report);
+              },
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -52,92 +107,45 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
         ),
         title: const Text('My Reports'),
       ),
-      body: FutureBuilder<List<Report>>(
-        future: _reportService.getReportsByReporter(widget.currentUserId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            );
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    color: Colors.red,
-                    size: 64,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Error loading reports',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    snapshot.error.toString(),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 14,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
+          : _reports.isEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.report_off, color: Colors.grey[400], size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'No Reports Yet',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
-            );
-          }
-
-          final reports = snapshot.data ?? [];
-
-          if (reports.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.report_off,
-                    color: Colors.grey[400],
-                    size: 64,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No Reports Yet',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'You haven\'t reported any content yet.\nHelp keep our community safe by reporting inappropriate content.',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 14,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You haven\'t reported any content yet.\nHelp keep our community safe by reporting inappropriate content.',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
               ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: reports.length,
-            itemBuilder: (context, index) {
-              final report = reports[index];
-              return _buildReportItem(report);
-            },
-          );
-        },
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      )
+          : RefreshIndicator(
+        onRefresh: _fetchReports,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _reports.length,
+          itemBuilder: (context, index) {
+            final report = _reports[index];
+            return _buildReportItem(report);
+          },
+        ),
       ),
     );
   }
@@ -386,111 +394,4 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
       return 'Just now';
     }
   }
-
-  void _showDeleteConfirmation(Report report) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.grey[900],
-          title: const Text(
-            'Delete Report',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: Text(
-            'Are you sure you want to delete this report?\n\nThis action cannot be undone.',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _deleteReport(report);
-              },
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _deleteReport(Report report) async {
-    setState(() => _isLoading = true);
-    try {
-      await _reportService.deleteReport(report.id);
-      setState(() {
-        _reports.removeWhere((r) => r.id == report.id);
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Report deleted successfully')),
-      );
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete report: $e')),
-      );
-    }
-  }
-
-  // Future<void> _deleteReport(Report report) async {
-  //   try {
-  //     print('🗑️ Delete report button pressed for report: ${report.id}');
-  //     print('👤 Current user ID: ${widget.currentUserId}');
-  //     print('📄 Report details: ${report.toJson()}');
-  //
-  //     // Show loading indicator
-  //     showDialog(
-  //       context: context,
-  //       barrierDismissible: false,
-  //       builder: (BuildContext context) {
-  //         return const Center(
-  //           child: CircularProgressIndicator(color: Colors.white),
-  //         );
-  //       },
-  //     );
-  //
-  //     await _reportService.deleteReport(report.id);
-  //
-  //     // Hide loading indicator
-  //     if (mounted) {
-  //       Navigator.of(context).pop();
-  //       // Show success message
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: const Text('Report deleted successfully'),
-  //           backgroundColor: Colors.green,
-  //           behavior: SnackBarBehavior.floating,
-  //         ),
-  //       );
-  //     }
-  //   } catch (e) {
-  //     print('❌ Delete report error in UI: ${e.toString()}');
-  //
-  //     // Hide loading indicator
-  //     if (mounted) {
-  //       Navigator.of(context).pop();
-  //
-  //       // Show error message
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('Failed to delete report: ${e.toString()}'),
-  //           backgroundColor: Colors.red,
-  //           behavior: SnackBarBehavior.floating,
-  //         ),
-  //       );
-  //     }
-  //   }
-  // }
 }
