@@ -37,6 +37,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         setState(() {
           _blockedUsers = blockedUsers.map((user) => ApiUser(
             id: user.uid ?? '',
+            userId: user.uid ?? '',
             email: user.email ?? '',
             displayName: user.displayName ?? '',
             profileImageUrl: user.profileImageUrl,

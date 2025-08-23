@@ -24,17 +24,6 @@ class _MeetScreenState extends State<MeetScreen> {
   @override
   void initState() {
     super.initState();
-   // _checkMeetStatus();
-  }
-
-  Future<void> _checkMeetStatus() async {
-    final isInMeet = await _meetService.isUserInMeet();
-    setState(() {
-      _hasJoinedMeet = isInMeet;
-    });
-    if (_hasJoinedMeet) {
-      _loadOnlineUsers();
-    }
   }
 
   Future<void> _loadOnlineUsers() async {
@@ -121,7 +110,7 @@ class _MeetScreenState extends State<MeetScreen> {
   void _startChat(ApiUser user) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ChatScreen(otherUserId: user.id),
+        builder: (context) => ChatScreen(otherUserId: user.userId),
       ),
     );
   }
@@ -346,12 +335,6 @@ class _MeetScreenState extends State<MeetScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Text(
-                //   'Online Users (${_onlineUsers.length})',
-                //   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                //     fontWeight: FontWeight.bold,
-                //   ),
-                // ),
                 if (_selectedGenderFilter != 'all')
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -383,20 +366,20 @@ class _MeetScreenState extends State<MeetScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final spacing = 8 * (2 - 1); // total spacing for 2 items
-                  final itemWidth = (constraints.maxWidth - spacing - 32) / 2; // 2 items
-                  final itemHeight = itemWidth / 0.8; // taller divisor → smaller height
+                  final spacing = 8 * (2 - 1);
+                  final itemWidth = (constraints.maxWidth - spacing - 32) / 2;
+                  final itemHeight = itemWidth / 0.8;
 
                   return GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // 2 items per row
+                      crossAxisCount: 2,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: itemWidth / itemHeight, // lower height
+                      childAspectRatio: itemWidth / itemHeight,
                     ),
                     itemCount: _onlineUsers.length,
                     itemBuilder: (context, index) {
@@ -407,7 +390,6 @@ class _MeetScreenState extends State<MeetScreen> {
                 },
               ),
             ),
-
           ],
         ),
       ),
@@ -518,7 +500,7 @@ class _MeetScreenState extends State<MeetScreen> {
                                       ? 'Near by you'
                                       : '${user.distance % 1 == 0 ? user.distance.toInt() : user.distance.toStringAsFixed(1)} km away',
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white,
                                     fontSize: 10,
                                     shadows: [
                                       Shadow(

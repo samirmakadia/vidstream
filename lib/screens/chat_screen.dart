@@ -5,6 +5,8 @@ import 'package:vidstream/models/api_models.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 
+import '../widgets/custom_image_widget.dart';
+
 class ChatScreen extends StatefulWidget {
   final String otherUserId;
 
@@ -49,7 +51,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       _otherUser = await _chatService.getUserById(widget.otherUserId);
       
       // Get or create conversation
-      _conversationId = await _chatService.getOrCreateConversation(widget.otherUserId);
+      //_conversationId = await _chatService.getOrCreateConversation(widget.otherUserId);
 
       // Start listening to messages in real-time
       if (_conversationId != null) {
@@ -232,19 +234,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       appBar: AppBar(
         title: Row(
           children: [
+            _otherUser?.profileImageUrl != null && _otherUser!.profileImageUrl!.isNotEmpty ?
+            CustomImageWidget(
+              imageUrl: _otherUser?.profileImageUrl ?? '',
+              height: 35,
+              width: 35,
+              cornerRadius: 30,
+            ) :
             CircleAvatar(
-              radius: 16,
+              radius: 17,
               backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-              backgroundImage: _otherUser?.profileImageUrl != null 
-                  ? NetworkImage(_otherUser!.profileImageUrl!) 
-                  : null,
-              child: _otherUser?.profileImageUrl == null
-                  ? Icon(
+              child: Icon(
                       Icons.person,
                       size: 16,
                       color: Theme.of(context).colorScheme.primary,
                     )
-                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(

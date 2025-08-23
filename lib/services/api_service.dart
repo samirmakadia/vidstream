@@ -1398,7 +1398,7 @@ class ApiService {
   }) async {
     final result = await ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.post<Map<String, dynamic>>(
-        '/chats/conversations',
+        '/chat/conversations',
         data: {
           'user_ids': [userId1, userId2],
         },
@@ -1423,7 +1423,7 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.post<Message>(
-        '/chats/messages',
+        '/chat/messages',
         data: {
           'conversation_id': conversationId,
           'content': content,
@@ -1448,7 +1448,7 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<response_models.PaginatedResponse<Message>>(
-        '/chats/conversations/$conversationId/messages',
+        '/chat/conversations/$conversationId/messages',
         queryParameters: {
           'page': page,
           'limit': limit,
@@ -1473,7 +1473,7 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<response_models.PaginatedResponse<Conversation>>(
-        '/chats/conversations',
+        '/chat/conversations',
         queryParameters: {
           'page': page,
           'limit': limit,
@@ -1501,7 +1501,7 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.put(
-        '/chats/conversations/$conversationId/read',
+        '/chat/conversations/$conversationId/seen',
         data: {
           'message_ids': messageIds,
         },
@@ -1515,7 +1515,7 @@ class ApiService {
 
   Future<void> deleteChatMessage(String messageId) async {
     return ErrorHandler.safeApiCall(() async {
-      final response = await _httpClient.delete('/chats/messages/$messageId');
+      final response = await _httpClient.delete('/chat/messages/$messageId');
       
       if (!response.success) {
         throw response_models.ApiException(response.message);

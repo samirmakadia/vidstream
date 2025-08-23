@@ -20,7 +20,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   void initState() {
     super.initState();
-  // _loadConversations();
+   _loadConversations();
   }
 
   Future<void> _loadConversations() async {
@@ -32,17 +32,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
       final currentUser = _authService.currentUser;
       if (currentUser != null) {
         _chatService.getUserConversations().listen((conversations) {
-          setState(() {
-            _conversations = conversations;
-            _isLoading = false;
-          });
+          if(mounted) {
+            setState(() {
+              _conversations = conversations;
+              _isLoading = false;
+            });
+          }
         });
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
       if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading chats: $e')),
         );

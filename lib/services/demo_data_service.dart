@@ -181,6 +181,8 @@ class DemoDataService {
       final sampleUsers = [
         ApiUser(
           id: 'demo_user_1',
+          userId: '',
+
           email: 'demo1@example.com',
           displayName: 'Alice Johnson',
           bio: 'Nature lover and photographer 📸 Capturing beautiful moments every day.',
@@ -192,6 +194,7 @@ class DemoDataService {
         ),
         ApiUser(
           id: 'demo_user_2',
+          userId: '',
           email: 'demo2@example.com',
           displayName: 'Mike Chen',
           bio: 'Tech enthusiast 💻 Sharing coding tips and tutorials for everyone.',
@@ -203,6 +206,7 @@ class DemoDataService {
         ),
         ApiUser(
           id: 'demo_user_3',
+          userId: '',
           email: 'demo3@example.com',
           displayName: 'Sarah Williams',
           bio: 'Fitness coach 💪 Helping you achieve your health goals step by step.',
@@ -216,6 +220,7 @@ class DemoDataService {
           id: 'demo_user_4',
           email: 'demo4@example.com',
           displayName: 'David Lopez',
+          userId: '',
           bio: 'Music producer 🎵 Creating beats and sharing the creative process.',
           createdAt: DateTime.now().subtract(const Duration(days: 15)),
           updatedAt: DateTime.now().subtract(const Duration(days: 15)),

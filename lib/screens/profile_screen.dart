@@ -10,6 +10,7 @@ import 'package:vidstream/screens/settings_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 
 import '../widgets/common_app_dialog.dart';
+import '../widgets/custom_image_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -259,34 +260,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
-  Future<void> _createSampleFollows() async {
-    try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Creating sample follows...'),
-          backgroundColor: Colors.blue,
-        ),
-      );
-
-      await DemoDataService.createSampleFollows();
-      await _refreshFollowCounts(); // Refresh follow counts
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sample follows created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to create sample follows: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    }
-  }
-
   void _navigateToFollowersList(int initialTabIndex) {
     if (_currentUser == null) return;
 
@@ -297,54 +270,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           initialTabIndex: initialTabIndex,
           displayName: _currentUser!.displayName ?? 'User',
         ),
-      ),
-    );
-  }
-
-  void _showDebugInfo() {
-    final authStatus = AuthUtils.getAuthStatus();
-    final String debugInfo = '''
-Debug Information:
-
-Authentication Status:
-- Authenticated: ${authStatus['authenticated']}
-- User ID: ${authStatus['id'] ?? 'null'}
-- Email: ${authStatus['email'] ?? 'null'}
-- Display Name: ${authStatus['displayName'] ?? 'null'}
-- Is Anonymous: ${authStatus['isAnonymous'] ?? 'null'}
-- Email Verified: ${authStatus['emailVerified'] ?? 'null'}
-
-Profile Data:
-- Current User: ${_currentUser != null ? 'Loaded' : 'Not loaded'}
-- User Videos: ${_userVideos.length}
-- Liked Videos: ${_likedVideos.length}
-
-Error Diagnostics:
-- If videos are not loading, check Firebase rules
-- If authentication fails, try signing out and back in
-- Permission denied errors indicate Firestore rules issues
-    ''';
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Debug Information'),
-        content: SingleChildScrollView(
-          child: Text(debugInfo, style: const TextStyle(fontFamily: 'monospace')),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _loadUserProfile(); // Retry loading profile
-            },
-            child: const Text('Retry Load'),
-          ),
-        ],
       ),
     );
   }
@@ -875,7 +800,9 @@ Error Diagnostics:
   Widget _buildTabContent() {
     final videos = _selectedTabIndex == 0 ? _userVideos : _likedVideos;
     final emptyTitle = _selectedTabIndex == 0 ? 'No videos yet' : 'No liked videos';
-    final emptySubtitle = _selectedTabIndex == 0 ? 'Create your first video using the + button!' : 'Like some videos to see them here!';
+    final emptySubtitle = _selectedTabIndex == 0
+        ? 'Create your first video using the + button!'
+        : 'Like some videos to see them here!';
     final emptyIcon = _selectedTabIndex == 0 ? Icons.video_library_outlined : Icons.favorite_outline;
 
     return SliverPadding(
@@ -887,24 +814,22 @@ Error Diagnostics:
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                emptyIcon,
-                size: 64,
-                color: Colors.white.withValues(alpha: 0.6),
-              ),
+              Icon(emptyIcon, size: 64, color: Colors.white.withOpacity(0.6)),
               const SizedBox(height: 16),
               Text(
                 emptyTitle,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(color: Colors.white.withOpacity(0.8)),
               ),
               const SizedBox(height: 8),
               Text(
                 emptySubtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.6),
-                ),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Colors.white.withOpacity(0.6)),
                 textAlign: TextAlign.center,
               ),
               if (_selectedTabIndex == 1) ...[
@@ -926,152 +851,120 @@ Error Diagnostics:
           ),
         ),
       )
-          : SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          childAspectRatio: 0.7,
-        ),
-        delegate: SliverChildBuilderDelegate(
-              (context, index) {
-            final video = videos[index];
-            return _buildVideoGridItem(video);
-          },
-          childCount: videos.length,
-        ),
+          : SliverLayoutBuilder(
+        builder: (context, constraints) {
+          final spacing = 8 * (3 - 1);
+          final itemWidth = (constraints.crossAxisExtent - spacing) / 3;
+          final itemHeight = itemWidth / 0.7;
+
+          return SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 0.7,
+            ),
+            delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                final video = videos[index];
+                return _buildVideoGridItem(video, itemWidth, itemHeight);
+              },
+              childCount: videos.length,
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildVideoGridItem(ApiVideo video) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => _openVideoPlayer(video),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: Colors.grey[900],
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Simple Thumbnail
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: video.thumbnailUrl.isNotEmpty
-                    ? Image.network(
-                  video.thumbnailUrl,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                              : null,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).colorScheme.primary,
+  Widget _buildVideoGridItem(ApiVideo video, double width, double height) {
+    return InkWell(
+      onTap: () => _openVideoPlayer(video),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Theme.of(context).colorScheme.surfaceContainer,
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            CustomImageWidget(
+              imageUrl: video.thumbnailUrl,
+              height: height,
+              width: width,
+              cornerRadius: 12,
+            ),
+
+            // Simple play button
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.play_arrow,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+
+            // Simple video stats
+            Positioned(
+              bottom: 6,
+              left: 6,
+              right: 6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.favorite,
+                          size: 12,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          video.likesCount.toString(),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.white,
+                            fontSize: 10,
                           ),
                         ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                      child: Icon(
-                        Icons.broken_image,
-                        color: Colors.white.withValues(alpha: 0.6),
-                        size: 32,
-                      ),
-                    );
-                  },
-                )
-                    : Container(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                  child: Icon(
-                    Icons.video_library,
-                    color: Colors.white.withValues(alpha: 0.6),
-                    size: 32,
-                  ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.visibility,
+                          size: 12,
+                          color: Colors.blue,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          video.viewsCount.toString(),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-
-              // Simple play button
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.play_arrow,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-
-              // Simple video stats
-              Positioned(
-                bottom: 6,
-                left: 6,
-                right: 6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.favorite,
-                            size: 12,
-                            color: Colors.red,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            video.likesCount.toString(),
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: Colors.white,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.visibility,
-                            size: 12,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            video.viewsCount.toString(),
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: Colors.white,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

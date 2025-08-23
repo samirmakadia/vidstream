@@ -3,6 +3,7 @@
 // User Model - adapted for API
 class ApiUser {
   final String id;
+  final String userId; // new field
   final String email;
   final String displayName;
   final String? username;
@@ -23,13 +24,14 @@ class ApiUser {
   final bool isGuest;
   final bool isInMeet;
   final bool isFollow;
-  final int age; // existing field
-  final double distance; // new field
+  final int age;
+  final double distance;
 
   String get uid => id;
 
   ApiUser({
     required this.id,
+    required this.userId, // initialize userId
     required this.email,
     required this.displayName,
     this.username,
@@ -51,12 +53,13 @@ class ApiUser {
     this.isGuest = false,
     this.isInMeet = false,
     this.age = 20,
-    this.distance = 0.0, // default value
+    this.distance = 0.0,
   });
 
   factory ApiUser.fromJson(Map<String, dynamic> json) {
     return ApiUser(
       id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '', // parse userId
       email: json['email'] ?? '',
       displayName: json['display_name'] ?? json['displayName'] ?? '',
       username: json['username'],
@@ -80,7 +83,7 @@ class ApiUser {
       isFollow: json['isFollow'] ?? false,
       isInMeet: json['is_in_meet'] ?? json['isInMeet'] ?? false,
       age: json['age'] ?? 20,
-      distance: (json['distance'] != null) ? (json['distance'] as num).toDouble() : 0.0, // new field
+      distance: (json['distance'] != null) ? (json['distance'] as num).toDouble() : 0.0,
     );
   }
 
@@ -88,6 +91,7 @@ class ApiUser {
     return {
       '_id': id,
       'id': id,
+      'userId': userId, // include in JSON
       'email': email,
       'display_name': displayName,
       'username': username,
@@ -109,12 +113,13 @@ class ApiUser {
       'isFollow': isFollow,
       'is_in_meet': isInMeet,
       'age': age,
-      'distance': distance, // include distance in JSON
+      'distance': distance,
     };
   }
 
   ApiUser copyWith({
     String? id,
+    String? userId, // copyWith support
     String? email,
     String? displayName,
     String? username,
@@ -136,10 +141,11 @@ class ApiUser {
     bool? isFollow,
     bool? isInMeet,
     int? age,
-    double? distance, // new field
+    double? distance,
   }) {
     return ApiUser(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       username: username ?? this.username,
@@ -161,7 +167,7 @@ class ApiUser {
       isFollow: isFollow ?? this.isFollow,
       isInMeet: isInMeet ?? this.isInMeet,
       age: age ?? this.age,
-      distance: distance ?? this.distance, // copyWith support
+      distance: distance ?? this.distance,
     );
   }
 }
