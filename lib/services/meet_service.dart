@@ -27,7 +27,7 @@ class MeetService {
       }
       
       // Join meet using placeholder meet ID (implement meet ID logic as needed)
-      await _apiRepository.api.joinMeet('main_meet');
+      await _apiRepository.api.joinMeet();
     } catch (e) {
       throw Exception('Failed to join meet: $e');
     }
@@ -39,7 +39,7 @@ class MeetService {
     if (currentUser == null) throw Exception('User not authenticated');
 
     try {
-      await _apiRepository.api.leaveMeet('main_meet');
+      await _apiRepository.api.leaveMeet();
     } catch (e) {
       throw Exception('Failed to leave meet: $e');
     }

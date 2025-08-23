@@ -1304,10 +1304,10 @@ class ApiService {
   }
 
   // Meet/Online user methods
-  Future<void> joinMeet(String meetId) async {
+  Future<void> joinMeet() async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.post(
-        '/meet/$meetId/join',
+        '/chat/meet/join',
       );
       
       if (!response.success) {
@@ -1316,10 +1316,10 @@ class ApiService {
     });
   }
 
-  Future<void> leaveMeet(String meetId) async {
+  Future<void> leaveMeet() async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.post(
-        '/meet/$meetId/leave',
+        '/chat/meet/leave',
       );
       
       if (!response.success) {
