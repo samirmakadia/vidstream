@@ -118,57 +118,64 @@ class AuthResponse {
 class NearbyUsersResponse {
   final List<ApiUser> users;
   final int totalCount;
-  final Filters filters;
+  final Filter filter;
 
   NearbyUsersResponse({
     required this.users,
     required this.totalCount,
-    required this.filters,
+    required this.filter,
   });
 
   factory NearbyUsersResponse.fromJson(Map<String, dynamic> json) {
+    print("NearbyUsersResponse raw JSON: $json"); // ✅ Debug print
+
+    final usersJson = json['users'] as List<dynamic>? ?? [];
+    final filterJson = json['filters'] as Map<String, dynamic>? ?? {};
+
     return NearbyUsersResponse(
-      users: (json['users'] as List? ?? [])
-          .map((e) => ApiUser.fromJson(e as Map<String, dynamic>))
+      users: usersJson
+          .map((u) => ApiUser.fromJson(u as Map<String, dynamic>))
           .toList(),
-      totalCount: json['totalCount'] as int? ?? 0,
-      filters: Filters.fromJson(json['filters'] as Map<String, dynamic>? ?? {}),
+      totalCount: (json['totalCount'] ?? 0) as int,
+      filter: Filter.fromJson(filterJson),
     );
   }
 }
 
-class Filters {
-  final int? maxDistance;
-  final String? genderFilter;
-  final AgeRange? ageRange;
+class Filter {
+  final String genderFilter;
+  final int maxDistance;
+  final AgeRange ageRange;
 
-  Filters({this.maxDistance, this.genderFilter, this.ageRange});
+  Filter({
+    required this.genderFilter,
+    required this.maxDistance,
+    required this.ageRange,
+  });
 
-  factory Filters.fromJson(Map<String, dynamic> json) {
-    return Filters(
-      maxDistance: json['maxDistance'] as int?,
-      genderFilter: json['genderFilter'] as String?,
-      ageRange: json['ageRange'] != null
-          ? AgeRange.fromJson(json['ageRange'] as Map<String, dynamic>)
-          : null,
+  factory Filter.fromJson(Map<String, dynamic> json) {
+    final ageRangeJson = json['ageRange'] as Map<String, dynamic>;
+    return Filter(
+      genderFilter: json['genderFilter'] as String,
+      maxDistance: json['maxDistance'] as int,
+      ageRange: AgeRange.fromJson(ageRangeJson),
     );
   }
 }
 
 class AgeRange {
-  final int? minAge;
-  final int? maxAge;
+  final int min;
+  final int max;
 
-  AgeRange({this.minAge, this.maxAge});
+  AgeRange({required this.min, required this.max});
 
   factory AgeRange.fromJson(Map<String, dynamic> json) {
     return AgeRange(
-      minAge: json['minAge'] as int?, // ✅ safe cast
-      maxAge: json['maxAge'] as int?,
+      min: int.parse(json['min'] as String),
+      max: int.parse(json['max'] as String),
     );
   }
 }
-
 
 
 // Custom Exception Classes

@@ -1565,7 +1565,7 @@ class ApiService {
         queryParameters: queryParams,
         fromJson: (json) {
           final map = json as Map<String, dynamic>;
-          final data = map['data'] as Map<String, dynamic>?; 
+          final data = map as Map<String, dynamic>?;
           if (data == null) {
             throw response_models.ApiException('Invalid response: missing data');
           }

@@ -1563,14 +1563,7 @@ class ApiService {
       final response = await _httpClient.get<response_models.NearbyUsersResponse>(
         '/chat/meet/nearby',
         queryParameters: queryParams,
-        fromJson: (json) {
-          final map = json as Map<String, dynamic>;
-          final data = map['data'] as Map<String, dynamic>?;
-          if (data == null) {
-            throw response_models.ApiException('Invalid response: missing data');
-          }
-          return response_models.NearbyUsersResponse.fromJson(data);
-        },
+        fromJson: (json) => response_models.NearbyUsersResponse.fromJson(json as Map<String, dynamic>),
       );
 
       if (response.success && response.data != null) {
