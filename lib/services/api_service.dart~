@@ -106,7 +106,7 @@ class ApiService {
     required String platform,
     required String deviceInfo,
   }) async {
-    return ErrorHandler.safeApiCall(() async {
+    return ErrorHandler.safeApiCall(() async { 
       final response = await _httpClient.post<void>(
         '/fcm/register',
         data: {
