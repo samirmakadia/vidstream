@@ -376,6 +376,36 @@ Instagram: @VidStreamOfficial''',
                 ),
                 const SizedBox(height: 20),
 
+
+                // Support Section
+                _buildSectionHeader('Support'),
+                _buildSettingsItem(
+                  icon: Icons.help,
+                  title: 'Help & Support',
+                  subtitle: 'Get help and contact us',
+                  onTap: _showHelpAndSupport,
+                ),
+                _buildSettingsItem(
+                  icon: Icons.star,
+                  title: 'Rate VidStream',
+                  subtitle: 'Share your experience with us',
+                  onTap: _showRateUsDialog,
+                ),
+                _buildSettingsItem(
+                  icon: Icons.system_update,
+                  title: 'Check for Updates',
+                  subtitle: 'See if a new version is available',
+                  onTap: _checkForUpdates,
+                ),
+                // _buildSettingsItem(
+                //   icon: Icons.notifications,
+                //   title: 'Notifications',
+                //   subtitle: 'Manage notification settings',
+                //   onTap: _showNotificationSettings,
+                // ),
+                const SizedBox(height: 20),
+
+
                 // Legal Section
                 _buildSectionHeader('Legal'),
                 _buildSettingsItem(
@@ -404,46 +434,18 @@ Instagram: @VidStreamOfficial''',
                 ),
                 const SizedBox(height: 20),
 
-                // Support Section
-                _buildSectionHeader('Support'),
-                _buildSettingsItem(
-                  icon: Icons.help,
-                  title: 'Help & Support',
-                  subtitle: 'Get help and contact us',
-                  onTap: _showHelpAndSupport,
-                ),
-                _buildSettingsItem(
-                  icon: Icons.star,
-                  title: 'Rate VidStream',
-                  subtitle: 'Share your experience with us',
-                  onTap: _showRateUsDialog,
-                ),
-                _buildSettingsItem(
-                  icon: Icons.system_update,
-                  title: 'Check for Updates',
-                  subtitle: 'See if a new version is available',
-                  onTap: _checkForUpdates,
-                ),
-                _buildSettingsItem(
-                  icon: Icons.notifications,
-                  title: 'Notifications',
-                  subtitle: 'Manage notification settings',
-                  onTap: _showNotificationSettings,
-                ),
-                const SizedBox(height: 20),
-
                 // Development Section (only in debug mode)
-                if (kDebugMode) ...[
-                  _buildSectionHeader('Development'),
-                  _buildSettingsItem(
-                    icon: Icons.refresh,
-                    title: 'Reset Onboarding',
-                    subtitle: 'Show onboarding screens again',
-                    onTap: _resetOnboarding,
-                    textColor: Colors.blue,
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                // if (kDebugMode) ...[
+                //   _buildSectionHeader('Development'),
+                //   _buildSettingsItem(
+                //     icon: Icons.refresh,
+                //     title: 'Reset Onboarding',
+                //     subtitle: 'Show onboarding screens again',
+                //     onTap: _resetOnboarding,
+                //     textColor: Colors.blue,
+                //   ),
+                //   const SizedBox(height: 20),
+                // ],
 
                 // Account Section
                 _buildSectionHeader('Account'),

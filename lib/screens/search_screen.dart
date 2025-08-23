@@ -145,7 +145,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               // Tabs
               TabBar(
                 controller: _tabController,
-                dividerColor: Colors.grey.shade300,
+                dividerColor: Colors.grey.withOpacity(0.5),
                 tabs: [
                   Tab(
                     child: Row(

@@ -53,6 +53,7 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
         title: Text(widget.displayName),
         centerTitle: true,
         bottom: TabBar(
+          dividerColor: Colors.grey.withOpacity(0.5),
           controller: _tabController,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white.withValues(alpha: 0.6),

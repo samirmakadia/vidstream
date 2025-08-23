@@ -620,7 +620,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         GestureDetector(
           onTap: _openSearchScreen,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.5),
               shape: BoxShape.circle,
@@ -632,7 +632,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             child: Icon(
               Icons.search,
               color: Colors.white,
-              size: 20,
+              size: 18,
             ),
           ),
         ),
@@ -641,7 +641,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         GestureDetector(
           onTap: _showFilterDialog,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.5),
               shape: BoxShape.circle,
@@ -659,7 +659,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                   color: _selectedTags.isNotEmpty 
                       ? Theme.of(context).colorScheme.primary 
                       : Colors.white,
-                  size: 20,
+                  size: 18,
                 ),
                 if (_selectedTags.isNotEmpty)
                   Positioned(
