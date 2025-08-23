@@ -391,6 +391,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   bool _isLoading = true;
   bool _isPosting = false;
   ApiComment? _replyingTo;
+  Set<String> _loadingCommentLikes = {};
 
   @override
   void initState() {
@@ -410,7 +411,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         if (mounted) {
           setState(() {
             _comments = comments;
-            _isLoading = false;
+      _isLoading = false;
           });
         }
       });
@@ -483,6 +484,10 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
     if (currentUserId == null) return;
 
+    setState(() {
+      _loadingCommentLikes.add(comment.id);
+    });
+
     try {
       await _likeService.toggleLike(
         userId: currentUserId,
@@ -490,7 +495,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         targetType: 'Comment',
       );
       setState(() {
-
+        comment.isLiked = !comment.isLiked;
+        comment.likesCount += comment.isLiked ? 1 : -1;
       });
       _loadComments();
     } catch (e) {
@@ -502,6 +508,10 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
           ),
         );
       }
+    }finally {
+      setState(() {
+        _loadingCommentLikes.remove(comment.id);
+      });
     }
   }
 
@@ -544,8 +554,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         padding: MediaQuery.of(context).viewInsets,
         child: Container(
           height: MediaQuery.of(context).size.height * 0.7,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -584,7 +594,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                 ),
               ),
 
-              const Divider(height: 1),
+              Divider(height: 1, color: Colors.grey.withOpacity(0.5)),
 
               // Comments List
               Expanded(
@@ -631,9 +641,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
                   border: Border(
-                    top: BorderSide(color: Colors.grey[300]!),
+                    top: BorderSide(color: Colors.grey.withOpacity(0.5)),
                   ),
                 ),
                 child: SafeArea(
@@ -679,7 +689,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                               decoration: InputDecoration(
                                 hintText: _replyingTo != null ? 'Write a reply...' : 'Add a comment...',
                                 filled: true,
-                                fillColor: Colors.white,
+                                fillColor: Colors.grey.withOpacity(0.1),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(24),
                                   borderSide: BorderSide.none,
@@ -802,16 +812,30 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                     Row(
                       children: [
                         GestureDetector(
-                          onTap: () => _toggleCommentLike(comment),
+                          onTap: _loadingCommentLikes.contains(comment.id)
+                              ? null
+                              : () => _toggleCommentLike(comment),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                comment.isLiked ? Icons.favorite : Icons.favorite_outline,
-                                size: 14,
-                                color: comment.isLiked ? Colors.red : Colors.grey[600],
-                              ),
-                              if (comment.likesCount > 0) ...[
+                              if (_loadingCommentLikes.contains(comment.id))
+                                SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                )
+                              else
+                                Icon(
+                                  comment.isLiked ? Icons.favorite : Icons.favorite_outline,
+                                  size: 14,
+                                  color: comment.isLiked ? Colors.red : Colors.grey[600],
+                                ),
+                              if (comment.likesCount > 0 && !_loadingCommentLikes.contains(comment.id)) ...[
                                 const SizedBox(width: 4),
                                 Text(
                                   comment.likesCount.toString(),
