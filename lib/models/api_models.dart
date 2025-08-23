@@ -374,14 +374,14 @@ class ApiComment {
   final String id;
   final String videoId;
   final String text;
-  final int likesCount;
+  int likesCount;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? parentCommentId;
   final ApiUser? user;
   final List<ApiComment>? replies;
   final int? v;
-  final bool isLiked; // Changed from nullable to non-nullable with default false
+  bool isLiked; // Changed from nullable to non-nullable with default false
 
   ApiComment({
     required this.id,

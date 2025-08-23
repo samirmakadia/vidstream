@@ -811,7 +811,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.9,
       decoration: const BoxDecoration(
         color: Colors.black,
         borderRadius: BorderRadius.only(
