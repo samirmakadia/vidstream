@@ -36,7 +36,7 @@ class NotificationService {
     DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestSoundPermission: true, 
     );
 
     const InitializationSettings initializationSettings = InitializationSettings(

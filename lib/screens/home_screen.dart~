@@ -55,6 +55,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   @override
   void initState() {
     super.initState();
+    _requestLocationPermission();
     WidgetsBinding.instance.addObserver(this);
     _searchAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -76,6 +77,14 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     _searchAnimationController.dispose();
     _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  Future<void> _requestLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
   }
 
   @override

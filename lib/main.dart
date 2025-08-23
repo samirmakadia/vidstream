@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vidstream/theme.dart';
@@ -14,7 +15,7 @@ import 'package:vidstream/models/api_models.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize services (non-blocking)
   _initializeServices();
   
@@ -24,6 +25,7 @@ void main() async {
 // Initialize services in the background
 void _initializeServices() async {
   try {
+    //await Firebase.initializeApp();
     await ServiceLocator.initialize();
     await ApiRepository.instance.initialize();
     await NotificationService().initialize();
