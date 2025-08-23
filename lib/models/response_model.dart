@@ -127,15 +127,17 @@ class NearbyUsersResponse {
   });
 
   factory NearbyUsersResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>;
-    final usersJson = data['users'] as List<dynamic>;
-    final filterJson = data['filters'] as Map<String, dynamic>;
+    print("NearbyUsersResponse raw JSON: $json"); // ✅ Debug print
+
+    final data = json['data'] as Map<String, dynamic>? ?? {};
+    final usersJson = data['users'] as List<dynamic>? ?? [];
+    final filterJson = data['filters'] as Map<String, dynamic>? ?? {};
 
     return NearbyUsersResponse(
       users: usersJson
           .map((u) => ApiUser.fromJson(u as Map<String, dynamic>))
           .toList(),
-      totalCount: data['totalCount'] as int,
+      totalCount: (data['totalCount'] ?? 0) as int,
       filter: Filter.fromJson(filterJson),
     );
   }

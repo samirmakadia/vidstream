@@ -1,3 +1,4 @@
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
@@ -5,28 +6,10 @@ import 'package:vidstream/repositories/api_repository.dart';
 class MeetService {
   final ApiRepository _apiRepository = ApiRepository.instance;
 
-  // Join the meet - mark user as online and in meet
   Future<void> joinMeet() async {
     final currentUser = _apiRepository.auth.currentUser;
     if (currentUser == null) throw Exception('User not authenticated');
-
     try {
-      Position? position;
-      try {
-        position = await getCurrentLocation();
-      } catch (e) {
-        print('Failed to get location: $e');
-      }
-
-      // Update user location if available
-      if (position != null) {
-        await _apiRepository.api.updateUserLocation(
-          latitude: position.latitude,
-          longitude: position.longitude,
-        );
-      }
-      
-      // Join meet using placeholder meet ID (implement meet ID logic as needed)
       await _apiRepository.api.joinMeet();
     } catch (e) {
       throw Exception('Failed to join meet: $e');

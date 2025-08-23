@@ -1304,10 +1304,10 @@ class ApiService {
   }
 
   // Meet/Online user methods
-  Future<void> joinMeet(String meetId) async {
+  Future<void> joinMeet() async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.post(
-        '/meet/$meetId/join',
+        '/chat/meet/join',
       );
       
       if (!response.success) {
@@ -1316,10 +1316,10 @@ class ApiService {
     });
   }
 
-  Future<void> leaveMeet(String meetId) async {
+  Future<void> leaveMeet() async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.post(
-        '/meet/$meetId/leave',
+        '/chat/meet/leave',
       );
       
       if (!response.success) {
@@ -1381,7 +1381,7 @@ class ApiService {
           if (country != null) 'country': country,
         },
       );
- 
+
       // 🔍 Debug print the full response
       print('Update location response: ${response.toJson()}');
 
@@ -1563,8 +1563,14 @@ class ApiService {
       final response = await _httpClient.get<response_models.NearbyUsersResponse>(
         '/chat/meet/nearby',
         queryParameters: queryParams,
-        fromJson: (json) =>
-            response_models.NearbyUsersResponse.fromJson(json as Map<String, dynamic>),
+        fromJson: (json) {
+          final map = json as Map<String, dynamic>;
+          final data = map['data'] as Map<String, dynamic>?; 
+          if (data == null) {
+            throw response_models.ApiException('Invalid response: missing data');
+          }
+          return response_models.NearbyUsersResponse.fromJson(data);
+        },
       );
 
       if (response.success && response.data != null) {
@@ -1574,6 +1580,7 @@ class ApiService {
       throw response_models.ApiException(response.message);
     });
   }
+
 
 
 

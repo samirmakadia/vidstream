@@ -1,3 +1,4 @@
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
@@ -5,29 +6,35 @@ import 'package:vidstream/repositories/api_repository.dart';
 class MeetService {
   final ApiRepository _apiRepository = ApiRepository.instance;
 
-  // Join the meet - mark user as online and in meet
   Future<void> joinMeet() async {
     final currentUser = _apiRepository.auth.currentUser;
     if (currentUser == null) throw Exception('User not authenticated');
 
     try {
       Position? position;
+      String city = "Unknown";
+      String country = "Unknown";
       try {
         position = await getCurrentLocation();
+        List<Placemark> placemarks =
+        await placemarkFromCoordinates(position.latitude, position.longitude);
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          city = place.locality ?? "Unknown";
+          country = place.country ?? "Unknown";
+        }
       } catch (e) {
         print('Failed to get location: $e');
       }
-
-      // Update user location if available
       if (position != null) {
         await _apiRepository.api.updateUserLocation(
           latitude: position.latitude,
           longitude: position.longitude,
+          city: city,
+          country: country
         );
       }
-      
-      // Join meet using placeholder meet ID (implement meet ID logic as needed)
-      await _apiRepository.api.joinMeet('main_meet');
+      await _apiRepository.api.joinMeet();
     } catch (e) {
       throw Exception('Failed to join meet: $e');
     }
@@ -39,7 +46,7 @@ class MeetService {
     if (currentUser == null) throw Exception('User not authenticated');
 
     try {
-      await _apiRepository.api.leaveMeet('main_meet');
+      await _apiRepository.api.leaveMeet();
     } catch (e) {
       throw Exception('Failed to leave meet: $e');
     }
@@ -149,9 +156,19 @@ class MeetService {
   }
 
   // Update user location
-  Future<void> updateLocation(double latitude, double longitude) async {
+  Future<void> updateLocation({
+    required double latitude,
+    required double longitude,
+    String? city,
+    String? country,
+  }) async {
     try {
-      await _apiRepository.api.updateUserLocation(latitude: latitude, longitude: longitude);
+      await _apiRepository.api.updateUserLocation(
+        latitude: latitude,
+        longitude: longitude,
+        city: city,
+        country: country,
+      );
     } catch (e) {
       print('Error updating location: $e');
     }

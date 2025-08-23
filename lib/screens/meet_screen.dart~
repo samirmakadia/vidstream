@@ -22,7 +22,7 @@ class _MeetScreenState extends State<MeetScreen> {
   @override
   void initState() {
     super.initState();
-    _loadOnlineUsers();
+    _checkMeetStatus();
   }
 
   Future<void> _checkMeetStatus() async {
@@ -79,7 +79,7 @@ class _MeetScreenState extends State<MeetScreen> {
         _hasJoinedMeet = true;
         _isLoading = false;
       });
-      _loadOnlineUsers();
+      _loadOnlineUsers(); 
     } catch (e) {
       setState(() {
         _isLoading = false;
