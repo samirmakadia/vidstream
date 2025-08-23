@@ -218,7 +218,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         ),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        contentPadding: const EdgeInsets.only(left: 8, top: 4, bottom: 4),
         dense: true,
         leading: GestureDetector(
           onTap: () => _navigateToUserProfile(user),
@@ -263,7 +263,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.red.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
@@ -273,13 +273,14 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                 'BLOCKED',
                 style: TextStyle(
                   color: Colors.red,
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             PopupMenuButton<String>(
               padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
               icon: Icon(
                 Icons.more_vert,
                 color: Colors.white.withValues(alpha: 0.7),

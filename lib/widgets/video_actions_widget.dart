@@ -5,6 +5,7 @@ import 'package:vidstream/services/comment_service.dart';
 import 'package:vidstream/services/like_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../screens/other_user_profile_screen.dart';
 import '../utils/graphics.dart';
 
 class VideoActionsWidget extends StatefulWidget {
@@ -543,6 +544,17 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     return total;
   }
 
+  void _navigateToUserProfile(ApiUser user) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => OtherUserProfileScreen(
+          userId: user.id,
+          displayName: user.displayName,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -763,19 +775,22 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                   color: Colors.grey[300],
                 ),
               // Avatar
-              CircleAvatar(
-                radius: isReply ? 12 : 16,
-                backgroundImage: (comment.user!.profileImageUrl ?? comment.user!.photoURL) != null
-                    ? NetworkImage(comment.user!.profileImageUrl ?? comment.user!.photoURL!)
-                    : null,
-                backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                child: (comment.user!.profileImageUrl == null && comment.user!.photoURL == null)
-                    ? Icon(
-                  Icons.person,
-                  size: isReply ? 12 : 16,
-                  color: Theme.of(context).colorScheme.primary,
-                )
-                    : null,
+              GestureDetector(
+                onTap: () => _navigateToUserProfile(comment.user!),
+                child: CircleAvatar(
+                  radius: isReply ? 12 : 16,
+                  backgroundImage: (comment.user!.profileImageUrl ?? comment.user!.photoURL) != null
+                      ? NetworkImage(comment.user!.profileImageUrl ?? comment.user!.photoURL!)
+                      : null,
+                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  child: (comment.user!.profileImageUrl == null && comment.user!.photoURL == null)
+                      ? Icon(
+                    Icons.person,
+                    size: isReply ? 12 : 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  )
+                      : null,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -784,11 +799,14 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          comment.user!.displayName ?? 'Unknown User',
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: isReply ? 12 : null,
+                        GestureDetector(
+                          onTap: () => _navigateToUserProfile(comment.user!),
+                          child: Text(
+                            comment.user!.displayName ?? 'Unknown User',
+                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontSize: isReply ? 12 : null,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
