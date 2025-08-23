@@ -1,6 +1,4 @@
 // API Response Models and Exceptions
-import 'api_models.dart';
-
 class ApiResponse<T> {
   final bool success;
   final String message;
@@ -115,68 +113,6 @@ class AuthResponse {
   };
 }
 
-class NearbyUsersResponse {
-  final List<ApiUser> users;
-  final int totalCount;
-  final Filter filter;
-
-  NearbyUsersResponse({
-    required this.users,
-    required this.totalCount,
-    required this.filter,
-  });
-
-  factory NearbyUsersResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>;
-    final usersJson = data['users'] as List<dynamic>;
-    final filterJson = data['filters'] as Map<String, dynamic>;
-
-    return NearbyUsersResponse(
-      users: usersJson
-          .map((u) => ApiUser.fromJson(u as Map<String, dynamic>))
-          .toList(),
-      totalCount: data['totalCount'] as int,
-      filter: Filter.fromJson(filterJson),
-    );
-  }
-}
-
-class Filter {
-  final String genderFilter;
-  final int maxDistance;
-  final AgeRange ageRange;
-
-  Filter({
-    required this.genderFilter,
-    required this.maxDistance,
-    required this.ageRange,
-  });
-
-  factory Filter.fromJson(Map<String, dynamic> json) {
-    final ageRangeJson = json['ageRange'] as Map<String, dynamic>;
-    return Filter(
-      genderFilter: json['genderFilter'] as String,
-      maxDistance: json['maxDistance'] as int,
-      ageRange: AgeRange.fromJson(ageRangeJson),
-    );
-  }
-}
-
-class AgeRange {
-  final int min;
-  final int max;
-
-  AgeRange({required this.min, required this.max});
-
-  factory AgeRange.fromJson(Map<String, dynamic> json) {
-    return AgeRange(
-      min: int.parse(json['min'] as String),
-      max: int.parse(json['max'] as String),
-    );
-  }
-}
-
-
 // Custom Exception Classes
 class ApiException implements Exception {
   final String message;
@@ -243,4 +179,3 @@ class TimeoutException extends NetworkException {
   TimeoutException([String? message]) 
     : super(message ?? 'Request timeout', statusCode: 408);
 }
-

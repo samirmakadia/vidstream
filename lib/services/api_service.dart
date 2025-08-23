@@ -1539,5 +1539,32 @@ class ApiService {
     });
   }
 
+  Future<response_models.NearbyUsersResponse?> getNearbyUsers({
+    required String genderFilter,
+    required int minAge,
+    required int maxAge,
+    required int maxDistance,
+  }) async {
+    return ErrorHandler.safeApiCall(() async {
+      final response = await _httpClient.get<response_models.NearbyUsersResponse>(
+        '/chat/meet/nearby',
+        queryParameters: {
+          'genderFilter': genderFilter,
+          'minAge': minAge,
+          'maxAge': maxAge,
+          'maxDistance': maxDistance,
+        },
+        fromJson: (json) =>
+            response_models.NearbyUsersResponse.fromJson(json as Map<String, dynamic>),
+      );
+
+      if (response.success && response.data != null) {
+        return response.data!;
+      }
+
+      throw response_models.ApiException(response.message);
+    });
+  }
+
 
 }

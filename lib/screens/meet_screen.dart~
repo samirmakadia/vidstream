@@ -22,7 +22,7 @@ class _MeetScreenState extends State<MeetScreen> {
   @override
   void initState() {
     super.initState();
-    _checkMeetStatus();
+    //_checkMeetStatus();
   }
 
   Future<void> _checkMeetStatus() async {
