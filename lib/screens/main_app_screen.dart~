@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:vidstream/screens/home_screen.dart';
@@ -9,6 +10,7 @@ import 'package:vidstream/screens/meet_screen.dart';
 import 'package:vidstream/screens/chat_list_screen.dart';
 
 import '../manager/firebase_manager.dart';
+import '../services/meet_service.dart';
 
 class MainAppScreen extends StatefulWidget {
   const MainAppScreen({super.key});
@@ -20,14 +22,16 @@ class MainAppScreen extends StatefulWidget {
 class _MainAppScreenState extends State<MainAppScreen> {
   int _currentIndex = 0;
   final GlobalKey<HomeScreenState> _homeScreenKey = GlobalKey<HomeScreenState>();
-  
+  final MeetService _meetService = MeetService();
+
   late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
     _requestPermissions();
-   // FirebaseManager().initNotification();
+    _updateUserLocation();
+    // FirebaseManager().initNotification();
     _screens = [
       HomeScreen(key: _homeScreenKey),
       const MeetScreen(),
@@ -74,6 +78,33 @@ class _MainAppScreenState extends State<MainAppScreen> {
       setState(() {
         _currentIndex = newIndex;
       });
+    }
+  }
+
+  Future<void> _updateUserLocation() async {
+    try {
+      Position? position;
+      position = await _meetService.getCurrentLocation();
+      double latitude = position.latitude;
+      double longitude = position.longitude;
+      String city = "Unknown";
+      String country = "Unknown";
+
+      List<Placemark> placemarks =
+      await placemarkFromCoordinates(latitude, longitude);
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        city = place.locality ?? "Unknown";
+        country = place.country ?? "Unknown";
+      }
+
+      await _meetService.updateLocation(
+        latitude: latitude,
+        longitude: longitude,
+        city: city,
+        country: country,
+      );
+    } catch (e) {
     }
   }
 

@@ -1348,36 +1348,43 @@ class ApiService {
     return result ?? <ApiUser>[];
   }
 
-  Future<bool> getOnlineUserStatus(String userId) async {
+  Future<bool> getOnlineUserStatus() async {
     final result = await ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<Map<String, dynamic>>(
-        '/users/$userId/online-status',
+        '/chat/meet/status',
         fromJson: (json) => json as Map<String, dynamic>,
       );
-      
+
       if (response.success && response.data != null) {
-        return response.data!['online'] as bool? ?? false;
+        final data = response.data!['data'] as Map<String, dynamic>?;
+        return data?['isInMeet'] as bool? ?? false;
       }
-      
       return false;
     });
-    
+
     return result ?? false;
   }
 
   Future<void> updateUserLocation({
     required double latitude,
     required double longitude,
+    String? city,
+    String? country,
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.put(
-        '/users/me/location',
+        '/users/location',
         data: {
           'latitude': latitude,
           'longitude': longitude,
+          if (city != null) 'city': city,
+          if (country != null) 'country': country,
         },
       );
-      
+ 
+      // 🔍 Debug print the full response
+      print('Update location response: ${response.toJson()}');
+
       if (!response.success) {
         throw response_models.ApiException(response.message);
       }
@@ -1541,19 +1548,21 @@ class ApiService {
 
   Future<response_models.NearbyUsersResponse?> getNearbyUsers({
     required String genderFilter,
-    required int minAge,
-    required int maxAge,
-    required int maxDistance,
+    int? minAge,
+    int? maxAge,
+    int? maxDistance,
   }) async {
     return ErrorHandler.safeApiCall(() async {
+      final queryParams = <String, dynamic>{
+        'genderFilter': genderFilter,
+        if (minAge != null) 'minAge': minAge,
+        if (maxAge != null) 'maxAge': maxAge,
+        if (maxDistance != null) 'maxDistance': maxDistance,
+      };
+
       final response = await _httpClient.get<response_models.NearbyUsersResponse>(
         '/chat/meet/nearby',
-        queryParameters: {
-          'genderFilter': genderFilter,
-          'minAge': minAge,
-          'maxAge': maxAge,
-          'maxDistance': maxDistance,
-        }, 
+        queryParameters: queryParams,
         fromJson: (json) =>
             response_models.NearbyUsersResponse.fromJson(json as Map<String, dynamic>),
       );
@@ -1565,6 +1574,7 @@ class ApiService {
       throw response_models.ApiException(response.message);
     });
   }
+
 
 
 }

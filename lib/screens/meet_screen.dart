@@ -26,15 +26,12 @@ class _MeetScreenState extends State<MeetScreen> {
   }
 
   Future<void> _checkMeetStatus() async {
-    final currentUser = _authService.currentUser;
-    if (currentUser != null) {
-      final isInMeet = await _meetService.isUserInMeet(currentUser.id);
-      setState(() {
-        _hasJoinedMeet = isInMeet;
-      });
-      if (_hasJoinedMeet) {
-        _loadOnlineUsers();
-      }
+    final isInMeet = await _meetService.isUserInMeet();
+    setState(() {
+      _hasJoinedMeet = isInMeet;
+    });
+    if (_hasJoinedMeet) {
+      _loadOnlineUsers();
     }
   }
 
@@ -46,7 +43,7 @@ class _MeetScreenState extends State<MeetScreen> {
     });
 
     try {
-      final stream = _meetService.getOnlineUsers(genderFilter: _selectedGenderFilter);
+      final stream = _meetService.getNearbyUsersStream(genderFilter: _selectedGenderFilter);
       final users = await stream.first;
       setState(() {
         _onlineUsers = users;
