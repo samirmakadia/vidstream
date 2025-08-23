@@ -131,6 +131,30 @@ class Utils{
     }
   }
 
+  static String getDeviceType() {
+    if (Platform.isAndroid) {
+      return 'android';
+    } else if (Platform.isIOS) {
+      return 'ios';
+    } else {
+      return 'unknown';
+    }
+  }
+
+  static Future<String> getDeviceInfo() async {
+    final deviceInfoPlugin = DeviceInfoPlugin();
+
+    if (Platform.isAndroid) {
+      final info = await deviceInfoPlugin.androidInfo;
+      return "${info.brand} ${info.model} (SDK ${info.version.sdkInt})";
+    } else if (Platform.isIOS) {
+      final info = await deviceInfoPlugin.iosInfo;
+      return "${info.utsname.machine} (iOS ${info.systemVersion})";
+    } else {
+      return "Unknown Device";
+    }
+  }
+
 }
 
 

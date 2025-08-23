@@ -1,8 +1,13 @@
 import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:vidstream/repositories/api_repository.dart';
+import 'package:vidstream/utils/utils.dart';
+
+import 'api_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -18,8 +23,17 @@ class NotificationService {
     if (_isInitialized) return;
 
     try {
-      // Initialize local notifications
       await _initializeLocalNotifications();
+
+      final fcmToken = await getFcmToken();
+      if (fcmToken != null) {
+        await updateFcmToken(fcmToken);
+      }
+
+      // Listen for token refresh
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+        await updateFcmToken(newToken);
+      });
 
       _isInitialized = true;
       debugPrint('✅ NotificationService initialized successfully');
@@ -151,28 +165,35 @@ class NotificationService {
     }
   }
 
-  // Get FCM token (placeholder for API-based implementation)
+
   Future<String?> getFcmToken() async {
     try {
-      // In API-based implementation, this would be handled differently
-      // For now, return a placeholder
-      return 'api_based_token_${DateTime.now().millisecondsSinceEpoch}';
+      final token = await FirebaseMessaging.instance.getToken();
+      debugPrint("✅ Obtained FCM token: $token");
+      return token;
     } catch (e) {
-      debugPrint('Error getting FCM token: $e');
+      debugPrint('❌ Error getting FCM token: $e');
       return null;
     }
   }
 
-  // Update FCM token in backend
   Future<void> updateFcmToken(String token) async {
     try {
-      await _apiRepository.api.updateFcmToken(token);
+      final platform = Utils.getDeviceType();
+      final deviceInfo = await Utils.getDeviceInfo();
+
+      await ApiService().registerFcmToken(
+        token: token,
+        platform: platform,
+        deviceInfo: deviceInfo,
+      );
+
+      debugPrint("✅ FCM token registered with backend");
     } catch (e) {
       debugPrint('Error updating FCM token: $e');
     }
   }
 
-  // Subscribe to topic
   Future<void> subscribeToTopic(String topic) async {
     try {
       await _apiRepository.api.subscribeToNotificationTopic(topic);
@@ -181,7 +202,6 @@ class NotificationService {
     }
   }
 
-  // Unsubscribe from topic
   Future<void> unsubscribeFromTopic(String topic) async {
     try {
       await _apiRepository.api.unsubscribeFromNotificationTopic(topic);
@@ -190,7 +210,6 @@ class NotificationService {
     }
   }
 
-  // Save notification to database
   Future<void> saveNotification({
     required String userId,
     required String title,

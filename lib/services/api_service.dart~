@@ -101,6 +101,28 @@ class ApiService {
     });
   }
 
+  Future<void> registerFcmToken({
+    required String token,
+    required String platform,
+    required String deviceInfo,
+  }) async {
+    return ErrorHandler.safeApiCall(() async {
+      final response = await _httpClient.post<void>(
+        '/fcm/register',
+        data: {
+          'token': token,
+          'platform': platform,
+          'deviceInfo': deviceInfo,
+        },
+        fromJson: (_) => null,
+      );
+
+      if (!response.success) {
+        throw response_models.ApiException(response.message);
+      }
+    });
+  }
+
   Future<response_models.AuthResponse?> refreshToken() async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.post<response_models.AuthResponse>(
@@ -390,7 +412,7 @@ class ApiService {
         'query': query,
         'page': page,
         'limit': limit,
-      }; 
+      };
       
       if (category != null) queryParams['category'] = category;
       
@@ -1449,10 +1471,13 @@ class ApiService {
           'page': page,
           'limit': limit,
         },
-        fromJson: (json) => response_models.PaginatedResponse.fromJson(
-          json as Map<String, dynamic>,
-          (item) => Conversation.fromJson(item as Map<String, dynamic>),
-        ),
+        fromJson: (json) {
+          final videosJson = (json as Map<String, dynamic>)['conversations'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': videosJson},
+                (item) => Conversation.fromJson(item as Map<String, dynamic>),
+          );
+        },
       );
       
       if (response.success && response.data != null) {
