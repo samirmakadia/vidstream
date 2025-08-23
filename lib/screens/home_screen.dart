@@ -946,7 +946,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
         ),
         
         Positioned(
-          bottom: 100,
+          bottom: 14,
           left: 0,
           right: 0,
           child: Padding(
@@ -968,12 +968,12 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                           isFollowLoading: _isFollowLoading,
                         ),
                       
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 4),
                       
                       // Video Description
                       if (widget.video.description.isNotEmpty)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric( vertical: 8),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(8),
@@ -1020,6 +1020,9 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                 
                 // Video Actions
                 VideoActionsWidget(
+                  isFollowLoading: _isFollowLoading,
+                  onFollowToggle: _toggleFollow,
+                  user: widget.video.user!,
                   video: widget.video,
                   isLiked: _isLiked,
                   onLikeToggle: _toggleLike,

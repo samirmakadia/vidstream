@@ -9,6 +9,7 @@ import '../screens/other_user_profile_screen.dart';
 import '../utils/graphics.dart';
 
 class VideoActionsWidget extends StatefulWidget {
+  final ApiUser user;
   final ApiVideo video;
   final bool isLiked;
   final VoidCallback onLikeToggle;
@@ -17,9 +18,12 @@ class VideoActionsWidget extends StatefulWidget {
   final int likeCount;
   final void Function(int commentCount)? onCommentUpdated;
   final void Function(ApiVideo video)? onReported;
+  final VoidCallback onFollowToggle;
+  final bool isFollowLoading;
 
   const VideoActionsWidget({
     super.key,
+    required this.user,
     required this.video,
     required this.isLiked,
     required this.onLikeToggle,
@@ -27,6 +31,8 @@ class VideoActionsWidget extends StatefulWidget {
     this.onVideoDeleted, required this.likeCount,
     this.onCommentUpdated,
     this.onReported,
+    required this.onFollowToggle,
+    this.isFollowLoading = false,
   });
 
   @override
@@ -245,6 +251,77 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => OtherUserProfileScreen(
+                      userId: widget.user.id,
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.grey.withValues(alpha: 0.5),
+                    width: 0.5, // border width
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundImage: widget.user.profileImageUrl != null
+                      ? NetworkImage(widget.user.profileImageUrl!)
+                      : null,
+                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  child: widget.user.profileImageUrl == null
+                      ? Icon(Icons.person, size: 20, color: Colors.white)
+                      : null,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: GestureDetector(
+                onTap: widget.isFollowLoading ? null : widget.onFollowToggle,
+                child: Container(
+                  width: 15,
+                  height: 15,
+                  decoration: BoxDecoration(
+                    color: widget.user.isFollow ? Colors.green : Colors.blue,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: widget.isFollowLoading
+                        ? const SizedBox(
+                      width: 10,
+                      height: 10,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                        : Icon(
+                      widget.user.isFollow ? Icons.check : Icons.add,
+                      size: 11,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
         // Like Button
         _buildActionButton(
           context,
@@ -255,7 +332,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
           isLoading: widget.isLikeLoading,
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
         // Comment Button
         _buildActionButton(
@@ -266,7 +343,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
           onTap: () => _showComments(context),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
         // Share Button
         _buildActionButton(
@@ -277,7 +354,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
           onTap: () => _shareVideo(context),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
         // More Options Button
         _buildActionButton(
@@ -288,7 +365,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
           onTap: () => _showVideoOptions(context),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
         // Views Count
         Column(
@@ -346,7 +423,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
             ),
           ),
           if (count != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               _formatCount(count),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
