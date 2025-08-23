@@ -9,31 +9,7 @@ class MeetService {
   Future<void> joinMeet() async {
     final currentUser = _apiRepository.auth.currentUser;
     if (currentUser == null) throw Exception('User not authenticated');
-
     try {
-      Position? position;
-      String city = "Unknown";
-      String country = "Unknown";
-      try {
-        position = await getCurrentLocation();
-        List<Placemark> placemarks =
-        await placemarkFromCoordinates(position.latitude, position.longitude);
-        if (placemarks.isNotEmpty) {
-          final place = placemarks.first;
-          city = place.locality ?? "Unknown";
-          country = place.country ?? "Unknown";
-        }
-      } catch (e) {
-        print('Failed to get location: $e');
-      }
-      if (position != null) {
-        await _apiRepository.api.updateUserLocation(
-          latitude: position.latitude,
-          longitude: position.longitude,
-          city: city,
-          country: country
-        );
-      }
       await _apiRepository.api.joinMeet();
     } catch (e) {
       throw Exception('Failed to join meet: $e');
@@ -85,7 +61,11 @@ class MeetService {
           maxDistance: maxDistance,
         );
 
-        yield response?.users ?? [];
+        print('NearbyUsersResponse users: ${response?.users}');
+        print('NearbyUsersResponse totalCount: ${response?.totalCount}');
+        print('NearbyUsersResponse filters: ${response?.filters.maxDistance}');
+
+        yield response?.users ?? []; 
         await Future.delayed(refreshInterval);
       }
     } catch (e, st) {

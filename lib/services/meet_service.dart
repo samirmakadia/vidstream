@@ -61,6 +61,10 @@ class MeetService {
           maxDistance: maxDistance,
         );
 
+        print('NearbyUsersResponse users: ${response?.users}');
+        print('NearbyUsersResponse totalCount: ${response?.totalCount}');
+        print('NearbyUsersResponse filters: ${response?.filters.maxDistance}');
+
         yield response?.users ?? [];
         await Future.delayed(refreshInterval);
       }

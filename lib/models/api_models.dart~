@@ -23,8 +23,7 @@ class ApiUser {
   final bool isGuest;
   final bool isInMeet;
   final bool isFollow;
-  final int age; // existing field
-  final double distance; // new field
+  final int age; // new field
 
   String get uid => id;
 
@@ -50,8 +49,7 @@ class ApiUser {
     this.isVerified = false,
     this.isGuest = false,
     this.isInMeet = false,
-    this.age = 20,
-    this.distance = 0.0, // default value
+    this.age = 20, // default value
   });
 
   factory ApiUser.fromJson(Map<String, dynamic> json) {
@@ -79,8 +77,7 @@ class ApiUser {
       isGuest: json['is_guest'] ?? json['isGuest'] ?? false,
       isFollow: json['isFollow'] ?? false,
       isInMeet: json['is_in_meet'] ?? json['isInMeet'] ?? false,
-      age: json['age'] ?? 20,
-      distance: (json['distance'] != null) ? (json['distance'] as num).toDouble() : 0.0, // new field
+      age: json['age'] ?? 20, // read age from JSON
     );
   }
 
@@ -108,8 +105,7 @@ class ApiUser {
       'is_guest': isGuest,
       'isFollow': isFollow,
       'is_in_meet': isInMeet,
-      'age': age,
-      'distance': distance, // include distance in JSON
+      'age': age, // include in JSON
     };
   }
 
@@ -136,7 +132,6 @@ class ApiUser {
     bool? isFollow,
     bool? isInMeet,
     int? age,
-    double? distance, // new field
   }) {
     return ApiUser(
       id: id ?? this.id,
@@ -161,7 +156,6 @@ class ApiUser {
       isFollow: isFollow ?? this.isFollow,
       isInMeet: isInMeet ?? this.isInMeet,
       age: age ?? this.age,
-      distance: distance ?? this.distance, // copyWith support
     );
   }
 }

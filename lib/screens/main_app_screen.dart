@@ -97,15 +97,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
         city = place.locality ?? "Unknown";
         country = place.country ?? "Unknown";
       }
-
-      print('Latitude: $latitude, Longitude: $longitude, City: $city, Country: $country');
-
-      await _meetService.updateLocation(
-        latitude: latitude,
-        longitude: longitude,
-        city: city,
-        country: country,
-      );
+      await _meetService.updateLocation(latitude: latitude, longitude: longitude, city: city, country: country,);
     } catch (e) {
     }
   }

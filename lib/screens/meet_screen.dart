@@ -4,6 +4,8 @@ import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/chat_screen.dart';
 
+import '../widgets/custom_image_widget.dart';
+
 class MeetScreen extends StatefulWidget {
   const MeetScreen({super.key});
 
@@ -22,7 +24,7 @@ class _MeetScreenState extends State<MeetScreen> {
   @override
   void initState() {
     super.initState();
-    _checkMeetStatus();
+   // _checkMeetStatus();
   }
 
   Future<void> _checkMeetStatus() async {
@@ -344,12 +346,12 @@ class _MeetScreenState extends State<MeetScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Online Users (${_onlineUsers.length})',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                // Text(
+                //   'Online Users (${_onlineUsers.length})',
+                //   style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
                 if (_selectedGenderFilter != 'all')
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -381,29 +383,38 @@ class _MeetScreenState extends State<MeetScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.8,
-                ),
-                itemCount: _onlineUsers.length,
-                itemBuilder: (context, index) {
-                  final user = _onlineUsers[index];
-                  return _buildUserCard(user);
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final spacing = 8 * (2 - 1); // total spacing for 2 items
+                  final itemWidth = (constraints.maxWidth - spacing - 32) / 2; // 2 items
+                  final itemHeight = itemWidth / 0.8; // taller divisor → smaller height
+
+                  return GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // 2 items per row
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: itemWidth / itemHeight, // lower height
+                    ),
+                    itemCount: _onlineUsers.length,
+                    itemBuilder: (context, index) {
+                      final user = _onlineUsers[index];
+                      return _buildUserCard(user, itemWidth, itemHeight);
+                    },
+                  );
                 },
               ),
             ),
+
           ],
         ),
       ),
     );
   }
 
-  Widget _buildUserCard(ApiUser user) {
+  Widget _buildUserCard(ApiUser user, double itemWidth, double itemHeight) {
     return GestureDetector(
       onTap: () => _startChat(user),
       child: Container(
@@ -412,95 +423,137 @@ class _MeetScreenState extends State<MeetScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  backgroundImage: user.profileImageUrl != null
-                      ? NetworkImage(user.profileImageUrl!)
-                      : null,
-                  child: user.profileImageUrl == null
-                      ? Icon(
-                          Icons.person,
-                          size: 30,
-                          color: Theme.of(context).colorScheme.primary,
-                        )
-                      : null,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Profile Image
+              user.profileImageUrl != null
+                  ? CustomImageWidget(
+                imageUrl: user.profileImageUrl!,
+                height: itemHeight,
+                width: itemWidth,
+                cornerRadius: 12,
+              )
+                  : Container(
+                height: itemHeight,
+                width: itemWidth,
+                color: Theme.of(context).colorScheme.primary.withAlpha(25),
+                child: Icon(
+                  Icons.person,
+                  size: itemHeight * 0.4,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: user.isInMeet ? Colors.green : Colors.orange,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Theme.of(context).cardColor,
-                        width: 2,
-                      ),
+              ),
+              // Bottom overlay with gradient
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(12),
+                      bottomRight: Radius.circular(12),
                     ),
+                    gradient: user.profileImageUrl != null
+                        ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.0),
+                        Colors.black.withOpacity(0.6),
+                      ],
+                    )
+                        : null,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              user.displayName ?? '',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: user.isInMeet 
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                user.isInMeet ? 'Online' : 'Away',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: user.isInMeet ? Colors.green : Colors.orange,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            if (user.gender != null && _selectedGenderFilter != 'all') ...[
-              const SizedBox(height: 2),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  _getGenderDisplayName(user.gender!),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.secondary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${user.displayName ?? ''}, ${user.age}',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold, 
+                                fontSize: 16,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    offset: Offset(0.5, 0.5),
+                                    blurRadius: 2,
+                                    color: Colors.black.withOpacity(0.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: user.isInMeet ? Colors.green : Colors.orange,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Theme.of(context).cardColor,
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  user.distance == 0
+                                      ? 'Near by you'
+                                      : '${user.distance % 1 == 0 ? user.distance.toInt() : user.distance.toStringAsFixed(1)} km away',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 10,
+                                    shadows: [
+                                      Shadow(
+                                        offset: Offset(0.5, 0.5),
+                                        blurRadius: 2,
+                                        color: Colors.black.withOpacity(0.5),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // const SizedBox(width: 6),
+                      // Container(
+                      //   width: 25,
+                      //   height: 25,
+                      //   decoration: BoxDecoration(
+                      //     color: Colors.grey.withOpacity(0.3),
+                      //     shape: BoxShape.circle,
+                      //   ),
+                      //   child: Icon(
+                      //     Icons.star,
+                      //     color: Colors.blueAccent,
+                      //     size: 18,
+                      //   ),
+                      // ),
+                    ],
                   ),
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
