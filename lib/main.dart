@@ -134,14 +134,6 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
     return StreamBuilder<ApiUser?>(
       stream: ApiRepository.instance.auth.authStateChanges,
       builder: (context, snapshot) {
-        // if (snapshot.connectionState == ConnectionState.waiting) {
-        //   return const Scaffold(
-        //     backgroundColor: Colors.black,
-        //     body: Center(
-        //       child: CircularProgressIndicator(color: Colors.white),
-        //     ),
-        //   );
-        // }
         
         if (snapshot.hasData) {
           return const MainAppScreen();
