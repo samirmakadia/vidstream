@@ -390,7 +390,7 @@ class ApiService {
         'query': query,
         'page': page,
         'limit': limit,
-      };
+      }; 
       
       if (category != null) queryParams['category'] = category;
       
