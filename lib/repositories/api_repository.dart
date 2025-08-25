@@ -7,7 +7,7 @@ import 'package:vidstream/services/report_service.dart';
 import 'package:vidstream/services/block_service.dart';
 import 'package:vidstream/services/search_service.dart';
 import 'package:vidstream/services/api_service.dart';
-import 'package:vidstream/services/chat_service.dart';
+// import 'package:vidstream/services/chat_service.dart';
 
 class ApiRepository {
   static final ApiRepository _instance = ApiRepository._internal();
@@ -26,7 +26,7 @@ class ApiRepository {
   BlockService? _blocks;
   SearchService? _search;
   ApiService? _api;
-  ChatService? _chat;
+  // ChatService? _chat;
 
   // Getters with lazy initialization
   AuthService get auth => _auth ??= AuthService();
@@ -38,7 +38,7 @@ class ApiRepository {
   BlockService get blocks => _blocks ??= BlockService();
   SearchService get search => _search ??= SearchService();
   ApiService get api => _api ??= ApiService();
-  ChatService get chat => _chat ??= ChatService();
+  // ChatService get chat => _chat ??= ChatService();
   
   // Initialize all services (lightweight)
   Future<void> initialize() async {
@@ -50,7 +50,7 @@ class ApiRepository {
       auth.initialize().catchError((e) => print('Auth init error: $e'));
       
       // Initialize chat service (can be done async)
-      chat.initialize().catchError((e) => print('Chat init error: $e'));
+      // chat.initialize().catchError((e) => print('Chat init error: $e'));
       
       print('✅ ApiRepository initialized');
     } catch (e) {
@@ -63,6 +63,6 @@ class ApiRepository {
   void dispose() {
     _auth?.dispose();
     _videos?.dispose();
-    _chat?.dispose();
+    // _chat?.dispose();
   }
 }

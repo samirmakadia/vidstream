@@ -1469,7 +1469,7 @@ class ApiService {
 
   Future<response_models.PaginatedResponse<Conversation>?> getChatConversations({
     int page = 1,
-    int limit = 20,
+    int limit = 500,
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<response_models.PaginatedResponse<Conversation>>(

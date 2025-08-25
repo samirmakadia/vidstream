@@ -1,7 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vidstream/services/chat_service.dart';
 import 'package:vidstream/services/socket_manager.dart';
 import 'package:vidstream/theme.dart';
 import 'package:vidstream/screens/auth_screen.dart';
@@ -32,7 +31,7 @@ void _initializeServices() async {
     await ApiRepository.instance.initialize();
     await NotificationService().initialize();
     await DialogManagerService().initialize();
-    await ChatService().initialize();
+    // await ChatService().initialize();
      print('✅ All services initialized successfully');
   } catch (e) {
     print('❌ Service initialization error: $e');

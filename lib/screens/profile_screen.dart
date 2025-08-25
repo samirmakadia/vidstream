@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/auth_screen.dart';
-import 'package:vidstream/services/demo_data_service.dart';
 import 'package:vidstream/utils/auth_utils.dart';
 import 'package:vidstream/screens/follower_following_list_screen.dart';
 import 'package:vidstream/screens/blocked_users_screen.dart';
@@ -191,7 +190,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
       );
 
-      await DemoDataService.createSampleVideos();
+      // await DemoDataService.createSampleVideos();
       await _loadUserProfile(); // Refresh to show new videos
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -219,7 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
       );
 
-      await DemoDataService.createSampleLikes();
+      // await DemoDataService.createSampleLikes();
       await _loadUserProfile(); // Refresh to show liked videos
 
       ScaffoldMessenger.of(context).showSnackBar(

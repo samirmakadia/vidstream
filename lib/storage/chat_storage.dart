@@ -41,10 +41,9 @@ class ChatStorage {
         content TEXT NOT NULL,
         status TEXT NOT NULL,
         timestamp INTEGER NOT NULL,
-        read_at INTEGER,
-        reply_to_id TEXT,
-        temp_id TEXT,
-        created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+        is_deleted INTEGER DEFAULT 0,
+        deleted_for TEXT
       )
     ''');
 
@@ -89,98 +88,46 @@ class ChatStorage {
     }
   }
 
-  // Message operations
-  Future<void> saveMessage(Message message) async {
+  /// Add or update a message in the database
+  Future<void> addOrUpdateMessage(Message message) async {
     final db = await database;
-    
     try {
-      await db.insert(
-        'messages',
-        {
-          'id': message.id,
-          'conversation_id': message.conversationId,
-          'sender_id': message.senderId,
-          'message_type': message.messageType,
-          'content': jsonEncode(message.content),
-          'status': message.status.name,
-          'timestamp': message.timestamp.millisecondsSinceEpoch,
-          'read_at': message.readAt?.millisecondsSinceEpoch,
-          'reply_to_id': message.replyToId,
-          'temp_id': message.tempId,
-          'created_at': DateTime.now().millisecondsSinceEpoch,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    } catch (e) {
-      debugPrint('Error saving message: $e');
-    }
-  }
-
-  Future<void> updateMessage(Message message) async {
-    final db = await database;
-    
-    try {
-      await db.update(
+      final count = await db.update(
         'messages',
         {
           'conversation_id': message.conversationId,
           'sender_id': message.senderId,
           'message_type': message.messageType,
-          'content': jsonEncode(message.content),
+          'content': jsonEncode(message.content.toJson()),
           'status': message.status.name,
           'timestamp': message.timestamp.millisecondsSinceEpoch,
-          'read_at': message.readAt?.millisecondsSinceEpoch,
-          'reply_to_id': message.replyToId,
-          'temp_id': message.tempId,
+          'is_deleted': message.isDeleted ? 1 : 0,
+          'deleted_for': jsonEncode(message.deletedFor),
         },
         where: 'id = ?',
         whereArgs: [message.id],
       );
-    } catch (e) {
-      debugPrint('Error updating message: $e');
-    }
-  }
-
-  Future<Message?> getMessageById(String messageId) async {
-    final db = await database;
-    
-    try {
-      final List<Map<String, dynamic>> maps = await db.query(
-        'messages',
-        where: 'id = ?',
-        whereArgs: [messageId],
-        limit: 1,
-      );
-      
-      if (maps.isNotEmpty) {
-        return _messageFromMap(maps.first);
+      if (count == 0) {
+        await db.insert(
+          'messages',
+          {
+            'id': message.id,
+            'conversation_id': message.conversationId,
+            'sender_id': message.senderId,
+            'message_type': message.messageType,
+            'content': jsonEncode(message.content.toJson()),
+            'status': message.status.name,
+            'timestamp': message.timestamp.millisecondsSinceEpoch,
+            'created_at': DateTime.now().millisecondsSinceEpoch,
+            'is_deleted': message.isDeleted ? 1 : 0,
+            'deleted_for': jsonEncode(message.deletedFor),
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
     } catch (e) {
-      debugPrint('Error getting message by ID: $e');
+      debugPrint('Error addOrUpdateMessage: $e');
     }
-    
-    return null;
-  }
-
-  Future<Message?> getMessageByTempId(String tempId) async {
-    final db = await database;
-    
-    try {
-      final List<Map<String, dynamic>> maps = await db.query(
-        'messages',
-        where: 'temp_id = ?',
-        whereArgs: [tempId],
-        limit: 1,
-      );
-      
-      if (maps.isNotEmpty) {
-        return _messageFromMap(maps.first);
-      }
-    } catch (e) {
-      debugPrint('Error getting message by temp ID: $e');
-    }
-    
-    return null;
   }
 
   Future<List<Message>> getMessagesForConversation(
@@ -207,31 +154,6 @@ class ChatStorage {
     }
   }
 
-  Future<void> markMessagesAsRead(String conversationId, List<String> messageIds) async {
-    final db = await database;
-    
-    try {
-      final batch = db.batch();
-      final readTime = DateTime.now().millisecondsSinceEpoch;
-      
-      for (final messageId in messageIds) {
-        batch.update(
-          'messages',
-          {
-            'status': MessageStatus.read.name,
-            'read_at': readTime,
-          },
-          where: 'id = ? AND conversation_id = ?',
-          whereArgs: [messageId, conversationId],
-        );
-      }
-      
-      await batch.commit(noResult: true);
-    } catch (e) {
-      debugPrint('Error marking messages as read: $e');
-    }
-  }
-
   Future<void> deleteMessage(String messageId) async {
     final db = await database;
     
@@ -248,26 +170,26 @@ class ChatStorage {
 
   // Conversation operations
   Future<void> saveConversation(Conversation conversation) async {
-    final db = await database;
-    
-    try {
-      await db.insert(
-        'conversations',
-        {
-          'id': conversation.id,
-          'participants': jsonEncode(conversation.participants),
-          'last_message_id': conversation.lastMessage?.id,
-          'last_message_time': conversation.lastMessageTime?.millisecondsSinceEpoch,
-          'unread_count': conversation.unreadCount,
-          'created_at': conversation.createdAt.millisecondsSinceEpoch,
-          'updated_at': conversation.updatedAt.millisecondsSinceEpoch,
-          'is_deleted': 0,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    } catch (e) {
-      debugPrint('Error saving conversation: $e');
-    }
+    // final db = await database;
+    //
+    // try {
+    //   await db.insert(
+    //     'conversations',
+    //     {
+    //       'id': conversation.id,
+    //       'participants': jsonEncode(conversation.participants),
+    //       'last_message_id': conversation.lastMessage?.id,
+    //       'last_message_time': conversation.lastMessageTime?.millisecondsSinceEpoch,
+    //       'unread_count': conversation.unreadCount,
+    //       'created_at': conversation.createdAt.millisecondsSinceEpoch,
+    //       'updated_at': conversation.updatedAt.millisecondsSinceEpoch,
+    //       'is_deleted': 0,
+    //     },
+    //     conflictAlgorithm: ConflictAlgorithm.replace,
+    //   );
+    // } catch (e) {
+    //   debugPrint('Error saving conversation: $e');
+    // }
   }
 
   Future<Conversation?> getConversationById(String conversationId) async {
@@ -467,42 +389,41 @@ class ChatStorage {
       conversationId: map['conversation_id'] as String,
       senderId: map['sender_id'] as String,
       messageType: map['message_type'] as String,
-      content: jsonDecode(map['content'] as String),
+      content: MessageContent.fromJson(jsonDecode(map['content'] as String)),
       status: MessageStatus.values.firstWhere(
         (e) => e.name == map['status'],
         orElse: () => MessageStatus.sent,
       ),
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int),
-      readAt: map['read_at'] != null 
-        ? DateTime.fromMillisecondsSinceEpoch(map['read_at'] as int)
-        : null,
-      replyToId: map['reply_to_id'] as String?,
-      tempId: map['temp_id'] as String?,
+      isDeleted: (map['is_deleted'] ?? 0) == 1,
+      deletedFor: map['deleted_for'] != null
+        ? List<String>.from(jsonDecode(map['deleted_for'] as String))
+        : [],
     );
   }
 
   Future<Conversation?> _conversationFromMap(Map<String, dynamic> map) async {
-    try {
-      Message? lastMessage;
-      if (map['last_message_id'] != null) {
-        lastMessage = await getMessageById(map['last_message_id'] as String);
-      }
-      
-      return Conversation(
-        id: map['id'] as String,
-        participants: List<String>.from(jsonDecode(map['participants'] as String)),
-        lastMessage: lastMessage,
-        lastMessageTime: map['last_message_time'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(map['last_message_time'] as int)
-          : null,
-        unreadCount: map['unread_count'] as int? ?? 0,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
-        updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updated_at'] as int),
-      );
-    } catch (e) {
-      debugPrint('Error converting conversation from map: $e');
-      return null;
-    }
+    // try {
+    //   Message? lastMessage;
+    //   if (map['last_message_id'] != null) {
+    //     // lastMessage = await getMessageById(map['last_message_id'] as String);
+    //   }
+    //
+    //   return Conversation(
+    //     id: map['id'] as String,
+    //     participants: List<String>.from(jsonDecode(map['participants'] as String)),
+    //     lastMessage: lastMessage,
+    //     lastMessageTime: map['last_message_time'] != null
+    //       ? DateTime.fromMillisecondsSinceEpoch(map['last_message_time'] as int)
+    //       : null,
+    //     unreadCount: map['unread_count'] as int? ?? 0,
+    //     createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
+    //     updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updated_at'] as int),
+    //   );
+    // } catch (e) {
+    //   debugPrint('Error converting conversation from map: $e');
+    //   return null;
+    // }
   }
 
   // Cleanup operations
@@ -534,7 +455,7 @@ class ChatStorage {
 
   // Add message method for compatibility with old interface
   Future<void> addMessage(Message message) async {
-    await saveMessage(message);
+    // await saveMessage(message);
   }
 
   // Get messages method for compatibility
@@ -556,13 +477,12 @@ class ChatStorage {
             'conversation_id': message.conversationId,
             'sender_id': message.senderId,
             'message_type': message.messageType,
-            'content': jsonEncode(message.content),
+            'content': jsonEncode(message.content.toJson()),
             'status': message.status.name,
             'timestamp': message.timestamp.millisecondsSinceEpoch,
-            'read_at': message.readAt?.millisecondsSinceEpoch,
-            'reply_to_id': message.replyToId,
-            'temp_id': message.tempId,
             'created_at': DateTime.now().millisecondsSinceEpoch,
+            'is_deleted': message.isDeleted ? 1 : 0,
+            'deleted_for': jsonEncode(message.deletedFor),
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
@@ -581,30 +501,30 @@ class ChatStorage {
 
   // Cache conversations method for batch operations
   Future<void> cacheConversations(List<Conversation> conversations) async {
-    final db = await database;
-    final batch = db.batch();
-    
-    try {
-      for (final conversation in conversations) {
-        batch.insert(
-          'conversations',
-          {
-            'id': conversation.id,
-            'participants': jsonEncode(conversation.participants),
-            'last_message_id': conversation.lastMessage?.id,
-            'last_message_time': conversation.lastMessageTime?.millisecondsSinceEpoch,
-            'unread_count': conversation.unreadCount,
-            'created_at': conversation.createdAt.millisecondsSinceEpoch,
-            'updated_at': conversation.updatedAt.millisecondsSinceEpoch,
-            'is_deleted': 0,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      }
-      
-      await batch.commit(noResult: true);
-    } catch (e) {
-      debugPrint('Error caching conversations: $e');
-    }
+    // final db = await database;
+    // final batch = db.batch();
+    //
+    // try {
+    //   for (final conversation in conversations) {
+    //     batch.insert(
+    //       'conversations',
+    //       {
+    //         'id': conversation.id,
+    //         'participants': jsonEncode(conversation.participants),
+    //         'last_message_id': conversation.lastMessage?.id,
+    //         'last_message_time': conversation.lastMessageTime?.millisecondsSinceEpoch,
+    //         'unread_count': conversation.unreadCount,
+    //         'created_at': conversation.createdAt.millisecondsSinceEpoch,
+    //         'updated_at': conversation.updatedAt.millisecondsSinceEpoch,
+    //         'is_deleted': 0,
+    //       },
+    //       conflictAlgorithm: ConflictAlgorithm.replace,
+    //     );
+    //   }
+    //
+    //   await batch.commit(noResult: true);
+    // } catch (e) {
+    //   debugPrint('Error caching conversations: $e');
+    // }
   }
 }

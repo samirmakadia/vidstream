@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/screens/main_app_screen.dart';
-import 'package:vidstream/services/demo_data_service.dart';
 import 'package:vidstream/theme.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -158,7 +157,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
   Future<void> _createSampleData() async {
     try {
-      await DemoDataService.createSampleVideos();
+      // await DemoDataService.createSampleVideos();
     } catch (e) {
       // Ignore errors - sample data is optional
       print('Failed to create sample data: $e');

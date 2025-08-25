@@ -1,6 +1,9 @@
 // API Data Models for VidStream App (adapted for REST API)
 
 // User Model - adapted for API
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
 class ApiUser {
   final String id;
   final String userId; // new field
@@ -491,13 +494,9 @@ class ApiLike {
 
 // Message Model for Socket.IO chat
 enum MessageStatus {
-  sending,
   sent,
   delivered,
   read,
-  failed,
-  deleted,
-  pending,
 }
 
 class Message {
@@ -505,18 +504,30 @@ class Message {
   final String conversationId;
   final String senderId;
   final String messageType;
-  final Map<String, dynamic> content;
+  final MessageContent content;
   final MessageStatus status;
   final DateTime timestamp;
-  final DateTime? readAt;
-  final String? replyToId;
-  final String? tempId;
+  final bool isDeleted;
+  final List<String> deletedFor;
 
   // Compatibility getters for UI
-  String get message => content['text'] ?? '';
+  String get message => content.text ?? '';
   DateTime get sentAt => timestamp;
   bool get isRead => status == MessageStatus.read;
   bool get isDelivered => status == MessageStatus.delivered;
+
+  Widget statusIcon({double size = 16, Color color = Colors.grey}) {
+    switch (status) {
+      case MessageStatus.sent:
+        return Icon(Icons.done , size: size, color: color.withOpacity(0.5));
+      case MessageStatus.delivered:
+        return Icon(Icons.done_all, size: size, color: color.withOpacity(0.7));
+      case MessageStatus.read:
+        return Icon(Icons.done_all, size: size, color: CupertinoColors.systemBlue);
+      default:
+        return Icon(Icons.access_time_outlined, size: size, color: color.withOpacity(0.5));
+    }
+  }
 
   Message({
     required this.id,
@@ -526,28 +537,24 @@ class Message {
     required this.content,
     required this.status,
     required this.timestamp,
-    this.readAt,
-    this.replyToId,
-    this.tempId,
+    this.isDeleted = false,
+    this.deletedFor = const [],
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      id: json['id']?.toString() ?? '',
+      id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       conversationId: json['conversation_id']?.toString() ?? json['conversationId']?.toString() ?? '',
       senderId: json['sender_id']?.toString() ?? json['senderId']?.toString() ?? '',
       messageType: json['message_type'] ?? json['messageType'] ?? 'text',
-      content: Map<String, dynamic>.from(json['content'] ?? {}),
+      content: MessageContent.fromJson(json['content'] ?? {}),
       status: MessageStatus.values.firstWhere(
         (e) => e.name == (json['status'] ?? 'sent'),
         orElse: () => MessageStatus.sent,
       ),
       timestamp: DateTime.tryParse(json['timestamp'] ?? json['created_at'] ?? '') ?? DateTime.now(),
-      readAt: json['read_at'] != null || json['readAt'] != null 
-        ? DateTime.tryParse(json['read_at'] ?? json['readAt']) 
-        : null,
-      replyToId: json['reply_to_id']?.toString() ?? json['replyToId']?.toString(),
-      tempId: json['temp_id']?.toString() ?? json['tempId']?.toString(),
+      isDeleted: json['isDeleted'] ?? false,
+      deletedFor: List<String>.from(json['deletedFor'] ?? []),
     );
   }
 
@@ -557,12 +564,11 @@ class Message {
       'conversation_id': conversationId,
       'sender_id': senderId,
       'message_type': messageType,
-      'content': content,
+      'content': content.toJson(),
       'status': status.name,
       'timestamp': timestamp.toIso8601String(),
-      'read_at': readAt?.toIso8601String(),
-      'reply_to_id': replyToId,
-      'temp_id': tempId,
+      'isDeleted': isDeleted,
+      'deletedFor': deletedFor,
     };
   }
 
@@ -571,12 +577,11 @@ class Message {
     String? conversationId,
     String? senderId,
     String? messageType,
-    Map<String, dynamic>? content,
+    MessageContent? content,
     MessageStatus? status,
     DateTime? timestamp,
-    DateTime? readAt,
-    String? replyToId,
-    String? tempId,
+    bool? isDeleted,
+    List<String>? deletedFor,
   }) {
     return Message(
       id: id ?? this.id,
@@ -586,86 +591,122 @@ class Message {
       content: content ?? this.content,
       status: status ?? this.status,
       timestamp: timestamp ?? this.timestamp,
-      readAt: readAt ?? this.readAt,
-      replyToId: replyToId ?? this.replyToId,
-      tempId: tempId ?? this.tempId,
+      isDeleted: isDeleted ?? this.isDeleted,
+      deletedFor: deletedFor ?? this.deletedFor,
     );
+  }
+}
+
+// Message content structure
+class MessageContent {
+  final String? text;
+  final String? mediaUrl;
+  final int? mediaSize;
+  final double? mediaDuration;
+  final String? thumbnailUrl;
+
+  MessageContent({
+    this.text,
+    this.mediaUrl,
+    this.mediaSize,
+    this.mediaDuration,
+    this.thumbnailUrl,
+  });
+
+  factory MessageContent.fromJson(Map<String, dynamic> json) {
+    return MessageContent(
+      text: json['text'],
+      mediaUrl: json['mediaUrl'],
+      mediaSize: json['mediaSize'],
+      mediaDuration: json['mediaDuration'] != null
+          ? (json['mediaDuration'] as num).toDouble()
+          : null,
+      thumbnailUrl: json['thumbnailUrl'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'text': text,
+      'mediaUrl': mediaUrl,
+      'mediaSize': mediaSize,
+      'mediaDuration': mediaDuration,
+      'thumbnailUrl': thumbnailUrl,
+    };
   }
 }
 
 // Conversation Model for Socket.IO chat
 class Conversation {
   final String id;
-  final List<String> participants;
+  final String conversationId;
   final Message? lastMessage;
-  final DateTime? lastMessageTime;
   final int unreadCount;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final List<ApiUser>? participantUsers;
+  final List<ApiUser>? participants;
+  final List<String> deletedFor;
 
   Conversation({
     required this.id,
+    required this.conversationId,
     required this.participants,
     this.lastMessage,
-    this.lastMessageTime,
     this.unreadCount = 0,
     required this.createdAt,
     required this.updatedAt,
-    this.participantUsers,
+    this.deletedFor = const [],
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
     return Conversation(
       id: json['id']?.toString() ?? '',
-      participants: List<String>.from(json['participants'] ?? []),
-      lastMessage: json['last_message'] != null 
-        ? Message.fromJson(json['last_message']) 
-        : null,
-      lastMessageTime: json['last_message_time'] != null || json['lastMessageTime'] != null 
-        ? DateTime.tryParse(json['last_message_time'] ?? json['lastMessageTime']) 
+      conversationId: json['conversation_id']?.toString() ?? json['conversationId']?.toString() ?? '',
+      lastMessage: json['lastMessage'] != null
+        ? Message.fromJson(json['lastMessage'])
         : null,
       unreadCount: json['unread_count'] ?? json['unreadCount'] ?? 0,
       createdAt: DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updated_at'] ?? json['updatedAt'] ?? '') ?? DateTime.now(),
-      participantUsers: json['participant_users'] != null 
+      participants: json['participant_users'] != null
         ? List<ApiUser>.from(json['participant_users'].map((x) => ApiUser.fromJson(x)))
         : null,
+      deletedFor: List<String>.from(json['deletedFor'] ?? [])
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'participants': participants,
-      'last_message': lastMessage?.toJson(),
-      'last_message_time': lastMessageTime?.toIso8601String(),
+      'conversation_id': conversationId,
+      'lastMessage': lastMessage?.toJson(),
       'unread_count': unreadCount,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-      'participant_users': participantUsers?.map((x) => x.toJson()).toList(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'participants': participants?.map((x) => x.toJson()).toList(),
+      'deletedFor': deletedFor,
     };
   }
 
   Conversation copyWith({
     String? id,
-    List<String>? participants,
+    List<ApiUser>? participants,
     Message? lastMessage,
     DateTime? lastMessageTime,
     int? unreadCount,
+    List<String>? deletedFor,
     DateTime? createdAt,
-    DateTime? updatedAt,
-    List<ApiUser>? participantUsers,
+    DateTime? updatedAt
   }) {
     return Conversation(
       id: id ?? this.id,
+      conversationId: conversationId,
       participants: participants ?? this.participants,
       lastMessage: lastMessage ?? this.lastMessage,
-      lastMessageTime: lastMessageTime ?? this.lastMessageTime,
       unreadCount: unreadCount ?? this.unreadCount,
+      deletedFor: deletedFor ?? this.deletedFor,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      participantUsers: participantUsers ?? this.participantUsers,
     );
   }
 }

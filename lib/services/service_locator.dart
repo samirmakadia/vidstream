@@ -60,14 +60,14 @@ class ServiceLocator {
       _apiService.initialize().catchError((e) => debugPrint('ApiService error: $e'));
       debugPrint('✓ ApiService created');
       
-      // Initialize socket manager (lightweight)
-      _socketManager = SocketManager();
-      _socketManager.initialize(
-        chatStorage: _chatStorage,
-        connectivityService: _connectivityService,
-        httpClient: _httpClient,
-      ).catchError((e) => debugPrint('SocketManager error: $e'));
-      debugPrint('✓ SocketManager created');
+      // // Initialize socket manager (lightweight)
+      // _socketManager = SocketManager();
+      // _socketManager.initialize(
+      //   chatStorage: _chatStorage,
+      //   connectivityService: _connectivityService,
+      //   httpClient: _httpClient,
+      // ).catchError((e) => debugPrint('SocketManager error: $e'));
+      // debugPrint('✓ SocketManager created');
       
       // Initialize error handler
       ErrorHandler.initialize(navigatorKey: navigatorKey);
@@ -91,32 +91,32 @@ class ServiceLocator {
   }
 
   /// Connect to socket after authentication
-  Future<void> connectSocket({String? token}) async {
-    try {
-      await _socketManager.connect(token: token);
-      debugPrint('ServiceLocator: Socket connected');
-    } catch (e) {
-      debugPrint('ServiceLocator: Failed to connect socket: $e');
-      // Don't rethrow - socket connection is not critical for app startup
-    }
-  }
+  // Future<void> connectSocket({String? token}) async {
+  //   try {
+  //     await _socketManager.connect(token: token);
+  //     debugPrint('ServiceLocator: Socket connected');
+  //   } catch (e) {
+  //     debugPrint('ServiceLocator: Failed to connect socket: $e');
+  //     // Don't rethrow - socket connection is not critical for app startup
+  //   }
+  // }
 
-  /// Disconnect socket (usually on logout)
-  Future<void> disconnectSocket() async {
-    try {
-      await _socketManager.disconnect();
-      debugPrint('ServiceLocator: Socket disconnected');
-    } catch (e) {
-      debugPrint('ServiceLocator: Error disconnecting socket: $e');
-    }
-  }
+  // /// Disconnect socket (usually on logout)
+  // Future<void> disconnectSocket() async {
+  //   try {
+  //     await _socketManager.disconnect();
+  //     debugPrint('ServiceLocator: Socket disconnected');
+  //   } catch (e) {
+  //     debugPrint('ServiceLocator: Error disconnecting socket: $e');
+  //   }
+  // }
 
   /// Clear all data (usually on logout)
   Future<void> clearAllData() async {
     try {
       await _chatStorage.clearAllData();
       _httpClient.clearTokens();
-      await disconnectSocket();
+      // await disconnectSocket();
       debugPrint('ServiceLocator: All data cleared');
     } catch (e) {
       debugPrint('ServiceLocator: Error clearing data: $e');
@@ -126,7 +126,7 @@ class ServiceLocator {
   /// Dispose all services
   void dispose() {
     try {
-      _socketManager.dispose();
+      // _socketManager.dispose();
       _connectivityService.dispose();
       _chatStorage.dispose();
       debugPrint('ServiceLocator: All services disposed');
