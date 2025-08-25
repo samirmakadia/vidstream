@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 class SessionManager {
@@ -15,5 +16,10 @@ class SessionManager {
 
   void resetSession() {
     _sessionId = const Uuid().v4();
+  }
+
+  Future<String?> getAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
   }
 }

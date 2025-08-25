@@ -9,19 +9,27 @@ class SocketManager {
 
   IO.Socket? _socket;
 
-  /// Connect to socket server with bearer token
   Future<void> connect({required String token}) async {
-    disconnect(); // Ensure previous socket is closed
+    disconnect();
 
     _socket = IO.io(
       'https://collie-humorous-goose.ngrok-free.app',
       IO.OptionBuilder()
-        .setTransports(['websocket'])
-        .enableAutoConnect()
-        .setAuth({'token': token})
-        .build()
+          .setTransports(['websocket'])
+          .enableAutoConnect()
+          .setAuth({'token': token})
+          .build(),
     );
 
+    _socket?.on('connect', (_) {
+      print("✅ Socket connected successfully with token: $token");
+    });
+
+    _socket?.on('connect_error', (err) {
+      print("❌ Socket connection error: $err");
+    });
+
+    // Custom server messages
     _socket?.on('message', _handleMessage);
   }
 

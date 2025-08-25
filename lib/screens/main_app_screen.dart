@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vidstream/screens/home_screen.dart';
 import 'package:vidstream/screens/profile_screen.dart';
 import 'package:vidstream/screens/create_post_screen.dart';
@@ -10,7 +11,9 @@ import 'package:vidstream/screens/meet_screen.dart';
 import 'package:vidstream/screens/chat_list_screen.dart';
 
 import '../manager/firebase_manager.dart';
+import '../manager/session_manager.dart';
 import '../services/meet_service.dart';
+import '../services/socket_manager.dart';
 
 class MainAppScreen extends StatefulWidget {
   const MainAppScreen({super.key});
@@ -32,12 +35,21 @@ class _MainAppScreenState extends State<MainAppScreen> {
     _requestPermissions();
     _updateUserLocation();
     // FirebaseManager().initNotification();
+    _connectSocket();
     _screens = [
       HomeScreen(key: _homeScreenKey),
       const MeetScreen(),
       const ChatListScreen(),
       const ProfileScreen(),
     ];
+  }
+
+  Future<void> _connectSocket() async {
+    final token = await SessionManager().getAccessToken();
+    print("Retrieved token: $token");
+    if (token != null && token.isNotEmpty) {
+      await SocketManager().connect(token: token);
+    }
   }
 
   Future<void> _requestPermissions() async {
