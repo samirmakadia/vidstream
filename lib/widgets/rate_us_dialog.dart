@@ -194,6 +194,7 @@ class _RateUsDialogState extends State<RateUsDialog> with TickerProviderStateMix
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Dialog(
+          // backgroundColor: Theme.of(context).colorScheme.onPrimary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(25),
           ),

@@ -1170,6 +1170,7 @@ class _ReportDialogState extends State<ReportDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.title),
+      backgroundColor: Theme.of(context).colorScheme.onSecondary,
       content: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.6,
