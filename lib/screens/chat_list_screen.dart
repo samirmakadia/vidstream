@@ -15,7 +15,7 @@ class ChatListScreen extends StatefulWidget {
 class _ChatListScreenState extends State<ChatListScreen> {
   final AuthService _authService = AuthService();
   final ChatService _chatService = ChatService();
-  final db = ConversationDatabase();
+  final db = ConversationDatabase.instance;
 
   @override
   void initState() {
@@ -81,6 +81,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return StreamBuilder<List<Conversation>>(
       stream: db.watchAllConversations(currentUserId),
       builder: (context, snapshot) {
+        print(' StreamBuilder: ${snapshot.error}');
         if (snapshot.connectionState == ConnectionState.waiting) {
           // stream is still connecting/loading
           return _buildLoadingState();

@@ -36,7 +36,7 @@ class SocketManager {
   void _handleMessage(dynamic data) async {
     final message = Message.fromJson(data);
     // Store or update message in local storage
-    MessageDatabase().addOrUpdateMessage(message);
+    MessageDatabase.instance.addOrUpdateMessage(message);
   }
 
 }

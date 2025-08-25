@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import '../models/api_models.dart';
-
 part 'message_storage_drift.g.dart';
 
 class MessagesDb extends Table {
@@ -22,7 +21,13 @@ class MessagesDb extends Table {
 
 @DriftDatabase(tables: [MessagesDb])
 class MessageDatabase extends _$MessageDatabase {
-  MessageDatabase() : super(NativeDatabase.memory());
+  // private constructor
+  MessageDatabase._internal() : super(NativeDatabase.memory());
+
+  static MessageDatabase? _instance;
+  static MessageDatabase get instance =>
+      _instance ??= MessageDatabase._internal();
+
 
   @override
   int get schemaVersion => 1;

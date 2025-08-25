@@ -22,11 +22,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final AuthService _authService = AuthService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final db = MessageDatabase();
+  final db = MessageDatabase.instance;
   // late final stream;
 
   Conversation? _conversation;
-  bool _isLoading = true;
+  bool _isLoading = false;
   bool _isSending = false;
   bool _canSendMessage = true;
 

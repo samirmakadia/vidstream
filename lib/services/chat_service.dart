@@ -16,7 +16,7 @@ class ChatService {
   Stream<List<Conversation>> getUserConversations() async* {
     try {
       // First yield cached conversations
-      final cachedConversations = await ConversationDatabase().getAllConversations( AuthService().currentUser?.id ?? '');
+      final cachedConversations = await ConversationDatabase.instance.getAllConversations( AuthService().currentUser?.id ?? '');
       if (cachedConversations.isNotEmpty) {
         yield cachedConversations;
       }
@@ -25,12 +25,12 @@ class ChatService {
       final apiResponse = await _apiRepository.api.getChatConversations();
       final apiConversations = apiResponse?.data ?? [];
       //await _chatStorage.cacheConversations(apiConversations);
-      await ConversationDatabase().replaceAllConversations(apiConversations);
+      await ConversationDatabase.instance.replaceAllConversations(apiConversations);
       yield apiConversations;
 
     } catch (e) {
       print('Error getting conversations: $e');
-      final cachedConversations = await ConversationDatabase().getAllConversations( AuthService().currentUser?.id ?? '');
+      final cachedConversations = await ConversationDatabase.instance.getAllConversations( AuthService().currentUser?.id ?? '');
       // final cachedConversations = await _chatStorage.getConversations();
       yield cachedConversations;
     }
