@@ -388,6 +388,7 @@ class ChatStorage {
       id: map['id'] as String,
       conversationId: map['conversation_id'] as String,
       senderId: map['sender_id'] as String,
+      receiverId: map['receiver_id'] as String,
       messageType: map['message_type'] as String,
       content: MessageContent.fromJson(jsonDecode(map['content'] as String)),
       status: MessageStatus.values.firstWhere(

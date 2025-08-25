@@ -29,12 +29,13 @@ class ApiUser {
   final bool isFollow;
   final int age;
   final double distance;
+  final bool isOnline;
 
   String get uid => id;
 
   ApiUser({
     required this.id,
-    required this.userId, // initialize userId
+    required this.userId,
     required this.email,
     required this.displayName,
     this.username,
@@ -57,12 +58,13 @@ class ApiUser {
     this.isInMeet = false,
     this.age = 20,
     this.distance = 0.0,
+    this.isOnline = false,
   });
 
   factory ApiUser.fromJson(Map<String, dynamic> json) {
     return ApiUser(
       id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
-      userId: json['userId']?.toString() ?? '', // parse userId
+      userId: json['userId']?.toString() ?? '',
       email: json['email'] ?? '',
       displayName: json['display_name'] ?? json['displayName'] ?? '',
       username: json['username'],
@@ -87,6 +89,7 @@ class ApiUser {
       isInMeet: json['is_in_meet'] ?? json['isInMeet'] ?? false,
       age: json['age'] ?? 20,
       distance: (json['distance'] != null) ? (json['distance'] as num).toDouble() : 0.0,
+      isOnline: json['isOnline'] ?? false,
     );
   }
 
@@ -94,7 +97,7 @@ class ApiUser {
     return {
       '_id': id,
       'id': id,
-      'userId': userId, // include in JSON
+      'userId': userId,
       'email': email,
       'display_name': displayName,
       'username': username,
@@ -117,12 +120,13 @@ class ApiUser {
       'is_in_meet': isInMeet,
       'age': age,
       'distance': distance,
+      'isOnline': isOnline,
     };
   }
 
   ApiUser copyWith({
     String? id,
-    String? userId, // copyWith support
+    String? userId,
     String? email,
     String? displayName,
     String? username,
@@ -145,6 +149,7 @@ class ApiUser {
     bool? isInMeet,
     int? age,
     double? distance,
+    bool? isOnline,
   }) {
     return ApiUser(
       id: id ?? this.id,
@@ -171,6 +176,7 @@ class ApiUser {
       isInMeet: isInMeet ?? this.isInMeet,
       age: age ?? this.age,
       distance: distance ?? this.distance,
+      isOnline: isOnline ?? this.isOnline,
     );
   }
 }
@@ -503,6 +509,7 @@ class Message {
   final String id;
   final String conversationId;
   final String senderId;
+  final String? receiverId; // added
   final String messageType;
   final MessageContent content;
   final MessageStatus status;
@@ -510,7 +517,6 @@ class Message {
   final bool isDeleted;
   final List<String> deletedFor;
 
-  // Compatibility getters for UI
   String get message => content.text ?? '';
   DateTime get sentAt => timestamp;
   bool get isRead => status == MessageStatus.read;
@@ -533,6 +539,7 @@ class Message {
     required this.id,
     required this.conversationId,
     required this.senderId,
+    this.receiverId, // added
     required this.messageType,
     required this.content,
     required this.status,
@@ -546,10 +553,11 @@ class Message {
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       conversationId: json['conversation_id']?.toString() ?? json['conversationId']?.toString() ?? '',
       senderId: json['sender_id']?.toString() ?? json['senderId']?.toString() ?? '',
+      receiverId: json['receiver_id']?.toString() ?? json['receiverId']?.toString() ?? '', // added
       messageType: json['message_type'] ?? json['messageType'] ?? 'text',
       content: MessageContent.fromJson(json['content'] ?? {}),
       status: MessageStatus.values.firstWhere(
-        (e) => e.name == (json['status'] ?? 'sent'),
+            (e) => e.name == (json['status'] ?? 'sent'),
         orElse: () => MessageStatus.sent,
       ),
       timestamp: DateTime.tryParse(json['timestamp'] ?? json['created_at'] ?? '') ?? DateTime.now(),
@@ -563,6 +571,7 @@ class Message {
       'id': id,
       'conversation_id': conversationId,
       'sender_id': senderId,
+      'receiver_id': receiverId, // added
       'message_type': messageType,
       'content': content.toJson(),
       'status': status.name,
@@ -572,10 +581,23 @@ class Message {
     };
   }
 
+  Map<String, dynamic> toSocketJson() {
+    return {
+      'messageId': id,
+      'conversationId': conversationId,
+      'senderId': senderId,
+      'receiverId': receiverId, // now included
+      'messageType': messageType,
+      'content': content.toJson(),
+      'status': status.name,
+    };
+  }
+
   Message copyWith({
     String? id,
     String? conversationId,
     String? senderId,
+    String? receiverId, // added
     String? messageType,
     MessageContent? content,
     MessageStatus? status,
@@ -587,6 +609,7 @@ class Message {
       id: id ?? this.id,
       conversationId: conversationId ?? this.conversationId,
       senderId: senderId ?? this.senderId,
+      receiverId: receiverId ?? this.receiverId, // added
       messageType: messageType ?? this.messageType,
       content: content ?? this.content,
       status: status ?? this.status,
@@ -660,18 +683,21 @@ class Conversation {
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
     return Conversation(
-      id: json['id']?.toString() ?? '',
-      conversationId: json['conversation_id']?.toString() ?? json['conversationId']?.toString() ?? '',
+      id: json['_id']?.toString() ?? '',
+      conversationId: json['conversationId']?.toString() ?? '',
       lastMessage: json['lastMessage'] != null
-        ? Message.fromJson(json['lastMessage'])
-        : null,
-      unreadCount: json['unread_count'] ?? json['unreadCount'] ?? 0,
-      createdAt: DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at'] ?? json['updatedAt'] ?? '') ?? DateTime.now(),
-      participants: json['participant_users'] != null
-        ? List<ApiUser>.from(json['participant_users'].map((x) => ApiUser.fromJson(x)))
-        : null,
-      deletedFor: List<String>.from(json['deletedFor'] ?? [])
+          ? Message.fromJson(json['lastMessage'])
+          : null,
+      unreadCount: (json['unread_count'] ?? json['unreadCount']) is int
+          ? (json['unread_count'] ?? json['unreadCount']) as int
+          : 0,
+      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
+      participants: json['participants'] != null
+          ? List<ApiUser>.from(
+          (json['participants'] as List).map((x) => ApiUser.fromJson(x)))
+          : null,
+      deletedFor: List<String>.from(json['deletedFor'] ?? []),
     );
   }
 

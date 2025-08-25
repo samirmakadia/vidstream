@@ -1,12 +1,11 @@
-import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
-
 import 'package:vidstream/storage/message_storage_drift.dart';
-
+import '../services/socket_manager.dart';
+import '../utils/app_toaster.dart';
 import '../widgets/custom_image_widget.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -38,9 +37,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
 
   Future<void> _sendMessage({String? mediaUrl, String messageType = 'text'}) async {
-
     final messageText = _messageController.text.trim();
-    if (messageText.isEmpty && mediaUrl == null) return;
+    if (messageText.isEmpty && mediaUrl == null) {
+      AppToast.showError("Enter message or attach media");
+      return;
+    }
 
     setState(() {
       _isSending = true;
@@ -48,19 +49,46 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     try {
       final currentUserId = _authService.currentUser?.id;
-      if (currentUserId != null && _conversation != null) {
+      final conversationId = _conversation?.id;
 
-      }
-    } catch (e) {
+      if (currentUserId == null ) return;
+
+
+      final content = MessageContent(
+        text: messageText,
+        mediaUrl: mediaUrl,
+        mediaSize: 0,
+        mediaDuration: 0,
+        thumbnailUrl: '',
+      );
+
+      final message = Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        conversationId: conversationId ?? '$currentUserId-${widget.otherUserId}',
+        senderId: currentUserId,
+        receiverId: widget.otherUserId,
+        messageType: messageType,
+        content: content,
+        status: MessageStatus.sent,
+        timestamp: DateTime.now(),
+      );
+
+      _messageController.clear();
+      SocketManager().sendMessage(message);
+      debugPrint("✅ Message sent: ${message.id}");
+    } catch (e, stack) {
+      debugPrint("❌ Error sending message: $e\n$stack");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error sending message: $e')),
         );
       }
     } finally {
-      setState(() {
-        _isSending = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
     }
   }
 
