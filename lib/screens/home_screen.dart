@@ -356,7 +356,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                       ),
                       
                       if (tempSelectedTags.isNotEmpty) ...[
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
@@ -415,7 +415,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                         ),
                       ],
                       
-                      const SizedBox(height: 100), // Extra space for buttons
+                      const SizedBox(height: 10), // Extra space for buttons
                     ],
                   ),
                 ),
@@ -423,7 +423,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               
               // Bottom actions
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Color(0xFF262626),
                   borderRadius: const BorderRadius.only(
@@ -946,7 +946,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
         ),
         
         Positioned(
-          bottom: 14,
+          bottom: 6,
           left: 0,
           right: 0,
           child: Padding(
@@ -968,12 +968,12 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                           isFollowLoading: _isFollowLoading,
                         ),
                       
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       
                       // Video Description
                       if (widget.video.description.isNotEmpty)
                         Container(
-                          padding: const EdgeInsets.symmetric( vertical: 8),
+                          padding: const EdgeInsets.symmetric( vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(8),
@@ -988,7 +988,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                           ),
                         ),
                       
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       
                       // Tags
                       if (widget.video.tags.isNotEmpty)

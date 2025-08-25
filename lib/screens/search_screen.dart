@@ -631,17 +631,17 @@ class UserCard extends StatelessWidget {
             children: [
               CustomImageWidget(
                 imageUrl: user.profileImageUrl ?? '',
-                height: 50,
-                width: 50,
+                height: 42,
+                width: 42,
                 cornerRadius: 25,
                 isUserInitial: true,
                 initials: Utils.getInitials(user.displayName),
-                initialsBgColor: Colors.red.shade50,
+                initialsBgColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 initialsTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 10),
               // User Info
               Expanded(
                 child: Column(
@@ -649,7 +649,7 @@ class UserCard extends StatelessWidget {
                   children: [
                     Text(
                       user.displayName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -668,14 +668,14 @@ class UserCard extends StatelessWidget {
                       ),
                     ],
                     
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     
                     // Stats
                     Row(
                       children: [
                         Icon(
                           Icons.people,
-                          size: 16,
+                          size: 14,
                           color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: 4),
@@ -688,7 +688,7 @@ class UserCard extends StatelessWidget {
                         
                         Icon(
                           Icons.video_library,
-                          size: 16,
+                          size: 14,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),

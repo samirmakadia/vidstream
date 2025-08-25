@@ -119,10 +119,16 @@ class _MainAppScreenState extends State<MainAppScreen> {
               offset: const Offset(0, -2),
             ),
           ],
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+              width: 0.5,
+            ),
+          ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -146,8 +152,8 @@ class _MainAppScreenState extends State<MainAppScreen> {
                 
                 // Create Post (Center Button)
                 Container(
-                  height: 56,
-                  width: 56,
+                  height: 42,
+                  width: 42,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -173,7 +179,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
                       child: Icon(
                         Icons.add,
                         color: Colors.white,
-                        size: 32,
+                        size: 26,
                       ),
                     ),
                   ),
@@ -184,6 +190,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
                   icon: Icons.chat_bubble_outline,
                   activeIcon: Icons.chat_bubble,
                   label: 'Chat',
+                  iconSize: 22,
                   index: 3,
                   isActive: _currentIndex == 2,
                 ),
@@ -207,6 +214,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
   Widget _buildNavItem({
     required IconData icon,
     required IconData activeIcon,
+    int? iconSize = 25,
     required String label,
     required int index,
     required bool isActive,
@@ -214,7 +222,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
     return GestureDetector(
       onTap: () => _onTabTapped(index),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -226,10 +234,10 @@ class _MainAppScreenState extends State<MainAppScreen> {
                 color: isActive 
                     ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                size: 26,
+                size: iconSize?.toDouble(),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
