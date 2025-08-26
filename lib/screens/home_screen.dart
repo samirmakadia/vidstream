@@ -111,7 +111,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      if(mounted) {
+        setState(() => _isLoading = false);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

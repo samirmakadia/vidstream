@@ -41,16 +41,14 @@ class UserInfoWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child:
-        Expanded(
-          child: Text(
-            '@${user.displayName}',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+        Text(
+          '@${user.displayName}',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );
