@@ -4,6 +4,7 @@ import 'package:vidstream/models/api_models.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import 'package:vidstream/storage/message_storage_drift.dart';
+import 'package:vidstream/utils/utils.dart';
 import '../services/socket_manager.dart';
 import '../utils/app_toaster.dart';
 import '../widgets/custom_image_widget.dart';
@@ -50,8 +51,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     try {
       final currentUserId = _authService.currentUser?.id;
-      final conversationId = _conversation?.id;
-
+      final conversationId = _conversation?.id ?? Utils.generateConversationId(currentUserId!, widget.otherUserId);
       if (currentUserId == null ) return;
 
 
@@ -65,7 +65,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
       final message = Message(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        conversationId: conversationId ?? '$currentUserId-${widget.otherUserId}',
+        conversationId: conversationId,
         senderId: currentUserId,
         receiverId: widget.otherUserId,
         messageType: messageType,
@@ -227,8 +227,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   Widget _buildMessagesList() {
     final currentUserId = _authService.currentUser?.id;
+    final conversationId = _conversation?.id ?? Utils.generateConversationId(currentUserId!, widget.otherUserId);
     return StreamBuilder<List<ChatMessage>>(
-      stream: db.watchMessagesForConversation(widget.conversationId ?? '$currentUserId-${widget.otherUserId}'),
+      stream: db.watchMessagesForConversation(conversationId),
       builder: (context, snapshot) {
         final messages = snapshot.data ?? [];
         return ListView.builder(

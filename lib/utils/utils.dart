@@ -155,6 +155,11 @@ class Utils{
     }
   }
 
+  static String generateConversationId(String userId1, String userId2) {
+    final ids = [userId1, userId2]..sort();
+    return '${ids[0]}-${ids[1]}';
+  }
+
 }
 
 

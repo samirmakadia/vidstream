@@ -111,6 +111,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
             itemCount: conversations.length,
             itemBuilder: (context, index) {
               final conversation = conversations[index];
+              print(
+                  'Building chat tile → id: ${conversation.conversationId}, name: ${conversation.participants?.map((u) => u.displayName).join(', ')}'
+              );
               return _buildChatTile(conversation);
             },
           ),
