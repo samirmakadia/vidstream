@@ -15,7 +15,7 @@ class SocketManager {
     disconnect();
 
     _socket = IO.io(
-      'https://collie-humorous-goose.ngrok-free.app',
+      'https://puny-toys-leave.loca.lt',
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
@@ -43,6 +43,7 @@ class SocketManager {
 
   /// Handle incoming message event and store/update in local storage
   void _handleMessage(dynamic data) async {
+    print("🔔 Incoming message data: $data");
     final message = Message.fromJson(data);
     debugPrint("⬅️ Message received from socket: ${message.id} | ${message.message}");
 
