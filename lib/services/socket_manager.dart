@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:vidstream/storage/conversation_storage_drift.dart';
 import '../models/api_models.dart';
 import '../storage/message_storage_drift.dart';
 import 'package:flutter/foundation.dart';
@@ -49,6 +50,7 @@ class SocketManager {
 
     // Save or update in local DB
     await MessageDatabase.instance.addOrUpdateMessage(message);
+    await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.id);
   }
 
 

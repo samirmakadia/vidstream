@@ -35,4 +35,16 @@ class ChatService {
       yield cachedConversations;
     }
   }
+
+  Future<bool> fetchAndCacheConversations() async {
+    try {
+      final apiResponse = await _apiRepository.api.getChatConversations();
+      final apiConversations = apiResponse?.data ?? [];
+      await ConversationDatabase.instance.replaceAllConversations(apiConversations);
+      return true;
+    } catch (e) {
+      print('Error fetching conversations: $e');
+      return false;
+    }
+  }
 }

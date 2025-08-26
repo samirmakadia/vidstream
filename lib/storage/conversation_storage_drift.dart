@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:vidstream/storage/message_storage_drift.dart';
 import '../models/api_models.dart';
+import '../services/chat_service.dart';
 
 part 'conversation_storage_drift.g.dart';
 
@@ -168,7 +169,26 @@ class ConversationDatabase extends _$ConversationDatabase {
       ),
     );
   }
+
+  /// Update the lastMessage field by conversationId
+  Future<void> updateLastMessageIdByConversationId(String conversationId, String lastMessageId) async {
+    var row = await (select(conversationsDb)
+      ..where((tbl) => tbl.conversationId.equals(conversationId)))
+        .getSingleOrNull();
+
+    if (row == null) {
+      // Fetch from ChatService if not found locally
+      final chatService = ChatService();
+      await chatService.fetchAndCacheConversations();
+    }
+
+    await (update(conversationsDb)
+      ..where((tbl) => tbl.conversationId.equals(conversationId)))
+        .write(
+      ConversationsDbCompanion(
+        lastMessage: Value(lastMessageId),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+  }
 }
-
-
-
