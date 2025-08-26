@@ -16,13 +16,6 @@ class SocketManager {
 
   IO.Socket? _socket;
 
-  final _userJoinedController = StreamController<String>.broadcast();
-  final _userLeftController = StreamController<String>.broadcast();
-
-  // 👇 getters
-  Stream<String> get onUserJoinedMeet => _userJoinedController.stream;
-  Stream<String> get onUserLeftMeet => _userLeftController.stream;
-
   Future<void> connect({required String token}) async {
     disconnect();
 
@@ -43,11 +36,14 @@ class SocketManager {
       print("❌ Socket connection error: $err");
     });
 
-    // Handle incoming messages
     _socket?.on('message', _handleMessage);
 
     _socket?.on('userJoinedMeet', _handleUserJoinedMeet);
     _socket?.on('userLeftMeet', _handleUserLeftMeet);
+
+    _socket?.on('delivered', _handleDelivered);
+
+
   }
 
   void disconnect() {
@@ -56,26 +52,31 @@ class SocketManager {
     _socket = null;
   }
 
-  /// Handle incoming message event and store/update in local storage
   void _handleMessage(dynamic data) async {
     print("🔔 Incoming message data: $data");
     final message = Message.fromJson(data);
-    debugPrint("⬅️ Message received from socket: ${message.id} | ${message.message}");
+    debugPrint("⬅️ Message received: ${message.id} | ${message.message}");
 
-    // Save or update in local DB
     await MessageDatabase.instance.addOrUpdateMessage(message);
     await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.id);
+
+    final deliveredPayload = {
+      ...message.toSocketJson(),
+      "status": "delivered",
+    };
+
+    _socket?.emit("message", deliveredPayload);
+
+    debugPrint("📩 Delivered receipt sent for message ${message.id}");
   }
 
   void sendMessage(Message message) async {
     try {
-      // Convert message to JSON string
       String jsonString = jsonEncode(message.toSocketJson());
       print(jsonString);
 
       _socket?.emit('message', message.toSocketJson());
 
-      // Save the message locally in DB
       await MessageDatabase.instance.addOrUpdateMessage(message);
 
       debugPrint("✅ Message sent and saved: ${message.id}");
@@ -99,12 +100,28 @@ class SocketManager {
   void _handleUserLeftMeet(dynamic data) async {
     debugPrint("👤 userLeftMeet event: $data");
     try {
-      final userId = data['userId']; 
+      final userId = data['userId'];
       if (userId != null) {
         eventBus.fire(MeetEvent(userId: userId, type: MeetEventType.left));
       }
     } catch (e) {
       debugPrint("❌ Error handling userLeftMeet: $e");
+    }
+  }
+
+  void _handleDelivered(dynamic data) async {
+    debugPrint("📬 delivered event: $data");
+    try {
+      final messageId = data['messageId'];
+      if (messageId != null) {
+        // Update local DB to mark as delivered
+        //await MessageDatabase.instance.updateMessageStatus(messageId, "delivered");
+
+        // Fire event to UI
+        //eventBus.fire(MessageDeliveredEvent(messageId));
+      }
+    } catch (e) {
+      debugPrint("❌ Error handling delivered event: $e");
     }
   }
 

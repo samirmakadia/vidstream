@@ -28,10 +28,8 @@ class _MeetScreenState extends State<MeetScreen> {
     _meetEventSub = eventBus.on<MeetEvent>().listen((event) {
       if (!mounted) return;
       if (event.type == MeetEventType.joined) {
-        debugPrint("✅ User joined meet: ${event.userId}");
-        _loadOnlineUsers(); // reload list in background
+        _loadOnlineUsers();
       } else if (event.type == MeetEventType.left) {
-        debugPrint("🚪 User left meet: ${event.userId}");
         setState(() {
           _onlineUsers.removeWhere((u) => u.userId == event.userId);
         });
