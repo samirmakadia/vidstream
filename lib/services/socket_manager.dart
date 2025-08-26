@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:event_bus/event_bus.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:vidstream/storage/conversation_storage_drift.dart';
 import '../models/api_models.dart';
 import '../storage/message_storage_drift.dart';
 import 'package:flutter/foundation.dart';
+
+final EventBus eventBus = EventBus();
 
 class SocketManager {
   static final SocketManager _instance = SocketManager._internal();
@@ -13,8 +16,8 @@ class SocketManager {
 
   IO.Socket? _socket;
 
-  final _userJoinedController = StreamController<String>.broadcast(); // userId
-  final _userLeftController = StreamController<String>.broadcast(); // userId
+  final _userJoinedController = StreamController<String>.broadcast();
+  final _userLeftController = StreamController<String>.broadcast();
 
   // 👇 getters
   Stream<String> get onUserJoinedMeet => _userJoinedController.stream;
@@ -86,7 +89,7 @@ class SocketManager {
     try {
       final userId = data['userId'];
       if (userId != null) {
-        _userJoinedController.add(userId);
+        eventBus.fire(MeetEvent(userId: userId, type: MeetEventType.joined));
       }
     } catch (e) {
       debugPrint("❌ Error handling userJoinedMeet: $e");
@@ -96,13 +99,26 @@ class SocketManager {
   void _handleUserLeftMeet(dynamic data) async {
     debugPrint("👤 userLeftMeet event: $data");
     try {
-      final userId = data['userId'];
+      final userId = data['userId']; 
       if (userId != null) {
-        _userLeftController.add(userId);
+        eventBus.fire(MeetEvent(userId: userId, type: MeetEventType.left));
       }
     } catch (e) {
       debugPrint("❌ Error handling userLeftMeet: $e");
     }
   }
 
+}
+
+
+enum MeetEventType { joined, left }
+
+class MeetEvent {
+  final String userId;
+  final MeetEventType type;
+
+  MeetEvent({
+    required this.userId,
+    required this.type,
+  });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:vidstream/services/meet_service.dart';
 import 'package:vidstream/models/api_models.dart';
@@ -18,22 +20,20 @@ class _MeetScreenState extends State<MeetScreen> {
   List<ApiUser> _onlineUsers = [];
   String _selectedGenderFilter = 'all';
   final MeetService _meetService = MeetService();
+  late final StreamSubscription _meetEventSub;
 
   @override
   void initState() {
     super.initState();
-
-    final socketManager = SocketManager();
-    socketManager.onUserJoinedMeet.listen((userId) {
-      if (mounted) {
-        _loadOnlineUsers();
-      }
-    });
-
-    socketManager.onUserLeftMeet.listen((userId) {
-      if (mounted) {
+    _meetEventSub = eventBus.on<MeetEvent>().listen((event) {
+      if (!mounted) return;
+      if (event.type == MeetEventType.joined) {
+        debugPrint("✅ User joined meet: ${event.userId}");
+        _loadOnlineUsers(); // reload list in background
+      } else if (event.type == MeetEventType.left) {
+        debugPrint("🚪 User left meet: ${event.userId}");
         setState(() {
-          _onlineUsers.removeWhere((u) => u.userId == userId);
+          _onlineUsers.removeWhere((u) => u.userId == event.userId);
         });
       }
     });
@@ -270,6 +270,11 @@ class _MeetScreenState extends State<MeetScreen> {
     );
   }
 
+  @override
+  void dispose() {
+    _meetEventSub.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -626,8 +631,4 @@ class _MeetScreenState extends State<MeetScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }
