@@ -40,10 +40,7 @@ class SocketManager {
 
     _socket?.on('userJoinedMeet', _handleUserJoinedMeet);
     _socket?.on('userLeftMeet', _handleUserLeftMeet);
-
-    _socket?.on('delivered', _handleDelivered);
-
-
+    
   }
 
   void disconnect() {
@@ -106,22 +103,6 @@ class SocketManager {
       }
     } catch (e) {
       debugPrint("❌ Error handling userLeftMeet: $e");
-    }
-  }
-
-  void _handleDelivered(dynamic data) async {
-    debugPrint("📬 delivered event: $data");
-    try {
-      final messageId = data['messageId'];
-      if (messageId != null) {
-        // Update local DB to mark as delivered
-        //await MessageDatabase.instance.updateMessageStatus(messageId, "delivered");
-
-        // Fire event to UI
-        //eventBus.fire(MessageDeliveredEvent(messageId));
-      }
-    } catch (e) {
-      debugPrint("❌ Error handling delivered event: $e");
     }
   }
 
