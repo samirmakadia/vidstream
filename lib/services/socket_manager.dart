@@ -15,7 +15,7 @@ class SocketManager {
     disconnect();
 
     _socket = IO.io(
-      'https://puny-toys-leave.loca.lt',
+      'https://vidstream-app.loca.lt',
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
