@@ -47,4 +47,14 @@ class ChatService {
       return false;
     }
   }
+
+  Future<ApiUser?> getUserById(String userId) async {
+    try {
+      return await _apiRepository.api.getUserById(userId);
+    } catch (e) {
+      print('Error getting user by ID: $e');
+      return null;
+    }
+  }
+
 }

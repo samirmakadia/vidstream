@@ -368,4 +368,6 @@ class AuthService {
   void dispose() {
     _authStateController.close();
   }
+
+
 }

@@ -4,6 +4,9 @@ import 'package:drift/native.dart';
 import 'package:vidstream/storage/message_storage_drift.dart';
 import '../models/api_models.dart';
 import '../services/chat_service.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 part 'conversation_storage_drift.g.dart';
 
@@ -21,10 +24,19 @@ class ConversationsDb extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+LazyDatabase _openConnection() {
+  return LazyDatabase(() async {
+    // Pick a safe, persistent folder
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dir.path, 'conversations.sqlite'));
+    return NativeDatabase(file);
+  });
+}
+
 @DriftDatabase(tables: [ConversationsDb])
 class ConversationDatabase extends _$ConversationDatabase {
   // --- singleton setup ---
-  ConversationDatabase._internal() : super(NativeDatabase.memory());
+  ConversationDatabase._internal() : super(_openConnection());
   static final ConversationDatabase instance = ConversationDatabase._internal();
 
   @override

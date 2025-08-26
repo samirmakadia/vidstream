@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import 'package:vidstream/storage/message_storage_drift.dart';
 import 'package:vidstream/utils/utils.dart';
+import '../services/chat_service.dart';
 import '../services/socket_manager.dart';
 import '../utils/app_toaster.dart';
 import '../widgets/custom_image_widget.dart';
@@ -12,8 +13,10 @@ import '../widgets/custom_image_widget.dart';
 class ChatScreen extends StatefulWidget {
   final String otherUserId;
   final String? conversationId;
+  final String? name;
+  final String? imageUrl;
 
-  const ChatScreen({super.key, required this.otherUserId, this.conversationId});
+  const ChatScreen({super.key, required this.otherUserId, this.conversationId, this.name, this.imageUrl});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -21,12 +24,13 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final AuthService _authService = AuthService();
+  final ChatService _chatService = ChatService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final db = MessageDatabase.instance;
   // late final stream;
+  ApiUser? _otherUser;
 
-  Conversation? _conversation;
   final bool _isLoading = false;
   bool _isSending = false;
   final bool _canSendMessage = true;
@@ -35,6 +39,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadOtherUser();
   }
 
 
@@ -51,7 +56,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     try {
       final currentUserId = _authService.currentUser?.id;
-      final conversationId = _conversation?.id ?? Utils.generateConversationId(currentUserId!, widget.otherUserId);
+      final conversationId = widget.conversationId ?? Utils.generateConversationId(currentUserId!, widget.otherUserId);
       if (currentUserId == null ) return;
 
 
@@ -93,8 +98,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
-  ApiUser? _otherUser() {
-    return _conversation?.participants?.firstWhere((user) => user.id != _authService.currentUser?.id);
+  Future<void> _loadOtherUser() async {
+    _otherUser = await _chatService.getUserById(widget.otherUserId);
+    setState(() {});
   }
 
   Future<void> _pickAndSendImage() async {
@@ -151,9 +157,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       appBar: AppBar(
         title: Row(
           children: [
-            _otherUser()?.profileImageUrl != null && _otherUser()!.profileImageUrl!.isNotEmpty ?
+            widget.imageUrl != null && widget.imageUrl!.isNotEmpty ?
             CustomImageWidget(
-              imageUrl: _otherUser()?.profileImageUrl ?? '',
+              imageUrl: widget.imageUrl ?? _otherUser?.profileImageUrl ?? '',
               height: 35,
               width: 35,
               cornerRadius: 30,
@@ -161,13 +167,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             CircleAvatar(
               radius: 17,
               backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-              backgroundImage: _otherUser()?.profileImageUrl != null ? NetworkImage(_otherUser()!.profileImageUrl!) : null,
+              backgroundImage: _otherUser?.profileImageUrl != null ? NetworkImage(_otherUser!.profileImageUrl!) : null,
               child: Icon(Icons.person, size: 16, color: Theme.of(context).colorScheme.primary)
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                _otherUser()?.displayName ?? 'Loading...',
+                _otherUser?.displayName ?? widget.name ?? 'Loading...',
                 style: Theme.of(context).appBarTheme.titleTextStyle,
               ),
             ),
@@ -214,7 +220,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           ),
           const SizedBox(height: 8),
           Text(
-            'Send your first message to ${_otherUser()?.displayName ?? 'this user'}',
+            'Send your first message to ${_otherUser?.displayName ?? 'this user'}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
@@ -227,7 +233,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   Widget _buildMessagesList() {
     final currentUserId = _authService.currentUser?.id;
-    final conversationId = _conversation?.id ?? Utils.generateConversationId(currentUserId!, widget.otherUserId);
+    final conversationId = widget.conversationId ?? Utils.generateConversationId(currentUserId!, widget.otherUserId);
     return StreamBuilder<List<ChatMessage>>(
       stream: db.watchMessagesForConversation(conversationId),
       builder: (context, snapshot) {
@@ -427,9 +433,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _conversation != null) {
+    if (state == AppLifecycleState.resumed && widget.conversationId != null) {
       // Mark messages as read when user returns to the chat
-      if (_conversation != null) {
+      if (widget.conversationId != null) {
         // TODO mark messages as read
       }
     }

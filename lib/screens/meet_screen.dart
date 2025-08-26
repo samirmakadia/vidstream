@@ -110,7 +110,7 @@ class _MeetScreenState extends State<MeetScreen> {
   void _startChat(ApiUser user) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ChatScreen(otherUserId: user.userId),
+        builder: (context) => ChatScreen(otherUserId: user.userId, name: user.displayName,imageUrl: user.profileImageUrl ,),
       ),
     );
   }
