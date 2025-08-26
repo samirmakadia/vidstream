@@ -25,9 +25,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   // late final stream;
 
   Conversation? _conversation;
-  final bool _isLoading = false;
+  bool _isLoading = false;
   bool _isSending = false;
-  final bool _canSendMessage = true;
+  bool _canSendMessage = true;
 
   @override
   void initState() {
