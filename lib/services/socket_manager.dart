@@ -15,7 +15,7 @@ class SocketManager {
     disconnect();
 
     _socket = IO.io(
-      'https://vidstream-app.loca.lt',
+      'https://creatives-macbook-air-2.taild45175.ts.net',
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
