@@ -176,8 +176,9 @@ class ConversationDatabase extends _$ConversationDatabase {
 
       // 3) Get last messages in parallel (only if you really need them here)
       final lastMsgs = await Future.wait(filtered.map((row) async {
-        // If you gate this with some flag/column, keep it; otherwise just fetch.
-        return MessageDatabase.instance.getLastMessageByConversationId(row.id);
+        return row.lastMessage != null
+            ? await MessageDatabase.instance.getLastMessageByConversationId(row.conversationId)
+            : null;
       }));
 
       // 4) Build domain objects

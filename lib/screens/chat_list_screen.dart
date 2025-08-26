@@ -174,7 +174,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
     final displayName = otherUser?.displayName ?? 'Unknown User';
     final profileImage = otherUser?.profileImageUrl;
-    final lastMessageText = conversation.lastMessage?.message ?? 'Start conversation';
+    print(conversation.lastMessage?.content.text);
+    final lastMessageText = conversation.lastMessage?.content.text ?? 'Start conversation';
 
     return GestureDetector(
       onTap: () {
