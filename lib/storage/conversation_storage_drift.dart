@@ -115,32 +115,89 @@ class ConversationDatabase extends _$ConversationDatabase {
     }));
   }
 
+  // Stream<List<Conversation>> watchAllConversations(String currentUserId) {
+  //   final query = (select(conversationsDb)
+  //     ..orderBy([(tbl) => OrderingTerm.desc(tbl.updatedAt)]));
+  //
+  //   return query.watch().map((rows) {
+  //     return rows.where((row) {
+  //       if (row.deletedFor != null && row.deletedFor!.isNotEmpty) {
+  //         final deletedForList = List<String>.from(jsonDecode(row.deletedFor!));
+  //         return !deletedForList.contains(currentUserId);
+  //       }
+  //       return true;
+  //     }).map((row) {
+  //       final participants = (jsonDecode(row.participants) as List)
+  //           .map((e) => AppUser.fromJson(Map<String, dynamic>.from(e)))
+  //           .toList();
+  //
+  //       final lastMsg = row.lastMessage != null
+  //           ? await MessageDatabase.instance.getLastMessageByConversationId(row.id)
+  //           : null;
+  //       return Conversation(
+  //         id: row.id,
+  //         conversationId: row.conversationId,
+  //         participants: participants,
+  //         lastMessage: , // can be populated if needed
+  //         unreadCount: row.unreadCount,
+  //         createdAt: DateTime.fromMillisecondsSinceEpoch(row.createdAt),
+  //         updatedAt: DateTime.fromMillisecondsSinceEpoch(row.updatedAt),
+  //       );
+  //     }).toList();
+  //   });
+  // }
+
   Stream<List<Conversation>> watchAllConversations(String currentUserId) {
     final query = (select(conversationsDb)
-      ..orderBy([(tbl) => OrderingTerm.desc(tbl.updatedAt)]));
+      ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]));
 
-    return query.watch().map((rows) {
-      return rows.where((row) {
-        if (row.deletedFor != null && row.deletedFor!.isNotEmpty) {
-          final deletedForList = List<String>.from(jsonDecode(row.deletedFor!));
-          return !deletedForList.contains(currentUserId);
+    return query.watch().asyncMap((rows) async {
+      // 1) Filter out conversations deleted for this user
+      final filtered = rows.where((row) {
+        final df = row.deletedFor;
+        if (df == null || df.isEmpty) return true;
+        try {
+          final list = (jsonDecode(df) as List).cast<String>();
+          return !list.contains(currentUserId);
+        } catch (_) {
+          // If malformed JSON, keep the conversation instead of crashing
+          return true;
         }
-        return true;
-      }).map((row) {
-        final participants = (jsonDecode(row.participants) as List)
-            .map((e) => AppUser.fromJson(Map<String, dynamic>.from(e)))
-            .toList();
-
-        return Conversation(
-          id: row.id,
-          conversationId: row.conversationId,
-          participants: participants,
-          lastMessage: null, // can be populated if needed
-          unreadCount: row.unreadCount,
-          createdAt: DateTime.fromMillisecondsSinceEpoch(row.createdAt),
-          updatedAt: DateTime.fromMillisecondsSinceEpoch(row.updatedAt),
-        );
       }).toList();
+
+      // 2) Decode participants
+      List<List<AppUser>> participantsPerRow = filtered.map((row) {
+        final raw = jsonDecode(row.participants) as List;
+        return raw.map((e) {
+          final map = (e is Map<String, dynamic>) ? e : Map<String, dynamic>.from(e as Map);
+          return AppUser.fromJson(map);
+        }).toList();
+      }).toList();
+
+      // 3) Get last messages in parallel (only if you really need them here)
+      final lastMsgs = await Future.wait(filtered.map((row) async {
+        // If you gate this with some flag/column, keep it; otherwise just fetch.
+        return MessageDatabase.instance.getLastMessageByConversationId(row.id);
+      }));
+
+      // 4) Build domain objects
+      final conversations = <Conversation>[];
+      for (int i = 0; i < filtered.length; i++) {
+        final row = filtered[i];
+        conversations.add(
+          Conversation(
+            id: row.id,
+            conversationId: row.conversationId,
+            participants: participantsPerRow[i],
+            lastMessage: lastMsgs[i], // Message? nullable, as your model defines
+            unreadCount: row.unreadCount ?? 0,
+            createdAt: DateTime.fromMillisecondsSinceEpoch(row.createdAt),
+            updatedAt: DateTime.fromMillisecondsSinceEpoch(row.updatedAt),
+          ),
+        );
+      }
+
+      return conversations;
     });
   }
 
