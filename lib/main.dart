@@ -18,13 +18,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize services (non-blocking)
-  _initializeServices();
+  await _initializeServices();
   
   runApp(const MyApp());
 }
 
 // Initialize services in the background
-void _initializeServices() async {
+Future<void> _initializeServices() async {
   try {
     //await Firebase.initializeApp();
     await ServiceLocator.initialize();
@@ -70,7 +70,17 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkOnboardingStatus();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await ApiRepository.instance.initialize();
+    await _checkOnboardingStatus();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -84,21 +94,10 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
     try {
       final prefs = await SharedPreferences.getInstance();
       final completed = prefs.getBool('onboarding_completed') ?? false;
-      
-      if (mounted) {
-        setState(() {
-          _onboardingCompleted = completed;
-          _isLoading = false;
-        });
-      }
+      _onboardingCompleted = completed;
     } catch (e) {
       print('Error checking onboarding status: $e');
-      if (mounted) {
-        setState(() {
-          _onboardingCompleted = false;
-          _isLoading = false;
-        });
-      }
+      _onboardingCompleted = false;
     }
   }
 
@@ -136,11 +135,11 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
     return StreamBuilder<ApiUser?>(
       stream: ApiRepository.instance.auth.authStateChanges,
       builder: (context, snapshot) {
-        
+
         if (snapshot.hasData) {
           return const MainAppScreen();
         }
-        
+
         return const AuthScreen();
       },
     );

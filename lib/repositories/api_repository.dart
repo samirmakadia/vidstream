@@ -45,13 +45,10 @@ class ApiRepository {
     try {
       // Initialize core API service first
       await api.initialize();
-      
-      // Initialize authentication (can be done async)
-      auth.initialize().catchError((e) => print('Auth init error: $e'));
-      
+      // Initialize authentication and await it so the stream emits before UI builds
+      await auth.initialize();
       // Initialize chat service (can be done async)
       // chat.initialize().catchError((e) => print('Chat init error: $e'));
-      
       print('✅ ApiRepository initialized');
     } catch (e) {
       print('❌ ApiRepository init error: $e');

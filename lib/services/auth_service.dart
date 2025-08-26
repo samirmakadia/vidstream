@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/models/response_model.dart' as response_models;
 import 'package:vidstream/services/api_service.dart';
@@ -12,7 +14,13 @@ class AuthService {
 
   // Use lazy getter to avoid circular dependency
   ApiService get _apiService => ApiService();
-  StreamController<ApiUser?> _authStateController = StreamController<ApiUser?>.broadcast();
+  final StreamController<ApiUser?> _authStateController = StreamController<ApiUser?>.broadcast();
+
+  /// Always provide the latest value immediately to new listeners (BehaviorSubject-like)
+  Stream<ApiUser?> get authStateChanges async* {
+    yield _currentUser;
+    yield* _authStateController.stream;
+  }
   
   ApiUser? _currentUser;
   String? _accessToken;
@@ -21,8 +29,9 @@ class AuthService {
   // Initialize service (lightweight)
   Future<void> initialize() async {
     try {
+      await restoreSession();
       await _loadCurrentUser();
-      
+      _authStateController.add(_currentUser);
       // Emit initial auth state to unblock UI
       if (!_authStateController.isClosed) {
         _authStateController.add(_currentUser);
@@ -39,11 +48,62 @@ class AuthService {
     }
   }
 
+  // inside AuthService
+  Future<void> saveSession(ApiUser user) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_accessToken != null) {
+      await prefs.setString('access_token', _accessToken!);
+    }
+    if (_refreshToken != null) {
+      await prefs.setString('refresh_token', _refreshToken!);
+    }
+    await prefs.setString('user', jsonEncode(user.toJson())); // store user JSON
+  }
+
+  Future<ApiUser?> restoreSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    final refresh = prefs.getString('refresh_token');
+    final userJson = prefs.getString('user');
+
+    if (token != null && userJson != null) {
+      try {
+        _accessToken = token;
+        _refreshToken = refresh ?? token;
+
+        final user = ApiUser.fromJson(jsonDecode(userJson));
+        _currentUser = user;
+
+        if (!_authStateController.isClosed) {
+          _authStateController.add(_currentUser);
+        }
+        return user;
+      } catch (e) {
+        _currentUser = null;
+        if (!_authStateController.isClosed) {
+          _authStateController.add(null);
+        }
+      }
+    } else {
+      _currentUser = null;
+      if (!_authStateController.isClosed) {
+        _authStateController.add(null);
+      }
+    }
+    return null;
+  }
+
+  Future<void> clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('access_token');
+    await prefs.remove('refresh_token');
+    await prefs.remove('user');
+  }
+
   // Get current user
   ApiUser? get currentUser => _currentUser;
 
   // Auth state stream
-  Stream<ApiUser?> get authStateChanges => _authStateController.stream;
 
   // Sign up with email and password
   Future<ApiUser?> signUpWithEmailAndPassword({
@@ -115,12 +175,13 @@ class AuthService {
       
       // Call logout API
       await _apiService.logout();
+      clearSession();
       
       // Clear local state
       _currentUser = null;
       _accessToken = null;
       _refreshToken = null;
-      
+
       _authStateController.add(null);
     } catch (e) {
       throw 'Sign out failed: ${e.toString()}';
@@ -216,9 +277,7 @@ class AuthService {
       final guestUser = await _createGuestUser();
       
       _currentUser = guestUser;
-      if (_authStateController.isClosed) {
-        _authStateController = StreamController<ApiUser?>.broadcast();
-      }
+      await saveSession(guestUser);
       if (!_authStateController.isClosed) {
         _authStateController.add(_currentUser);
       }
@@ -261,8 +320,8 @@ class AuthService {
     } catch (e) {
       print('Error loading current user: $e');
       // If loading fails, user might need to re-authenticate
-      _currentUser = null;
-      _authStateController.add(null);
+      // _currentUser = null;
+      // _authStateController.add(null);
     }
   }
 

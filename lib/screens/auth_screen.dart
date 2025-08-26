@@ -65,6 +65,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     try {
       final result = await ApiRepository.instance.auth.signInWithGoogle();
       if (result != null && mounted) {
+        await ApiRepository.instance.auth.saveSession(result);
         // Create sample data for demo
         await _createSampleData();
         Navigator.of(context).pushReplacement(
@@ -100,6 +101,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     try {
       final result = await ApiRepository.instance.auth.signInWithApple();
       if (result != null && mounted) {
+        await ApiRepository.instance.auth.saveSession(result);
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainAppScreen()),
         );
@@ -123,6 +125,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     try {
       final result = await ApiRepository.instance.auth.signInAsGuest();
       if (result != null && mounted) {
+        await ApiRepository.instance.auth.saveSession(result);
         // Create sample data for demo
         await _createSampleData();
         Navigator.of(context).pushReplacement(
