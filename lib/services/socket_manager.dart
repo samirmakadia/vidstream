@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:vidstream/storage/conversation_storage_drift.dart';
@@ -11,6 +12,13 @@ class SocketManager {
   SocketManager._internal();
 
   IO.Socket? _socket;
+
+  final _userJoinedController = StreamController<String>.broadcast(); // userId
+  final _userLeftController = StreamController<String>.broadcast(); // userId
+
+  // 👇 getters
+  Stream<String> get onUserJoinedMeet => _userJoinedController.stream;
+  Stream<String> get onUserLeftMeet => _userLeftController.stream;
 
   Future<void> connect({required String token}) async {
     disconnect();
@@ -34,6 +42,9 @@ class SocketManager {
 
     // Handle incoming messages
     _socket?.on('message', _handleMessage);
+
+    _socket?.on('userJoinedMeet', _handleUserJoinedMeet);
+    _socket?.on('userLeftMeet', _handleUserLeftMeet);
   }
 
   void disconnect() {
@@ -53,7 +64,6 @@ class SocketManager {
     await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.id);
   }
 
-
   void sendMessage(Message message) async {
     try {
       // Convert message to JSON string
@@ -70,4 +80,29 @@ class SocketManager {
       debugPrint("❌ Error sending message: $e\n$stack");
     }
   }
+
+  void _handleUserJoinedMeet(dynamic data) async {
+    debugPrint("👥 userJoinedMeet event: $data");
+    try {
+      final userId = data['userId'];
+      if (userId != null) {
+        _userJoinedController.add(userId);
+      }
+    } catch (e) {
+      debugPrint("❌ Error handling userJoinedMeet: $e");
+    }
+  }
+
+  void _handleUserLeftMeet(dynamic data) async {
+    debugPrint("👤 userLeftMeet event: $data");
+    try {
+      final userId = data['userId'];
+      if (userId != null) {
+        _userLeftController.add(userId);
+      }
+    } catch (e) {
+      debugPrint("❌ Error handling userLeftMeet: $e");
+    }
+  }
+
 }

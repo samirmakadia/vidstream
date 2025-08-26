@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vidstream/services/meet_service.dart';
-import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/chat_screen.dart';
-
+import '../services/socket_manager.dart';
 import '../widgets/custom_image_widget.dart';
 
 class MeetScreen extends StatefulWidget {
@@ -17,13 +16,27 @@ class _MeetScreenState extends State<MeetScreen> {
   bool _hasJoinedMeet = false;
   bool _isLoading = false;
   List<ApiUser> _onlineUsers = [];
-  String _selectedGenderFilter = 'all'; // 'all', 'male', 'female', 'other'
+  String _selectedGenderFilter = 'all';
   final MeetService _meetService = MeetService();
-  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
+
+    final socketManager = SocketManager();
+    socketManager.onUserJoinedMeet.listen((userId) {
+      if (mounted) {
+        _loadOnlineUsers();
+      }
+    });
+
+    socketManager.onUserLeftMeet.listen((userId) {
+      if (mounted) {
+        setState(() {
+          _onlineUsers.removeWhere((u) => u.userId == userId);
+        });
+      }
+    });
   }
 
   Future<void> _loadOnlineUsers() async {

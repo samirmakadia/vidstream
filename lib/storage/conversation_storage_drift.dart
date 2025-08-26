@@ -26,7 +26,6 @@ class ConversationsDb extends Table {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    // Pick a safe, persistent folder
     final dir = await getApplicationDocumentsDirectory();
     final file = File(p.join(dir.path, 'conversations.sqlite'));
     return NativeDatabase(file);
