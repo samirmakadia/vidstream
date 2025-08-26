@@ -180,7 +180,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => ChatScreen(otherUserId: otherUser?.id ?? ''),
+            builder: (context) => ChatScreen(otherUserId: otherUser?.id ?? '',conversationId: conversation.conversationId),
           ),
         ).then((_) => _loadConversations());
       },

@@ -10,8 +10,9 @@ import '../widgets/custom_image_widget.dart';
 
 class ChatScreen extends StatefulWidget {
   final String otherUserId;
+  final String? conversationId;
 
-  const ChatScreen({super.key, required this.otherUserId});
+  const ChatScreen({super.key, required this.otherUserId, this.conversationId});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -225,12 +226,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildMessagesList() {
-    if (_conversation == null) {
-      return const Center(child: Text('No conversation'));
-    }
-    // Replace _messages with a StreamBuilder using watchMessagesForConversation
+    final currentUserId = _authService.currentUser?.id;
     return StreamBuilder<List<ChatMessage>>(
-      stream: db.watchMessagesForConversation(_conversation?.id ?? ''),
+      stream: db.watchMessagesForConversation(widget.conversationId ?? '$currentUserId-${widget.otherUserId}'),
       builder: (context, snapshot) {
         final messages = snapshot.data ?? [];
         return ListView.builder(
