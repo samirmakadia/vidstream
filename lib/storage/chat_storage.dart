@@ -386,6 +386,7 @@ class ChatStorage {
   Message _messageFromMap(Map<String, dynamic> map) {
     return Message(
       id: map['id'] as String,
+      messageId: map['messageId'] as String,
       conversationId: map['conversation_id'] as String,
       senderId: map['sender_id'] as String,
       receiverId: map['receiver_id'] as String,

@@ -110,20 +110,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             _isLoading = false;
           });
         }
-
-        // Show info message if no videos could be loaded due to permissions
-        if (videos.isEmpty && likedVideos.isEmpty && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Unable to load videos due to permission issues. Try creating sample data.'),
-              backgroundColor: Colors.orange,
-              action: SnackBarAction(
-                label: 'Create Sample',
-                onPressed: _createSampleVideos,
-              ),
-            ),
-          );
-        }
       }
     } catch (e) {
       if (mounted) {

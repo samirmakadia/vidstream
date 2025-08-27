@@ -7,19 +7,20 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 part 'message_storage_drift.g.dart';
 
-class MessagesDb extends Table {
+  class MessagesDb extends Table {
   TextColumn get id => text()();
+  TextColumn get messageId => text()();
   TextColumn get conversationId => text()();
   TextColumn get senderId => text()();
   TextColumn get messageType => text()();
-  TextColumn get content => text()(); // JSON string
+  TextColumn get content => text()();
   TextColumn get status => text()();
   IntColumn get timestamp => integer()();
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
   TextColumn get deletedFor => text().nullable()(); // JSON array
 
   @override
-  Set<Column> get primaryKey => {id};
+  Set<Column> get primaryKey => {messageId};
 }
 
 LazyDatabase openConnection() {
@@ -46,7 +47,7 @@ class MessageDatabase extends _$MessageDatabase {
   // Insert or update a message
   Future<void> addOrUpdateMessage(Message message) async {
     await into(messagesDb).insertOnConflictUpdate(MessagesDbCompanion(
-      id: Value(message.id),
+      messageId: Value(message.messageId),
       conversationId: Value(message.conversationId),
       senderId: Value(message.senderId),
       messageType: Value(message.messageType),
@@ -70,6 +71,7 @@ class MessageDatabase extends _$MessageDatabase {
 
     return Message(
       id: row.id,
+      messageId: row.messageId,
       conversationId: row.conversationId,
       senderId: row.senderId,
       messageType: row.messageType,
@@ -91,6 +93,7 @@ class MessageDatabase extends _$MessageDatabase {
 
     return rows.map((row) => Message(
       id: row.id,
+      messageId: row.messageId,
       conversationId: row.conversationId,
       senderId: row.senderId,
       messageType: row.messageType,
@@ -111,6 +114,7 @@ class MessageDatabase extends _$MessageDatabase {
     );
     return query.watch().map((rows) => rows.map((row) => Message(
       id: row.id,
+      messageId: row.messageId,
       conversationId: row.conversationId,
       senderId: row.senderId,
       messageType: row.messageType,

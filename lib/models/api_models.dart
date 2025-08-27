@@ -506,10 +506,11 @@ enum MessageStatus {
 }
 
 class Message {
-  final String id;
+  final String? id;
+  final String messageId;
   final String conversationId;
   final String senderId;
-  final String? receiverId; // added
+  final String? receiverId;
   final String messageType;
   final MessageContent content;
   final MessageStatus status;
@@ -525,7 +526,7 @@ class Message {
   Widget statusIcon({double size = 16, Color color = Colors.grey}) {
     switch (status) {
       case MessageStatus.sent:
-        return Icon(Icons.done , size: size, color: color.withOpacity(0.5));
+        return Icon(Icons.done, size: size, color: color.withOpacity(0.5));
       case MessageStatus.delivered:
         return Icon(Icons.done_all, size: size, color: color.withOpacity(0.7));
       case MessageStatus.read:
@@ -536,10 +537,11 @@ class Message {
   }
 
   Message({
-    required this.id,
+    this.id,
+    required this.messageId,
     required this.conversationId,
     required this.senderId,
-    this.receiverId, // added
+    this.receiverId,
     required this.messageType,
     required this.content,
     required this.status,
@@ -551,9 +553,12 @@ class Message {
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
+      messageId: json['messageId']?.toString()
+          ?? json['id']?.toString()
+          ?? DateTime.now().millisecondsSinceEpoch.toString(),
       conversationId: json['conversation_id']?.toString() ?? json['conversationId']?.toString() ?? '',
       senderId: json['sender_id']?.toString() ?? json['senderId']?.toString() ?? '',
-      receiverId: json['receiver_id']?.toString() ?? json['receiverId']?.toString() ?? '', // added
+      receiverId: json['receiver_id']?.toString() ?? json['receiverId']?.toString() ?? '',
       messageType: json['message_type'] ?? json['messageType'] ?? 'text',
       content: MessageContent.fromJson(json['content'] ?? {}),
       status: MessageStatus.values.firstWhere(
@@ -569,9 +574,10 @@ class Message {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'messageId': messageId,
       'conversation_id': conversationId,
       'sender_id': senderId,
-      'receiver_id': receiverId, // added
+      'receiver_id': receiverId,
       'message_type': messageType,
       'content': content.toJson(),
       'status': status.name,
@@ -583,10 +589,11 @@ class Message {
 
   Map<String, dynamic> toSocketJson() {
     return {
-      'messageId': id,
+      'id': id,
+      'messageId': messageId,
       'conversationId': conversationId,
       'senderId': senderId,
-      'receiverId': receiverId, // now included
+      'receiverId': receiverId,
       'messageType': messageType,
       'content': content.toJson(),
       'status': status.name,
@@ -595,9 +602,10 @@ class Message {
 
   Message copyWith({
     String? id,
+    String? messageId,
     String? conversationId,
     String? senderId,
-    String? receiverId, // added
+    String? receiverId,
     String? messageType,
     MessageContent? content,
     MessageStatus? status,
@@ -607,9 +615,10 @@ class Message {
   }) {
     return Message(
       id: id ?? this.id,
+      messageId: messageId ?? this.messageId,
       conversationId: conversationId ?? this.conversationId,
       senderId: senderId ?? this.senderId,
-      receiverId: receiverId ?? this.receiverId, // added
+      receiverId: receiverId ?? this.receiverId,
       messageType: messageType ?? this.messageType,
       content: content ?? this.content,
       status: status ?? this.status,

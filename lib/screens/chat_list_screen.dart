@@ -83,6 +83,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       stream: db.watchAllConversations(currentUserId),
       builder: (context, snapshot) {
         print(' StreamBuilder: ${snapshot.error}');
+        print(snapshot.stackTrace);
         if (snapshot.connectionState == ConnectionState.waiting) {
           return _buildLoadingState();
         }

@@ -54,43 +54,39 @@ class SocketManager {
     print("🔔 Incoming message data: $data");
     final message = Message.fromJson(data);
 
-    await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.id);
+    await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.messageId);
 
     final deliveredPayload = {
       ...message.toSocketJson(),
+      "messageId": message.messageId,
       "status": "delivered",
     };
-
+    print("📤 Sending Delivered Payload:\n$deliveredPayload");
     _socket?.emit("message", deliveredPayload);
 
     final Map<String, dynamic> messageDeliveredMap = {
       ...data,
+      "messageId": message.messageId,
       "status": "delivered",
     };
+    print("📤 Sending Delivered Payload:\n$messageDeliveredMap");
 
     final messageDelivered = Message.fromJson(messageDeliveredMap);
     await MessageDatabase.instance.addOrUpdateMessage(messageDelivered);
 
-    debugPrint("📩 Delivered receipt sent for message ${message.id}");
+    debugPrint("📩 Delivered receipt sent for message ${messageDeliveredMap}");
   }
 
-  Future<void> sendSeenEvent(Message message) async {
+  Future<void> sendSeenEvent(Message message, String? receiverId) async {
     try {
       final setSeenPayload = {
         ...message.toSocketJson(),
         "status": "read",
+        "receiverId": receiverId,
       };
-
-      // 🔹 Send "seen" to socket
+      print("📤 Sending Seen Payload:\n$setSeenPayload");
       _socket?.emit('message', setSeenPayload);
-
-      // 🔹 Update only the status in local DB
-      await MessageDatabase.instance.updateMessageStatus(message.id, "read");
-
-      // 🔹 Fire event
-      eventBus.fire('read_event');
-
-      print("👁️ Message ${message.id} marked as seen");
+      print("👁️ Message ${message.messageId} marked as seen");
     } catch (e) {
       print("Error in sendSeenEvent: $e");
     }
@@ -106,7 +102,7 @@ class SocketManager {
 
       await MessageDatabase.instance.addOrUpdateMessage(message);
 
-      debugPrint("✅ Message sent and saved: ${message.id}");
+      debugPrint("✅ Message sent and saved: ${message.messageId}");
     } catch (e, stack) {
       debugPrint("❌ Error sending message: $e\n$stack");
     }

@@ -69,7 +69,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       );
 
       final message = Message(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        messageId: Utils.generateMessageId(),
         conversationId: conversationId,
         senderId: currentUserId,
         receiverId: widget.otherUserId,
@@ -81,7 +81,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
       _messageController.clear();
       SocketManager().sendMessage(message);
-      debugPrint("✅ Message sent: ${message.id}");
+      debugPrint("✅ Message sent: ${message.messageId}");
     } catch (e, stack) {
       debugPrint("❌ Error sending message: $e\n$stack");
       if (mounted) {
@@ -263,8 +263,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             final message = messages[index];
             final isMe = message.senderId == _authService.currentUser?.uid;
             if (!isMe && message.status != MessageStatus.read) {
-              SocketManager().sendSeenEvent(message);
+              SocketManager().sendSeenEvent(message,_authService.currentUser?.uid);
             }
+            print("Message seen: ${message.messageId}, Status: ${message.status}");
             return _buildMessageBubble(message, isMe);
           },
         );

@@ -14,6 +14,12 @@ class $MessagesDbTable extends MessagesDb
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _messageIdMeta =
+      const VerificationMeta('messageId');
+  @override
+  late final GeneratedColumn<String> messageId = GeneratedColumn<String>(
+      'message_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _conversationIdMeta =
       const VerificationMeta('conversationId');
   @override
@@ -68,6 +74,7 @@ class $MessagesDbTable extends MessagesDb
   @override
   List<GeneratedColumn> get $columns => [
         id,
+        messageId,
         conversationId,
         senderId,
         messageType,
@@ -91,6 +98,12 @@ class $MessagesDbTable extends MessagesDb
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('message_id')) {
+      context.handle(_messageIdMeta,
+          messageId.isAcceptableOrUnknown(data['message_id']!, _messageIdMeta));
+    } else if (isInserting) {
+      context.missing(_messageIdMeta);
     }
     if (data.containsKey('conversation_id')) {
       context.handle(
@@ -146,13 +159,15 @@ class $MessagesDbTable extends MessagesDb
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {id};
+  Set<GeneratedColumn> get $primaryKey => {messageId};
   @override
   MessagesDbData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return MessagesDbData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      messageId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}message_id'])!,
       conversationId: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}conversation_id'])!,
       senderId: attachedDatabase.typeMapping
@@ -180,6 +195,7 @@ class $MessagesDbTable extends MessagesDb
 
 class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   final String id;
+  final String messageId;
   final String conversationId;
   final String senderId;
   final String messageType;
@@ -190,6 +206,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   final String? deletedFor;
   const MessagesDbData(
       {required this.id,
+      required this.messageId,
       required this.conversationId,
       required this.senderId,
       required this.messageType,
@@ -202,6 +219,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
+    map['message_id'] = Variable<String>(messageId);
     map['conversation_id'] = Variable<String>(conversationId);
     map['sender_id'] = Variable<String>(senderId);
     map['message_type'] = Variable<String>(messageType);
@@ -218,6 +236,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   MessagesDbCompanion toCompanion(bool nullToAbsent) {
     return MessagesDbCompanion(
       id: Value(id),
+      messageId: Value(messageId),
       conversationId: Value(conversationId),
       senderId: Value(senderId),
       messageType: Value(messageType),
@@ -236,6 +255,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return MessagesDbData(
       id: serializer.fromJson<String>(json['id']),
+      messageId: serializer.fromJson<String>(json['messageId']),
       conversationId: serializer.fromJson<String>(json['conversationId']),
       senderId: serializer.fromJson<String>(json['senderId']),
       messageType: serializer.fromJson<String>(json['messageType']),
@@ -251,6 +271,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
+      'messageId': serializer.toJson<String>(messageId),
       'conversationId': serializer.toJson<String>(conversationId),
       'senderId': serializer.toJson<String>(senderId),
       'messageType': serializer.toJson<String>(messageType),
@@ -264,6 +285,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
 
   MessagesDbData copyWith(
           {String? id,
+          String? messageId,
           String? conversationId,
           String? senderId,
           String? messageType,
@@ -274,6 +296,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
           Value<String?> deletedFor = const Value.absent()}) =>
       MessagesDbData(
         id: id ?? this.id,
+        messageId: messageId ?? this.messageId,
         conversationId: conversationId ?? this.conversationId,
         senderId: senderId ?? this.senderId,
         messageType: messageType ?? this.messageType,
@@ -286,6 +309,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   MessagesDbData copyWithCompanion(MessagesDbCompanion data) {
     return MessagesDbData(
       id: data.id.present ? data.id.value : this.id,
+      messageId: data.messageId.present ? data.messageId.value : this.messageId,
       conversationId: data.conversationId.present
           ? data.conversationId.value
           : this.conversationId,
@@ -305,6 +329,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   String toString() {
     return (StringBuffer('MessagesDbData(')
           ..write('id: $id, ')
+          ..write('messageId: $messageId, ')
           ..write('conversationId: $conversationId, ')
           ..write('senderId: $senderId, ')
           ..write('messageType: $messageType, ')
@@ -318,13 +343,14 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   }
 
   @override
-  int get hashCode => Object.hash(id, conversationId, senderId, messageType,
-      content, status, timestamp, isDeleted, deletedFor);
+  int get hashCode => Object.hash(id, messageId, conversationId, senderId,
+      messageType, content, status, timestamp, isDeleted, deletedFor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is MessagesDbData &&
           other.id == this.id &&
+          other.messageId == this.messageId &&
           other.conversationId == this.conversationId &&
           other.senderId == this.senderId &&
           other.messageType == this.messageType &&
@@ -337,6 +363,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
 
 class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
   final Value<String> id;
+  final Value<String> messageId;
   final Value<String> conversationId;
   final Value<String> senderId;
   final Value<String> messageType;
@@ -348,6 +375,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
   final Value<int> rowid;
   const MessagesDbCompanion({
     this.id = const Value.absent(),
+    this.messageId = const Value.absent(),
     this.conversationId = const Value.absent(),
     this.senderId = const Value.absent(),
     this.messageType = const Value.absent(),
@@ -360,6 +388,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
   });
   MessagesDbCompanion.insert({
     required String id,
+    required String messageId,
     required String conversationId,
     required String senderId,
     required String messageType,
@@ -370,6 +399,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
     this.deletedFor = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
+        messageId = Value(messageId),
         conversationId = Value(conversationId),
         senderId = Value(senderId),
         messageType = Value(messageType),
@@ -378,6 +408,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
         timestamp = Value(timestamp);
   static Insertable<MessagesDbData> custom({
     Expression<String>? id,
+    Expression<String>? messageId,
     Expression<String>? conversationId,
     Expression<String>? senderId,
     Expression<String>? messageType,
@@ -390,6 +421,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (messageId != null) 'message_id': messageId,
       if (conversationId != null) 'conversation_id': conversationId,
       if (senderId != null) 'sender_id': senderId,
       if (messageType != null) 'message_type': messageType,
@@ -404,6 +436,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
 
   MessagesDbCompanion copyWith(
       {Value<String>? id,
+      Value<String>? messageId,
       Value<String>? conversationId,
       Value<String>? senderId,
       Value<String>? messageType,
@@ -415,6 +448,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
       Value<int>? rowid}) {
     return MessagesDbCompanion(
       id: id ?? this.id,
+      messageId: messageId ?? this.messageId,
       conversationId: conversationId ?? this.conversationId,
       senderId: senderId ?? this.senderId,
       messageType: messageType ?? this.messageType,
@@ -432,6 +466,9 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (messageId.present) {
+      map['message_id'] = Variable<String>(messageId.value);
     }
     if (conversationId.present) {
       map['conversation_id'] = Variable<String>(conversationId.value);
@@ -467,6 +504,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
   String toString() {
     return (StringBuffer('MessagesDbCompanion(')
           ..write('id: $id, ')
+          ..write('messageId: $messageId, ')
           ..write('conversationId: $conversationId, ')
           ..write('senderId: $senderId, ')
           ..write('messageType: $messageType, ')
@@ -494,6 +532,7 @@ abstract class _$MessageDatabase extends GeneratedDatabase {
 
 typedef $$MessagesDbTableCreateCompanionBuilder = MessagesDbCompanion Function({
   required String id,
+  required String messageId,
   required String conversationId,
   required String senderId,
   required String messageType,
@@ -506,6 +545,7 @@ typedef $$MessagesDbTableCreateCompanionBuilder = MessagesDbCompanion Function({
 });
 typedef $$MessagesDbTableUpdateCompanionBuilder = MessagesDbCompanion Function({
   Value<String> id,
+  Value<String> messageId,
   Value<String> conversationId,
   Value<String> senderId,
   Value<String> messageType,
@@ -528,6 +568,9 @@ class $$MessagesDbTableFilterComposer
   });
   ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get messageId => $composableBuilder(
+      column: $table.messageId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get conversationId => $composableBuilder(
       column: $table.conversationId,
@@ -567,6 +610,9 @@ class $$MessagesDbTableOrderingComposer
   ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get messageId => $composableBuilder(
+      column: $table.messageId, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get conversationId => $composableBuilder(
       column: $table.conversationId,
       builder: (column) => ColumnOrderings(column));
@@ -604,6 +650,9 @@ class $$MessagesDbTableAnnotationComposer
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get messageId =>
+      $composableBuilder(column: $table.messageId, builder: (column) => column);
 
   GeneratedColumn<String> get conversationId => $composableBuilder(
       column: $table.conversationId, builder: (column) => column);
@@ -657,6 +706,7 @@ class $$MessagesDbTableTableManager extends RootTableManager<
               $$MessagesDbTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
+            Value<String> messageId = const Value.absent(),
             Value<String> conversationId = const Value.absent(),
             Value<String> senderId = const Value.absent(),
             Value<String> messageType = const Value.absent(),
@@ -669,6 +719,7 @@ class $$MessagesDbTableTableManager extends RootTableManager<
           }) =>
               MessagesDbCompanion(
             id: id,
+            messageId: messageId,
             conversationId: conversationId,
             senderId: senderId,
             messageType: messageType,
@@ -681,6 +732,7 @@ class $$MessagesDbTableTableManager extends RootTableManager<
           ),
           createCompanionCallback: ({
             required String id,
+            required String messageId,
             required String conversationId,
             required String senderId,
             required String messageType,
@@ -693,6 +745,7 @@ class $$MessagesDbTableTableManager extends RootTableManager<
           }) =>
               MessagesDbCompanion.insert(
             id: id,
+            messageId: messageId,
             conversationId: conversationId,
             senderId: senderId,
             messageType: messageType,

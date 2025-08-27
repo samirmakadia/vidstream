@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -158,6 +159,19 @@ class Utils{
   static String generateConversationId(String userId1, String userId2) {
     final ids = [userId1, userId2]..sort();
     return '${ids[0]}-${ids[1]}';
+  }
+
+  static String _generateRandomString(int length) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rand = Random();
+    return List.generate(length, (_) => chars[rand.nextInt(chars.length)]).join();
+  }
+
+  static String generateMessageId() {
+    final prefix = _generateRandomString(4);
+    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    final suffix = _generateRandomString(4);
+    return '$prefix$timestamp$suffix';
   }
 
 }
