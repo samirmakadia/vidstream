@@ -33,6 +33,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   final bool _isLoading = false;
   bool _isSending = false;
+  bool initialScroll = false;
   final bool _canSendMessage = true;
 
   @override
@@ -246,15 +247,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           );
         }
         final messages = snapshot.data ?? [];
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-        });
+        _scrollToBottomInstant();
         return ListView.builder(
           controller: _scrollController,
           padding: const EdgeInsets.all(16),

@@ -63,44 +63,18 @@ class SocketManager {
   void _handleMessage(dynamic data) async {
     print("🔔 Incoming message data: $data");
 
-    // Cast data safely
     final Map<String, dynamic> jsonData = (data as Map).cast<String, dynamic>();
 
     final message = Message.fromJson(jsonData);
 
     final currentUserId = _currentUserId ?? "";
-    if (currentUserId.isEmpty) return;
-
     final receiverId = _getReceiverId(message.conversationId, currentUserId);
 
-    // Update conversation lastMessageId
     await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.messageId);
 
-    // Only send delivered if the message is still in 'sent' status
     if (message.status == MessageStatus.sent) {
-      final deliveredPayload = {
-        ...message.toSocketJson(),
-        "messageId": message.messageId,
-        "status": "delivered",
-        "receiverId": receiverId,
-      };
-      print("📤 Sending Delivered Payload:\n$deliveredPayload");
-      _socket?.emit("message", deliveredPayload);
-
-      // Update locally
-      final messageDeliveredMap = {
-        ...jsonData,
-        "messageId": message.messageId,
-        "status": "delivered",
-        "receiverId": receiverId,
-      };
-
-      final messageDelivered = Message.fromJson(messageDeliveredMap);
-      await MessageDatabase.instance.addOrUpdateMessage(messageDelivered);
-      Utils.saveLastSyncDate();
-      debugPrint("📩 Delivered receipt sent for message ${message.messageId}");
+      await _sendDeliveredReceipt(message, message.toSocketJson(), receiverId);
     } else {
-      // just update local db with whatever status came from server
       await MessageDatabase.instance.addOrUpdateMessage(message);
       debugPrint("✅ Message ${message.messageId} updated with status ${message.status}");
     }
@@ -181,9 +155,9 @@ class SocketManager {
           final receiverId = _getReceiverId(message.conversationId, currentUserId);
 
           await MessageDatabase.instance.addOrUpdateMessage(message);
-          // if (message.status == MessageStatus.sent) {
-          //   await _sendDeliveredReceipt(message, message.toJson(), receiverId);
-          // }
+          if (message.status == MessageStatus.sent) {
+            await _sendDeliveredReceipt(message, message.toJson(), receiverId);
+          }
         }
       }
 
@@ -195,6 +169,39 @@ class SocketManager {
     }
   }
 
+  Future<void> _sendDeliveredReceipt(
+      Message message,
+      Map<String, dynamic> messageJson,
+      String receiverId,
+      ) async {
+    try {
+      if (_socket == null || !_socket!.connected) return;
+
+      final deliveredPayload = {
+        ...messageJson,
+        "messageId": message.messageId,
+        "status": "delivered",
+        "receiverId": receiverId,
+      };
+
+      print("📤 Sending Delivered Receipt:\n$deliveredPayload");
+
+      _socket?.emit("message", deliveredPayload);
+
+      final updatedMessage = Message.fromJson({
+        ...messageJson,
+        "messageId": message.messageId,
+        "status": "delivered",
+        "receiverId": receiverId,
+      });
+
+      await MessageDatabase.instance.addOrUpdateMessage(updatedMessage);
+      await Utils.saveLastSyncDate();
+      debugPrint("📩 Delivered receipt sent for message ${message.messageId}");
+    } catch (e, stack) {
+      debugPrint("❌ Error sending delivered receipt: $e\n$stack");
+    }
+  }
 
 
 }
