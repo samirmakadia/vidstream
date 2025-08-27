@@ -262,7 +262,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           itemBuilder: (context, index) {
             final message = messages[index];
             final isMe = message.senderId == _authService.currentUser?.uid;
-            if (!isMe && message.status != "read") {
+            if (!isMe && message.status != MessageStatus.read) {
               SocketManager().sendSeenEvent(message);
             }
             return _buildMessageBubble(message, isMe);
