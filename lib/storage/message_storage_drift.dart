@@ -126,4 +126,14 @@ class MessageDatabase extends _$MessageDatabase {
   Future<void> deleteMessage(String messageId) async {
     await (delete(messagesDb)..where((tbl) => tbl.id.equals(messageId))).go();
   }
+
+  Future<void> updateMessageStatus(String messageId, String status) async {
+    await (update(messagesDb)
+      ..where((tbl) => tbl.id.equals(messageId)))
+        .write(MessagesDbCompanion(
+      status: Value(status),
+    ));
+
+    print("✅ Message $messageId status updated to $status");
+  }
 }

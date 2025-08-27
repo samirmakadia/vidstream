@@ -40,7 +40,7 @@ class SocketManager {
 
     _socket?.on('userJoinedMeet', _handleUserJoinedMeet);
     _socket?.on('userLeftMeet', _handleUserLeftMeet);
-    
+
   }
 
   void disconnect() {
@@ -52,9 +52,7 @@ class SocketManager {
   void _handleMessage(dynamic data) async {
     print("🔔 Incoming message data: $data");
     final message = Message.fromJson(data);
-    debugPrint("⬅️ Message received: ${message.id} | ${message.message}");
 
-    await MessageDatabase.instance.addOrUpdateMessage(message);
     await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.id);
 
     final deliveredPayload = {
@@ -63,6 +61,14 @@ class SocketManager {
     };
 
     _socket?.emit("message", deliveredPayload);
+
+    final Map<String, dynamic> messageDeliveredMap = {
+      ...data,
+      "status": "delivered",
+    };
+
+    final messageDelivered = Message.fromJson(messageDeliveredMap);
+    await MessageDatabase.instance.addOrUpdateMessage(messageDelivered);
 
     debugPrint("📩 Delivered receipt sent for message ${message.id}");
   }

@@ -238,6 +238,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       stream: db.watchMessagesForConversation(conversationId),
       builder: (context, snapshot) {
         final messages = snapshot.data ?? [];
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
         return ListView.builder(
           controller: _scrollController,
           padding: const EdgeInsets.all(16),
