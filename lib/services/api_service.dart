@@ -330,7 +330,7 @@ class ApiService {
     required double duration,
     required String title,
     required String description,
-    required String category,
+    // required String category,
     List<String>? tags,
     bool isPublic = true,
   }) async {
@@ -338,7 +338,7 @@ class ApiService {
       final body = {
         'title': title,
         'description': description,
-        'category': category,
+        // 'category': category,
         'videoUrl': videoPath,
         'thumbnailUrl': thumbnailPath,
         'duration': duration,

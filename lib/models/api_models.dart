@@ -320,7 +320,7 @@ class ApiCommonFile {
   factory ApiCommonFile.fromJson(Map<String, dynamic> json) {
     return ApiCommonFile(
       url: json['url'] ?? '',
-      thumbnailUrl: json['thumbnailUrl'] ?? '',
+      thumbnailUrl: json['thumbnail'] ?? '',
       filename: json['filename'] ?? '',
       originalName: json['originalName'] ?? '',
       size: json['size'] ?? 0,

@@ -168,7 +168,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
         duration: _uploadedFile!.duration,
         title: "Untitled",
         description: _descriptionController.text.trim(),
-        category: _uploadedFile!.category ?? 'general',
+        // category: _uploadedFile!.category ?? 'general',
         tags: _selectedTags,
         isPublic: true,
       );
