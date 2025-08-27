@@ -11,9 +11,9 @@ class HttpClient {
   HttpClient._internal();
 
   static const String baseUrl = 'https://creatives-macbook-air-2.taild45175.ts.net/api/v1';
-  static const Duration connectTimeout = Duration(seconds: 5);
-  static const Duration receiveTimeout = Duration(seconds: 10);
-  static const Duration sendTimeout = Duration(seconds: 10);
+  static const Duration connectTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 30);
+  static const Duration sendTimeout = Duration(seconds: 30);
 
   late Dio _dio;
   String? _accessToken;
