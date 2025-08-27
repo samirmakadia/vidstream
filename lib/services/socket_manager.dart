@@ -8,17 +8,23 @@ import '../models/api_models.dart';
 import '../storage/message_storage_drift.dart';
 import 'package:flutter/foundation.dart';
 
+import 'auth_service.dart';
+
 final EventBus eventBus = EventBus();
 
 class SocketManager {
   static final SocketManager _instance = SocketManager._internal();
   factory SocketManager() => _instance;
   SocketManager._internal();
+  final AuthService _authService = AuthService();
+  String? _currentUserId;
 
   IO.Socket? _socket;
 
   Future<void> connect({required String token}) async {
     disconnect();
+
+    _currentUserId = _authService.currentUser?.id ?? "";
 
     _socket = IO.io(
       'https://creatives-macbook-air-2.taild45175.ts.net',
@@ -52,29 +58,49 @@ class SocketManager {
 
   void _handleMessage(dynamic data) async {
     print("🔔 Incoming message data: $data");
-    final message = Message.fromJson(data);
+
+    final jsonData = (data as Map).cast<String, dynamic>();
+    final message = Message.fromJson(jsonData);
+
+    final currentUserId = _currentUserId ?? "";
+    final receiverId = _getReceiverId(message.conversationId, currentUserId);
 
     await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.messageId);
 
+    if (message.status == MessageStatus.sent) {
+      await _sendDeliveredReceipt(message, jsonData, receiverId);
+    } else {
+      await MessageDatabase.instance.addOrUpdateMessage(message);
+      debugPrint("✅ Message ${message.messageId} updated with status ${message.status}");
+    }
+  }
+
+  String _getReceiverId(String conversationId, String currentUserId) {
+    final parts = conversationId.split('-');
+    if (parts.length != 2) return "";
+    return parts.first == currentUserId ? parts.last : parts.first;
+  }
+
+  Future<void> _sendDeliveredReceipt(Message message, Map<String, dynamic> jsonData, String receiverId) async {
     final deliveredPayload = {
       ...message.toSocketJson(),
       "messageId": message.messageId,
       "status": "delivered",
+      "receiverId": receiverId,
     };
+
     print("📤 Sending Delivered Payload:\n$deliveredPayload");
     _socket?.emit("message", deliveredPayload);
 
-    final Map<String, dynamic> messageDeliveredMap = {
-      ...data,
+    final messageDeliveredMap = {
+      ...jsonData,
       "messageId": message.messageId,
       "status": "delivered",
+      "receiverId": receiverId,
     };
-    print("📤 Sending Delivered Payload:\n$messageDeliveredMap");
 
-    final messageDelivered = Message.fromJson(messageDeliveredMap);
-    await MessageDatabase.instance.addOrUpdateMessage(messageDelivered);
-
-    debugPrint("📩 Delivered receipt sent for message ${messageDeliveredMap}");
+    await MessageDatabase.instance.addOrUpdateMessage(Message.fromJson(messageDeliveredMap));
+    debugPrint("📩 Delivered receipt sent for message ${message.messageId}");
   }
 
   Future<void> sendSeenEvent(Message message, String? receiverId) async {

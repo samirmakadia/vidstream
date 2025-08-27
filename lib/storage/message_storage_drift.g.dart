@@ -12,8 +12,8 @@ class $MessagesDbTable extends MessagesDb
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+      'id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _messageIdMeta =
       const VerificationMeta('messageId');
   @override
@@ -96,8 +96,6 @@ class $MessagesDbTable extends MessagesDb
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('message_id')) {
       context.handle(_messageIdMeta,
@@ -165,7 +163,7 @@ class $MessagesDbTable extends MessagesDb
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return MessagesDbData(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id']),
       messageId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}message_id'])!,
       conversationId: attachedDatabase.typeMapping.read(
@@ -194,7 +192,7 @@ class $MessagesDbTable extends MessagesDb
 }
 
 class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
-  final String id;
+  final String? id;
   final String messageId;
   final String conversationId;
   final String senderId;
@@ -205,7 +203,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   final bool isDeleted;
   final String? deletedFor;
   const MessagesDbData(
-      {required this.id,
+      {this.id,
       required this.messageId,
       required this.conversationId,
       required this.senderId,
@@ -218,7 +216,9 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || id != null) {
+      map['id'] = Variable<String>(id);
+    }
     map['message_id'] = Variable<String>(messageId);
     map['conversation_id'] = Variable<String>(conversationId);
     map['sender_id'] = Variable<String>(senderId);
@@ -235,7 +235,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
 
   MessagesDbCompanion toCompanion(bool nullToAbsent) {
     return MessagesDbCompanion(
-      id: Value(id),
+      id: id == null && nullToAbsent ? const Value.absent() : Value(id),
       messageId: Value(messageId),
       conversationId: Value(conversationId),
       senderId: Value(senderId),
@@ -254,7 +254,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return MessagesDbData(
-      id: serializer.fromJson<String>(json['id']),
+      id: serializer.fromJson<String?>(json['id']),
       messageId: serializer.fromJson<String>(json['messageId']),
       conversationId: serializer.fromJson<String>(json['conversationId']),
       senderId: serializer.fromJson<String>(json['senderId']),
@@ -270,7 +270,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
+      'id': serializer.toJson<String?>(id),
       'messageId': serializer.toJson<String>(messageId),
       'conversationId': serializer.toJson<String>(conversationId),
       'senderId': serializer.toJson<String>(senderId),
@@ -284,7 +284,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   }
 
   MessagesDbData copyWith(
-          {String? id,
+          {Value<String?> id = const Value.absent(),
           String? messageId,
           String? conversationId,
           String? senderId,
@@ -295,7 +295,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
           bool? isDeleted,
           Value<String?> deletedFor = const Value.absent()}) =>
       MessagesDbData(
-        id: id ?? this.id,
+        id: id.present ? id.value : this.id,
         messageId: messageId ?? this.messageId,
         conversationId: conversationId ?? this.conversationId,
         senderId: senderId ?? this.senderId,
@@ -362,7 +362,7 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
 }
 
 class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
-  final Value<String> id;
+  final Value<String?> id;
   final Value<String> messageId;
   final Value<String> conversationId;
   final Value<String> senderId;
@@ -387,7 +387,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
     this.rowid = const Value.absent(),
   });
   MessagesDbCompanion.insert({
-    required String id,
+    this.id = const Value.absent(),
     required String messageId,
     required String conversationId,
     required String senderId,
@@ -398,8 +398,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
     this.isDeleted = const Value.absent(),
     this.deletedFor = const Value.absent(),
     this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        messageId = Value(messageId),
+  })  : messageId = Value(messageId),
         conversationId = Value(conversationId),
         senderId = Value(senderId),
         messageType = Value(messageType),
@@ -435,7 +434,7 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
   }
 
   MessagesDbCompanion copyWith(
-      {Value<String>? id,
+      {Value<String?>? id,
       Value<String>? messageId,
       Value<String>? conversationId,
       Value<String>? senderId,
@@ -531,7 +530,7 @@ abstract class _$MessageDatabase extends GeneratedDatabase {
 }
 
 typedef $$MessagesDbTableCreateCompanionBuilder = MessagesDbCompanion Function({
-  required String id,
+  Value<String?> id,
   required String messageId,
   required String conversationId,
   required String senderId,
@@ -544,7 +543,7 @@ typedef $$MessagesDbTableCreateCompanionBuilder = MessagesDbCompanion Function({
   Value<int> rowid,
 });
 typedef $$MessagesDbTableUpdateCompanionBuilder = MessagesDbCompanion Function({
-  Value<String> id,
+  Value<String?> id,
   Value<String> messageId,
   Value<String> conversationId,
   Value<String> senderId,
@@ -705,7 +704,7 @@ class $$MessagesDbTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$MessagesDbTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
+            Value<String?> id = const Value.absent(),
             Value<String> messageId = const Value.absent(),
             Value<String> conversationId = const Value.absent(),
             Value<String> senderId = const Value.absent(),
@@ -731,7 +730,7 @@ class $$MessagesDbTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           createCompanionCallback: ({
-            required String id,
+            Value<String?> id = const Value.absent(),
             required String messageId,
             required String conversationId,
             required String senderId,

@@ -8,7 +8,7 @@ import 'package:path_provider/path_provider.dart';
 part 'message_storage_drift.g.dart';
 
   class MessagesDb extends Table {
-  TextColumn get id => text()();
+    TextColumn get id => text().nullable()();
   TextColumn get messageId => text()();
   TextColumn get conversationId => text()();
   TextColumn get senderId => text()();
@@ -47,6 +47,7 @@ class MessageDatabase extends _$MessageDatabase {
   // Insert or update a message
   Future<void> addOrUpdateMessage(Message message) async {
     await into(messagesDb).insertOnConflictUpdate(MessagesDbCompanion(
+      id: Value.absent(),
       messageId: Value(message.messageId),
       conversationId: Value(message.conversationId),
       senderId: Value(message.senderId),
@@ -128,12 +129,12 @@ class MessageDatabase extends _$MessageDatabase {
 
   // Delete a message
   Future<void> deleteMessage(String messageId) async {
-    await (delete(messagesDb)..where((tbl) => tbl.id.equals(messageId))).go();
+    await (delete(messagesDb)..where((tbl) => tbl.messageId.equals(messageId))).go();
   }
 
   Future<void> updateMessageStatus(String messageId, String status) async {
     await (update(messagesDb)
-      ..where((tbl) => tbl.id.equals(messageId)))
+      ..where((tbl) => tbl.messageId.equals(messageId)))
         .write(MessagesDbCompanion(
       status: Value(status),
     ));

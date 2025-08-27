@@ -49,7 +49,7 @@ class ConversationDatabase extends _$ConversationDatabase {
         id: Value(conversation.id),
         conversationId: Value(conversation.conversationId),
         participants: Value(jsonEncode(conversation.participants)),
-        lastMessage: Value(conversation.lastMessage?.id),
+        lastMessage: Value(conversation.lastMessage?.messageId),
         unreadCount: Value(conversation.unreadCount),
         createdAt: Value(conversation.createdAt.millisecondsSinceEpoch),
         updatedAt: Value(conversation.updatedAt.millisecondsSinceEpoch),

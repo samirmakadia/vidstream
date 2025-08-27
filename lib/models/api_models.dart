@@ -589,7 +589,6 @@ class Message {
 
   Map<String, dynamic> toSocketJson() {
     return {
-      'id': id,
       'messageId': messageId,
       'conversationId': conversationId,
       'senderId': senderId,
