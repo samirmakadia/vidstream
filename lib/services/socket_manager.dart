@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:event_bus/event_bus.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:vidstream/storage/conversation_storage_drift.dart';
+import '../manager/session_manager.dart';
 import '../models/api_models.dart';
 import '../storage/message_storage_drift.dart';
 import 'package:flutter/foundation.dart';
@@ -72,6 +73,29 @@ class SocketManager {
 
     debugPrint("📩 Delivered receipt sent for message ${message.id}");
   }
+
+  Future<void> sendSeenEvent(Message message) async {
+    try {
+      final setSeenPayload = {
+        ...message.toSocketJson(),
+        "status": "read",
+      };
+
+      // 🔹 Send "seen" to socket
+      _socket?.emit('message', setSeenPayload);
+
+      // 🔹 Update only the status in local DB
+      await MessageDatabase.instance.updateMessageStatus(message.id, "read");
+
+      // 🔹 Fire event
+      eventBus.fire('read_event');
+
+      print("👁️ Message ${message.id} marked as seen");
+    } catch (e) {
+      print("Error in sendSeenEvent: $e");
+    }
+  }
+
 
   void sendMessage(Message message) async {
     try {

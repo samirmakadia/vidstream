@@ -237,6 +237,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     return StreamBuilder<List<ChatMessage>>(
       stream: db.watchMessagesForConversation(conversationId),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('No messages yet. \nStart the conversation!', textAlign: TextAlign.center,),
+          );
+        }
         final messages = snapshot.data ?? [];
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
@@ -254,6 +262,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           itemBuilder: (context, index) {
             final message = messages[index];
             final isMe = message.senderId == _authService.currentUser?.uid;
+            if (!isMe && message.status != "read") {
+              SocketManager().sendSeenEvent(message);
+            }
             return _buildMessageBubble(message, isMe);
           },
         );
