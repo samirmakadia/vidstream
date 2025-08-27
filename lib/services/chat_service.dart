@@ -8,6 +8,8 @@ import 'package:vidstream/storage/conversation_storage_drift.dart';
 import 'package:vidstream/utils/connectivity_service.dart';
 import 'package:vidstream/services/http_client.dart';
 
+import '../models/response_model.dart';
+
 class ChatService {
 
   ApiRepository get _apiRepository => ApiRepository.instance;
@@ -53,6 +55,16 @@ class ChatService {
       return await _apiRepository.api.getUserById(userId);
     } catch (e) {
       print('Error getting user by ID: $e');
+      return null;
+    }
+  }
+
+  Future<List<Message>?> getSyncChatMessages({required DateTime date}) async {
+    try {
+      final paginatedResponse = await _apiRepository.api.getSyncChatMessages(date: date);
+      return paginatedResponse?.data; // return List<Message> for convenience
+    } catch (e) {
+      print('❌ Error syncing chat messages: $e');
       return null;
     }
   }

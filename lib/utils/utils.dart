@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'graphics.dart';
@@ -172,6 +174,23 @@ class Utils{
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     final suffix = _generateRandomString(4);
     return '$prefix$timestamp$suffix';
+  }
+
+  static Future<DateTime?> getLastSyncDate() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? dateString = prefs.getString('lastSyncedDate');
+
+    if (dateString != null) {
+      return DateTime.tryParse(dateString); // safely returns DateTime? or null
+    }
+    return null;
+  }
+
+  static Future<void> saveLastSyncDate() async {
+    final String date = DateTime.now().toUtc().toIso8601String(); // 2025-08-26T18:30:37.830Z
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('lastSyncedDate', date);
   }
 
 }
