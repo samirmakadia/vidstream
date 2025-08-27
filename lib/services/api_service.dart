@@ -743,6 +743,32 @@ class ApiService {
     });
   }
 
+  Future<response_models.PaginatedResponse<Message>?> getSyncChatMessages({
+    required DateTime date,
+  }) async {
+    return ErrorHandler.safeApiCall(() async {
+      final response = await _httpClient.get<response_models.PaginatedResponse<Message>>(
+        '/chat/messages/sync',
+        queryParameters: {
+          'date': '${date.toUtc().toIso8601String()}Z',
+        },
+        fromJson: (json) {
+          final messageJson = (json as Map<String, dynamic>)['messages'] as List<dynamic>? ?? [];
+          return response_models.PaginatedResponse.fromJson(
+            {'data': messageJson},
+                (item) => Message.fromJson(item as Map<String, dynamic>),
+          );
+        },
+      );
+
+      if (response.success && response.data != null) {
+        return response.data!;
+      }
+
+      throw response_models.ApiException(response.message);
+    });
+  }
+
   Future<Conversation?> createConversation({
     required List<String> participants,
   }) async {
