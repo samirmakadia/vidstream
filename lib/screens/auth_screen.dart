@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';
@@ -17,7 +19,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   late Animation<Offset> _slideAnimation;
   
   bool _isLoading = false;
-  bool _isAppleSignInAvailable = false;
+  bool _isAppleSignInAvailable = Platform.isIOS;
 
   @override
   void initState() {
@@ -44,20 +46,13 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     ));
     
     _animationController.forward();
-    _checkAppleSignInAvailability();
+    // _checkAppleSignInAvailability();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
-  }
-
-  Future<void> _checkAppleSignInAvailability() async {
-    final isAvailable = await ApiRepository.instance.auth.isAppleSignInAvailable();
-    setState(() {
-      _isAppleSignInAvailable = isAvailable;
-    });
   }
 
   Future<void> _signInWithGoogle() async {

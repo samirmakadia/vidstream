@@ -669,6 +669,22 @@ class MessageContent {
     );
   }
 
+  MessageContent copyWith({
+    String? text,
+    String? mediaUrl,
+    int? mediaSize,
+    double? mediaDuration,
+    String? thumbnailUrl,
+  }) {
+    return MessageContent(
+      text: text ?? this.text,
+      mediaUrl: mediaUrl ?? this.mediaUrl,
+      mediaSize: mediaSize ?? this.mediaSize,
+      mediaDuration: mediaDuration ?? this.mediaDuration,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'text': text,
