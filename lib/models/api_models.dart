@@ -503,6 +503,7 @@ enum MessageStatus {
   sent,
   delivered,
   read,
+  pending,
 }
 
 class Message {

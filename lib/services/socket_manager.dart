@@ -119,12 +119,18 @@ class SocketManager {
 
   void sendMessage(Message message) async {
     try {
+      final nowIso = DateTime.now().toIso8601String();
       String jsonString = jsonEncode(message.toSocketJson());
       print(jsonString);
 
       _socket?.emit('message', message.toSocketJson());
 
-      await MessageDatabase.instance.addOrUpdateMessage(message);
+      final localMessage = message.copyWith(
+        status: MessageStatus.pending,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      );
+      await MessageDatabase.instance.addOrUpdateMessage(localMessage);
 
       debugPrint("✅ Message sent and saved: ${message.content.text}, status: ${message.status}");
     } catch (e, stack) {

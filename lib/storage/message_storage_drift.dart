@@ -57,10 +57,8 @@ class MessageDatabase extends _$MessageDatabase {
       messageType: Value(message.messageType),
       content: Value(jsonEncode(message.content.toJson())),
       status: Value(message.status.name),
-
       createdAt: Value(message.createdAt.isNotEmpty ? message.createdAt : nowIso),
       updatedAt: Value(message.updatedAt.isNotEmpty ? message.updatedAt : nowIso),
-
       isDeleted: Value(message.isDeleted),
       deletedFor: Value(jsonEncode(message.deletedFor)),
     ));
