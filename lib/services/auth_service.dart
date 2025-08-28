@@ -327,6 +327,8 @@ class AuthService {
 
   Future<ApiUser> _createGuestUser() async {
     final deviceId = await AuthUtils().getDeviceId();
+    // final deviceId = 'T2SNS33.73-22-3-15';
+
     print('Creating guest user with device ID: $deviceId');
 
     final authResponse = await _apiService.guestLogin(deviceId: deviceId);

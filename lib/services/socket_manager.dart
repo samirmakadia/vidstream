@@ -90,19 +90,15 @@ class SocketManager {
     required String currentUserId,
     required String senderId,
   }) {
-    // If I am the sender → receiver is the other participant
-    if (senderId == currentUserId) {
-      final parts = conversationId.split('-');
-      if (parts.length != 2) return "";
-      return parts[0] == currentUserId ? parts[1] : parts[0];
-    }
-
-    // If I am NOT the sender → I am the receiver
-    return currentUserId;
+    final parts = conversationId.split('-');
+    if (parts.length != 2) return "";
+    return parts[0] == senderId ? parts[1] : parts[0];
   }
 
-  Future<void> sendSeenEvent(Message message, String? receiverId) async {
+  Future<void> sendSeenEvent(Message message, String currentUserId) async {
     try {
+      final receiverId = _getReceiverId(conversationId: message.conversationId, currentUserId: currentUserId, senderId: message.senderId,);
+
       final setSeenPayload = {
         ...message.toSocketJson(),
         "status": "read",
@@ -110,6 +106,7 @@ class SocketManager {
       };
       print("📤 Sending Seen Payload:\n$setSeenPayload");
       _socket?.emit('message', setSeenPayload);
+      await MessageDatabase.instance.updateMessageStatus(message.messageId, MessageStatus.read.name);
       print("👁️ Message ${message.messageId} marked as seen");
       Utils.saveLastSyncDate();
     } catch (e) {
@@ -193,7 +190,6 @@ class SocketManager {
       debugPrint("❌ Error syncing messages: $e\n$stack");
     }
   }
-
 
   Future<void> _sendDeliveredReceipt(
       Message message,

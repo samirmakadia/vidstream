@@ -348,9 +348,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             final message = messages[index];
             final isMe = message.senderId == _authService.currentUser?.uid;
             if (!isMe && message.status != MessageStatus.read) {
-              SocketManager().sendSeenEvent(message,_authService.currentUser?.uid);
+              SocketManager().sendSeenEvent(message,_authService.currentUser?.uid ?? '');
             }
-            print("Message seen: ${message.messageId}, Status: ${message.status}, id : ${message.id}");
+            print("Message seen: ${message.content.text}, Status: ${message.status}, id : ${message.id}");
+            print("Message createdAt:  ${message.createdAt}");
             return _buildMessageBubble(message, isMe);
           },
         );
@@ -429,7 +430,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _formatTime(message.sentAt),
+                    _formatTime(DateTime.parse(message.createdAt)),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
