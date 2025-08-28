@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:event_bus/event_bus.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:vidstream/storage/conversation_storage_drift.dart';
-import '../manager/session_manager.dart';
 import '../models/api_models.dart';
 import '../storage/message_storage_drift.dart';
 import 'package:flutter/foundation.dart';
@@ -143,11 +142,10 @@ class SocketManager {
 
   Future<void> _syncMessagesSinceLastSync() async {
     try {
+      final DateTime sinceDate = (await Utils.getLastSyncDate())?.toUtc() ??
+          DateTime.now().subtract(const Duration(days: 1)).toUtc();
 
-      final DateTime sinceDate = await Utils.getLastSyncDate() ??
-          DateTime.now().subtract(const Duration(days: 1));
-
-      final messages = await _chatService.getSyncChatMessages(date: sinceDate);
+      final messages = await _chatService.getSyncChatMessages1(date: sinceDate);
 
       if (messages != null && messages.isNotEmpty) {
         for (var message in messages) {
@@ -155,13 +153,15 @@ class SocketManager {
           final receiverId = _getReceiverId(message.conversationId, currentUserId);
 
           await MessageDatabase.instance.addOrUpdateMessage(message);
+
           if (message.status == MessageStatus.sent) {
             await _sendDeliveredReceipt(message, message.toJson(), receiverId);
           }
         }
       }
 
-      Utils.saveLastSyncDate();
+      await Utils.saveLastSyncDate();
+
       print("🟢 Messages synced successfully since $sinceDate");
 
     } catch (e, stack) {

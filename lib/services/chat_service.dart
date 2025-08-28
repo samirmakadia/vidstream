@@ -60,10 +60,10 @@ class ChatService {
     }
   }
 
-  Future<List<Message>?> getSyncChatMessages({required DateTime date}) async {
+  Future<List<Message>?> getSyncChatMessages1({required DateTime date}) async {
     try {
       final paginatedResponse = await _apiRepository.api.getSyncChatMessages(date: date);
-      return paginatedResponse?.data; // return List<Message> for convenience
+      return paginatedResponse?.data;
     } catch (e) {
       print('❌ Error syncing chat messages: $e');
       return null;

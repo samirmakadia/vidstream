@@ -750,7 +750,8 @@ class ApiService {
       final response = await _httpClient.get<response_models.PaginatedResponse<Message>>(
         '/chat/messages/sync',
         queryParameters: {
-          'date': date.toUtc().toIso8601String(),
+          // Encode ISO8601 string for URL
+          'date': date,
         },
         fromJson: (json) {
           final messageJson = (json as Map<String, dynamic>)['messages'] as List<dynamic>? ?? [];

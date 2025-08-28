@@ -54,7 +54,7 @@ class MessageDatabase extends _$MessageDatabase {
       messageType: Value(message.messageType),
       content: Value(jsonEncode(message.content.toJson())),
       status: Value(message.status.name),
-      timestamp: Value(message.timestamp.millisecondsSinceEpoch),
+      timestamp: Value(message.createdAt.millisecondsSinceEpoch),
       isDeleted: Value(message.isDeleted),
       deletedFor: Value(jsonEncode(message.deletedFor)),
     ));
@@ -78,7 +78,7 @@ class MessageDatabase extends _$MessageDatabase {
       messageType: row.messageType,
       content: MessageContent.fromJson(jsonDecode(row.content)),
       status: MessageStatus.values.firstWhere((e) => e.name == row.status, orElse: () => MessageStatus.sent),
-      timestamp: DateTime.fromMillisecondsSinceEpoch(row.timestamp),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(row.timestamp),
       isDeleted: row.isDeleted,
       deletedFor: row.deletedFor != null ? List<String>.from(jsonDecode(row.deletedFor!)) : [],
     );
@@ -100,7 +100,7 @@ class MessageDatabase extends _$MessageDatabase {
       messageType: row.messageType,
       content: MessageContent.fromJson(jsonDecode(row.content)),
       status: MessageStatus.values.firstWhere((e) => e.name == row.status, orElse: () => MessageStatus.sent),
-      timestamp: DateTime.fromMillisecondsSinceEpoch(row.timestamp),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(row.timestamp),
       isDeleted: row.isDeleted,
       deletedFor: row.deletedFor != null ? List<String>.from(jsonDecode(row.deletedFor!)) : [],
     )).toList().reversed.toList();
@@ -121,7 +121,7 @@ class MessageDatabase extends _$MessageDatabase {
       messageType: row.messageType,
       content: MessageContent.fromJson(jsonDecode(row.content)),
       status: MessageStatus.values.firstWhere((e) => e.name == row.status, orElse: () => MessageStatus.sent),
-      timestamp: DateTime.fromMillisecondsSinceEpoch(row.timestamp),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(row.timestamp),
       isDeleted: row.isDeleted,
       deletedFor: row.deletedFor != null ? List<String>.from(jsonDecode(row.deletedFor!)) : [],
     )).toList().reversed.toList());

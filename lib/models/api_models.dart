@@ -514,12 +514,12 @@ class Message {
   final String messageType;
   final MessageContent content;
   final MessageStatus status;
-  final DateTime timestamp;
+  final DateTime createdAt;
   final bool isDeleted;
   final List<String> deletedFor;
 
   String get message => content.text ?? '';
-  DateTime get sentAt => timestamp;
+  DateTime get sentAt => createdAt;
   bool get isRead => status == MessageStatus.read;
   bool get isDelivered => status == MessageStatus.delivered;
 
@@ -545,7 +545,7 @@ class Message {
     required this.messageType,
     required this.content,
     required this.status,
-    required this.timestamp,
+    required this.createdAt,
     this.isDeleted = false,
     this.deletedFor = const [],
   });
@@ -565,7 +565,9 @@ class Message {
             (e) => e.name == (json['status'] ?? 'sent'),
         orElse: () => MessageStatus.sent,
       ),
-      timestamp: DateTime.tryParse(json['timestamp'] ?? json['created_at'] ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(
+          json['createdAt'] ?? json['created_at'] ?? json['timestamp'] ?? ''
+      ) ?? DateTime.now(),
       isDeleted: json['isDeleted'] ?? false,
       deletedFor: List<String>.from(json['deletedFor'] ?? []),
     );
@@ -581,7 +583,7 @@ class Message {
       'message_type': messageType,
       'content': content.toJson(),
       'status': status.name,
-      'timestamp': timestamp.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(), // ✅ use createdAt
       'isDeleted': isDeleted,
       'deletedFor': deletedFor,
     };
@@ -596,6 +598,7 @@ class Message {
       'messageType': messageType,
       'content': content.toJson(),
       'status': status.name,
+      'createdAt': createdAt.toIso8601String(), // ✅ include createdAt
     };
   }
 
@@ -608,7 +611,7 @@ class Message {
     String? messageType,
     MessageContent? content,
     MessageStatus? status,
-    DateTime? timestamp,
+    DateTime? createdAt, // ✅ updated
     bool? isDeleted,
     List<String>? deletedFor,
   }) {
@@ -621,7 +624,7 @@ class Message {
       messageType: messageType ?? this.messageType,
       content: content ?? this.content,
       status: status ?? this.status,
-      timestamp: timestamp ?? this.timestamp,
+      createdAt: createdAt ?? this.createdAt,
       isDeleted: isDeleted ?? this.isDeleted,
       deletedFor: deletedFor ?? this.deletedFor,
     );

@@ -78,7 +78,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         messageType: messageType,
         content: content,
         status: MessageStatus.sent,
-        timestamp: DateTime.now(),
+        createdAt: DateTime.now(),
       );
 
       _messageController.clear();
@@ -300,7 +300,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             if (!isMe && message.status != MessageStatus.read) {
               SocketManager().sendSeenEvent(message,_authService.currentUser?.uid);
             }
-            print("Message seen: ${message.messageId}, Status: ${message.status}");
+            print("Message seen: ${message.messageId}, Status: ${message.status}, date : ${message.createdAt}");
             return _buildMessageBubble(message, isMe);
           },
         );
