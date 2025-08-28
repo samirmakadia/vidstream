@@ -47,7 +47,7 @@ class MessageDatabase extends _$MessageDatabase {
   // Insert or update a message
   Future<void> addOrUpdateMessage(Message message) async {
     await into(messagesDb).insertOnConflictUpdate(MessagesDbCompanion(
-      id: Value.absent(),
+      id: Value(message.id),
       messageId: Value(message.messageId),
       conversationId: Value(message.conversationId),
       senderId: Value(message.senderId),

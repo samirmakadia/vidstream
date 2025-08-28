@@ -554,6 +554,7 @@ class Message {
     return Message(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       messageId: json['messageId']?.toString()
+          ?? json['_id']?.toString()
           ?? json['id']?.toString()
           ?? DateTime.now().millisecondsSinceEpoch.toString(),
       conversationId: json['conversation_id']?.toString() ?? json['conversationId']?.toString() ?? '',
@@ -598,7 +599,6 @@ class Message {
       'messageType': messageType,
       'content': content.toJson(),
       'status': status.name,
-      'createdAt': createdAt.toIso8601String(), // ✅ include createdAt
     };
   }
 
