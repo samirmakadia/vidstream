@@ -15,8 +15,9 @@ class ChatScreen extends StatefulWidget {
   final String? conversationId;
   final String? name;
   final String? imageUrl;
+  final Conversation? conversation;
 
-  const ChatScreen({super.key, required this.otherUserId, this.conversationId, this.name, this.imageUrl});
+  const ChatScreen({super.key, required this.otherUserId, this.conversationId, this.name, this.imageUrl,  this.conversation});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -152,6 +153,32 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _deleteConversation() async {
+    try {
+      await _chatService.deleteChatConversation(widget.conversation?.id ?? '');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Conversation deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete conversation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -182,6 +209,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'delete') {
+                _deleteConversation();
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'delete',
+                child: Text('Delete Conversation'),
+              ),
+            ],
+          ),
+        ],
       ),
       body: _isLoading ? _buildLoadingState() : _buildChatBody(),
     );

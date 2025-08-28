@@ -869,6 +869,16 @@ class ApiService {
     });
   }
 
+  Future<void> deleteChatConversation(String id) async {
+    return ErrorHandler.safeApiCall(() async {
+      final response = await _httpClient.delete('/chat/conversations/$id');
+
+      if (!response.success) {
+        throw response_models.ApiException(response.message);
+      }
+    });
+  }
+
   Future<Conversation?> getConversation(String conversationId) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<Conversation>(

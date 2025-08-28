@@ -9,9 +9,10 @@ import 'package:vidstream/utils/connectivity_service.dart';
 import 'package:vidstream/services/http_client.dart';
 
 import '../models/response_model.dart';
+import 'api_service.dart';
 
 class ChatService {
-
+  final ApiService _apiService = ApiService();
   ApiRepository get _apiRepository => ApiRepository.instance;
 
   // Get user's conversations
@@ -66,6 +67,14 @@ class ChatService {
     } catch (e) {
       print('❌ Error syncing chat messages: $e');
       return null;
+    }
+  }
+
+  Future<void> deleteChatConversation(String id) async {
+    try {
+      await _apiService.deleteChatConversation(id);
+    } catch (e) {
+      throw 'Failed to delete comment: ${e.toString()}';
     }
   }
 
