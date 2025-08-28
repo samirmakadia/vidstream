@@ -174,8 +174,10 @@ class SocketManager {
             senderId: message.senderId,
           );
 
+          await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.messageId);
+
           if (message.status == MessageStatus.sent && message.senderId != _currentUserId) {
-            await _sendDeliveredReceipt(message, message.toJson(),receiverId,);
+            await _sendDeliveredReceipt(message, message.toSocketJson(),receiverId,);
           }
           else {
             await MessageDatabase.instance.addOrUpdateMessage(message);
@@ -200,6 +202,7 @@ class SocketManager {
 
       final deliveredPayload = {
         ...messageJson,
+        "id": message.id,
         "messageId": message.messageId,
         "status": "delivered",
         "receiverId": receiverId,
