@@ -71,9 +71,10 @@ class SocketManager {
 
     await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.messageId);
 
-    if (message.status == MessageStatus.sent) {
+    if (message.status == MessageStatus.sent && receiverId == currentUserId) {
       await _sendDeliveredReceipt(message, message.toSocketJson(), receiverId);
-    } else {
+    }
+    else {
       await MessageDatabase.instance.addOrUpdateMessage(message);
       debugPrint("✅ Message ${message.messageId} updated with status ${message.status}");
     }
@@ -142,8 +143,7 @@ class SocketManager {
 
   Future<void> _syncMessagesSinceLastSync() async {
     try {
-      final DateTime sinceDate = (await Utils.getLastSyncDate())?.toUtc() ??
-          DateTime.now().subtract(const Duration(days: 1)).toUtc();
+      final DateTime sinceDate = (await Utils.getLastSyncDate())?.toUtc() ?? DateTime.now().subtract(const Duration(days: 1)).toUtc();
 
       final messages = await _chatService.getSyncChatMessages1(date: sinceDate);
 
@@ -152,10 +152,11 @@ class SocketManager {
           final currentUserId = _currentUserId ?? "";
           final receiverId = _getReceiverId(message.conversationId, currentUserId);
 
-          await MessageDatabase.instance.addOrUpdateMessage(message);
-
-          if (message.status == MessageStatus.sent) {
-            await _sendDeliveredReceipt(message, message.toJson(), receiverId);
+          if (message.status == MessageStatus.sent && message.senderId != _currentUserId) {
+            await _sendDeliveredReceipt(message, message.toJson(), _currentUserId ?? "");
+          }
+          else {
+            await MessageDatabase.instance.addOrUpdateMessage(message);
           }
         }
       }
@@ -163,11 +164,11 @@ class SocketManager {
       await Utils.saveLastSyncDate();
 
       print("🟢 Messages synced successfully since $sinceDate");
-
     } catch (e, stack) {
       debugPrint("❌ Error syncing messages: $e\n$stack");
     }
   }
+
 
   Future<void> _sendDeliveredReceipt(
       Message message,
