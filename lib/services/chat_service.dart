@@ -78,4 +78,12 @@ class ChatService {
     }
   }
 
+  Future<void> deleteChatMessage(String messageId) async {
+    try {
+      await _apiService.deleteMessage(messageId);
+    } catch (e) {
+      throw 'Failed to delete comment: ${e.toString()}';
+    }
+  }
+
 }

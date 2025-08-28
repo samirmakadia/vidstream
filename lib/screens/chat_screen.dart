@@ -179,6 +179,55 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _onMessageLongPress(ChatMessage message, Offset tapPosition) async {
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    final result = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(tapPosition.dx, tapPosition.dy, 0, 0),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        const PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete, color: Colors.red),
+              SizedBox(width: 8),
+              Text("Delete"),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (result == 'delete') {
+      try {
+        print('messageid of message is:${message.id}');
+        await _chatService.deleteChatMessage(message.id ?? '');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Message deleted'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -300,7 +349,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             if (!isMe && message.status != MessageStatus.read) {
               SocketManager().sendSeenEvent(message,_authService.currentUser?.uid);
             }
-            print("Message seen: ${message.content.text}, Status: ${message.status}, id : ${message.id}");
+            print("Message seen: ${message.messageId}, Status: ${message.status}, id : ${message.id}");
             return _buildMessageBubble(message, isMe);
           },
         );
@@ -309,84 +358,89 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildMessageBubble(ChatMessage message, bool isMe) {
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isMe 
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(18).copyWith(
-                  bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(18),
-                  bottomLeft: isMe ? const Radius.circular(18) : const Radius.circular(4),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+    return GestureDetector(
+      onLongPressStart: (details) {
+        _onMessageLongPress(message, details.globalPosition);
+      },
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          child: Column(
+            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isMe
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(18).copyWith(
+                    bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(18),
+                    bottomLeft: isMe ? const Radius.circular(18) : const Radius.circular(4),
                   ),
-                ],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (message.messageType == 'image')
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey[300],
+                        ),
+                        child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                      )
+                    else if (message.messageType == 'video')
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey[300],
+                        ),
+                        child: const Icon(Icons.play_circle_outline, size: 50, color: Colors.grey),
+                      ),
+                    if (message.message.isNotEmpty)
+                      Text(
+                        message.message,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (message.messageType == 'image')
-                    Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.grey[300],
-                      ),
-                      child: const Icon(Icons.image, size: 50, color: Colors.grey),
-                    )
-                  else if (message.messageType == 'video')
-                    Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.grey[300],
-                      ),
-                      child: const Icon(Icons.play_circle_outline, size: 50, color: Colors.grey),
+                  Text(
+                    _formatTime(message.sentAt),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
-                  if (message.message.isNotEmpty)
-                    Text(
-                      message.message,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
+                  ),
+                  if (isMe) ...[
+                    const SizedBox(width: 4),
+                    message.statusIcon(size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
+                  ],
                 ],
               ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _formatTime(message.sentAt),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-                if (isMe) ...[
-                  const SizedBox(width: 4),
-                  message.statusIcon(size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
-                ],
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
