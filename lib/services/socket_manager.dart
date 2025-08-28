@@ -51,6 +51,9 @@ class SocketManager {
     _socket?.on('userJoinedMeet', _handleUserJoinedMeet);
     _socket?.on('userLeftMeet', _handleUserLeftMeet);
 
+    _socket?.on('message_deleted', _handleMessageDeleted);
+
+
   }
 
   void disconnect() {
@@ -227,6 +230,28 @@ class SocketManager {
     }
   }
 
+  void _handleMessageDeleted(dynamic data) async {
+    try {
+      print("🗑️ Message deleted event received: $data");
+
+      // Extract messageId from payload
+      final Map<String, dynamic> jsonData = (data as Map).cast<String, dynamic>();
+      final String? messageId = jsonData['messageId'];
+
+      if (messageId != null && messageId.isNotEmpty) {
+        // Delete from local database
+        await MessageDatabase.instance.deleteMessageById(messageId);
+
+        eventBus.fire('message_deleted');
+
+        print("✅ Message $messageId deleted locally");
+      } else {
+        print("⚠️ messageId not found in event payload");
+      }
+    } catch (e, stack) {
+      debugPrint("❌ Error handling message_deleted: $e\n$stack");
+    }
+  }
 
 }
 

@@ -29,7 +29,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final db = MessageDatabase.instance;
-  // late final stream;
+  Timer? _timer;
   ApiUser? _otherUser;
 
   final bool _isLoading = false;
@@ -42,6 +42,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadOtherUser();
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
 
@@ -556,6 +559,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
