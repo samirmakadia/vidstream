@@ -49,12 +49,18 @@ class $MessagesDbTable extends MessagesDb
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
       'status', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _timestampMeta =
-      const VerificationMeta('timestamp');
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
   @override
-  late final GeneratedColumn<int> timestamp = GeneratedColumn<int>(
-      'timestamp', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _isDeletedMeta =
       const VerificationMeta('isDeleted');
   @override
@@ -80,7 +86,8 @@ class $MessagesDbTable extends MessagesDb
         messageType,
         content,
         status,
-        timestamp,
+        createdAt,
+        updatedAt,
         isDeleted,
         deletedFor
       ];
@@ -137,11 +144,17 @@ class $MessagesDbTable extends MessagesDb
     } else if (isInserting) {
       context.missing(_statusMeta);
     }
-    if (data.containsKey('timestamp')) {
-      context.handle(_timestampMeta,
-          timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta));
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     } else if (isInserting) {
-      context.missing(_timestampMeta);
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
     }
     if (data.containsKey('is_deleted')) {
       context.handle(_isDeletedMeta,
@@ -176,8 +189,10 @@ class $MessagesDbTable extends MessagesDb
           .read(DriftSqlType.string, data['${effectivePrefix}content'])!,
       status: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
-      timestamp: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}timestamp'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}updated_at'])!,
       isDeleted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
       deletedFor: attachedDatabase.typeMapping
@@ -199,7 +214,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   final String messageType;
   final String content;
   final String status;
-  final int timestamp;
+  final String createdAt;
+  final String updatedAt;
   final bool isDeleted;
   final String? deletedFor;
   const MessagesDbData(
@@ -210,7 +226,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
       required this.messageType,
       required this.content,
       required this.status,
-      required this.timestamp,
+      required this.createdAt,
+      required this.updatedAt,
       required this.isDeleted,
       this.deletedFor});
   @override
@@ -225,7 +242,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
     map['message_type'] = Variable<String>(messageType);
     map['content'] = Variable<String>(content);
     map['status'] = Variable<String>(status);
-    map['timestamp'] = Variable<int>(timestamp);
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
     map['is_deleted'] = Variable<bool>(isDeleted);
     if (!nullToAbsent || deletedFor != null) {
       map['deleted_for'] = Variable<String>(deletedFor);
@@ -242,7 +260,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
       messageType: Value(messageType),
       content: Value(content),
       status: Value(status),
-      timestamp: Value(timestamp),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
       isDeleted: Value(isDeleted),
       deletedFor: deletedFor == null && nullToAbsent
           ? const Value.absent()
@@ -261,7 +280,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
       messageType: serializer.fromJson<String>(json['messageType']),
       content: serializer.fromJson<String>(json['content']),
       status: serializer.fromJson<String>(json['status']),
-      timestamp: serializer.fromJson<int>(json['timestamp']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
       deletedFor: serializer.fromJson<String?>(json['deletedFor']),
     );
@@ -277,7 +297,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
       'messageType': serializer.toJson<String>(messageType),
       'content': serializer.toJson<String>(content),
       'status': serializer.toJson<String>(status),
-      'timestamp': serializer.toJson<int>(timestamp),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
       'isDeleted': serializer.toJson<bool>(isDeleted),
       'deletedFor': serializer.toJson<String?>(deletedFor),
     };
@@ -291,7 +312,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
           String? messageType,
           String? content,
           String? status,
-          int? timestamp,
+          String? createdAt,
+          String? updatedAt,
           bool? isDeleted,
           Value<String?> deletedFor = const Value.absent()}) =>
       MessagesDbData(
@@ -302,7 +324,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
         messageType: messageType ?? this.messageType,
         content: content ?? this.content,
         status: status ?? this.status,
-        timestamp: timestamp ?? this.timestamp,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
         isDeleted: isDeleted ?? this.isDeleted,
         deletedFor: deletedFor.present ? deletedFor.value : this.deletedFor,
       );
@@ -318,7 +341,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
           data.messageType.present ? data.messageType.value : this.messageType,
       content: data.content.present ? data.content.value : this.content,
       status: data.status.present ? data.status.value : this.status,
-      timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
       deletedFor:
           data.deletedFor.present ? data.deletedFor.value : this.deletedFor,
@@ -335,7 +359,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
           ..write('messageType: $messageType, ')
           ..write('content: $content, ')
           ..write('status: $status, ')
-          ..write('timestamp: $timestamp, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('isDeleted: $isDeleted, ')
           ..write('deletedFor: $deletedFor')
           ..write(')'))
@@ -343,8 +368,18 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
   }
 
   @override
-  int get hashCode => Object.hash(id, messageId, conversationId, senderId,
-      messageType, content, status, timestamp, isDeleted, deletedFor);
+  int get hashCode => Object.hash(
+      id,
+      messageId,
+      conversationId,
+      senderId,
+      messageType,
+      content,
+      status,
+      createdAt,
+      updatedAt,
+      isDeleted,
+      deletedFor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -356,7 +391,8 @@ class MessagesDbData extends DataClass implements Insertable<MessagesDbData> {
           other.messageType == this.messageType &&
           other.content == this.content &&
           other.status == this.status &&
-          other.timestamp == this.timestamp &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
           other.isDeleted == this.isDeleted &&
           other.deletedFor == this.deletedFor);
 }
@@ -369,7 +405,8 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
   final Value<String> messageType;
   final Value<String> content;
   final Value<String> status;
-  final Value<int> timestamp;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
   final Value<bool> isDeleted;
   final Value<String?> deletedFor;
   final Value<int> rowid;
@@ -381,7 +418,8 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
     this.messageType = const Value.absent(),
     this.content = const Value.absent(),
     this.status = const Value.absent(),
-    this.timestamp = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     this.isDeleted = const Value.absent(),
     this.deletedFor = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -394,7 +432,8 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
     required String messageType,
     required String content,
     required String status,
-    required int timestamp,
+    required String createdAt,
+    required String updatedAt,
     this.isDeleted = const Value.absent(),
     this.deletedFor = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -404,7 +443,8 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
         messageType = Value(messageType),
         content = Value(content),
         status = Value(status),
-        timestamp = Value(timestamp);
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
   static Insertable<MessagesDbData> custom({
     Expression<String>? id,
     Expression<String>? messageId,
@@ -413,7 +453,8 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
     Expression<String>? messageType,
     Expression<String>? content,
     Expression<String>? status,
-    Expression<int>? timestamp,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
     Expression<bool>? isDeleted,
     Expression<String>? deletedFor,
     Expression<int>? rowid,
@@ -426,7 +467,8 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
       if (messageType != null) 'message_type': messageType,
       if (content != null) 'content': content,
       if (status != null) 'status': status,
-      if (timestamp != null) 'timestamp': timestamp,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
       if (isDeleted != null) 'is_deleted': isDeleted,
       if (deletedFor != null) 'deleted_for': deletedFor,
       if (rowid != null) 'rowid': rowid,
@@ -441,7 +483,8 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
       Value<String>? messageType,
       Value<String>? content,
       Value<String>? status,
-      Value<int>? timestamp,
+      Value<String>? createdAt,
+      Value<String>? updatedAt,
       Value<bool>? isDeleted,
       Value<String?>? deletedFor,
       Value<int>? rowid}) {
@@ -453,7 +496,8 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
       messageType: messageType ?? this.messageType,
       content: content ?? this.content,
       status: status ?? this.status,
-      timestamp: timestamp ?? this.timestamp,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       isDeleted: isDeleted ?? this.isDeleted,
       deletedFor: deletedFor ?? this.deletedFor,
       rowid: rowid ?? this.rowid,
@@ -484,8 +528,11 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
-    if (timestamp.present) {
-      map['timestamp'] = Variable<int>(timestamp.value);
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
     }
     if (isDeleted.present) {
       map['is_deleted'] = Variable<bool>(isDeleted.value);
@@ -509,7 +556,8 @@ class MessagesDbCompanion extends UpdateCompanion<MessagesDbData> {
           ..write('messageType: $messageType, ')
           ..write('content: $content, ')
           ..write('status: $status, ')
-          ..write('timestamp: $timestamp, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('isDeleted: $isDeleted, ')
           ..write('deletedFor: $deletedFor, ')
           ..write('rowid: $rowid')
@@ -537,7 +585,8 @@ typedef $$MessagesDbTableCreateCompanionBuilder = MessagesDbCompanion Function({
   required String messageType,
   required String content,
   required String status,
-  required int timestamp,
+  required String createdAt,
+  required String updatedAt,
   Value<bool> isDeleted,
   Value<String?> deletedFor,
   Value<int> rowid,
@@ -550,7 +599,8 @@ typedef $$MessagesDbTableUpdateCompanionBuilder = MessagesDbCompanion Function({
   Value<String> messageType,
   Value<String> content,
   Value<String> status,
-  Value<int> timestamp,
+  Value<String> createdAt,
+  Value<String> updatedAt,
   Value<bool> isDeleted,
   Value<String?> deletedFor,
   Value<int> rowid,
@@ -587,8 +637,11 @@ class $$MessagesDbTableFilterComposer
   ColumnFilters<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get timestamp => $composableBuilder(
-      column: $table.timestamp, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get isDeleted => $composableBuilder(
       column: $table.isDeleted, builder: (column) => ColumnFilters(column));
@@ -628,8 +681,11 @@ class $$MessagesDbTableOrderingComposer
   ColumnOrderings<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get timestamp => $composableBuilder(
-      column: $table.timestamp, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get isDeleted => $composableBuilder(
       column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
@@ -668,8 +724,11 @@ class $$MessagesDbTableAnnotationComposer
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
-  GeneratedColumn<int> get timestamp =>
-      $composableBuilder(column: $table.timestamp, builder: (column) => column);
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
   GeneratedColumn<bool> get isDeleted =>
       $composableBuilder(column: $table.isDeleted, builder: (column) => column);
@@ -711,7 +770,8 @@ class $$MessagesDbTableTableManager extends RootTableManager<
             Value<String> messageType = const Value.absent(),
             Value<String> content = const Value.absent(),
             Value<String> status = const Value.absent(),
-            Value<int> timestamp = const Value.absent(),
+            Value<String> createdAt = const Value.absent(),
+            Value<String> updatedAt = const Value.absent(),
             Value<bool> isDeleted = const Value.absent(),
             Value<String?> deletedFor = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -724,7 +784,8 @@ class $$MessagesDbTableTableManager extends RootTableManager<
             messageType: messageType,
             content: content,
             status: status,
-            timestamp: timestamp,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
             isDeleted: isDeleted,
             deletedFor: deletedFor,
             rowid: rowid,
@@ -737,7 +798,8 @@ class $$MessagesDbTableTableManager extends RootTableManager<
             required String messageType,
             required String content,
             required String status,
-            required int timestamp,
+            required String createdAt,
+            required String updatedAt,
             Value<bool> isDeleted = const Value.absent(),
             Value<String?> deletedFor = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -750,7 +812,8 @@ class $$MessagesDbTableTableManager extends RootTableManager<
             messageType: messageType,
             content: content,
             status: status,
-            timestamp: timestamp,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
             isDeleted: isDeleted,
             deletedFor: deletedFor,
             rowid: rowid,

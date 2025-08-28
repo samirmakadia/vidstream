@@ -7,17 +7,18 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 part 'message_storage_drift.g.dart';
 
-  class MessagesDb extends Table {
-    TextColumn get id => text().nullable()();
+class MessagesDb extends Table {
+  TextColumn get id => text().nullable()();
   TextColumn get messageId => text()();
   TextColumn get conversationId => text()();
   TextColumn get senderId => text()();
   TextColumn get messageType => text()();
   TextColumn get content => text()();
   TextColumn get status => text()();
-  IntColumn get timestamp => integer()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
-  TextColumn get deletedFor => text().nullable()(); // JSON array
+  TextColumn get deletedFor => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {messageId};
@@ -46,6 +47,8 @@ class MessageDatabase extends _$MessageDatabase {
 
   // Insert or update a message
   Future<void> addOrUpdateMessage(Message message) async {
+    final nowIso = DateTime.now().toIso8601String();
+
     await into(messagesDb).insertOnConflictUpdate(MessagesDbCompanion(
       id: Value(message.id),
       messageId: Value(message.messageId),
@@ -54,17 +57,21 @@ class MessageDatabase extends _$MessageDatabase {
       messageType: Value(message.messageType),
       content: Value(jsonEncode(message.content.toJson())),
       status: Value(message.status.name),
-      timestamp: Value(message.createdAt.millisecondsSinceEpoch),
+
+      createdAt: Value(message.createdAt.isNotEmpty ? message.createdAt : nowIso),
+      updatedAt: Value(message.updatedAt.isNotEmpty ? message.updatedAt : nowIso),
+
       isDeleted: Value(message.isDeleted),
       deletedFor: Value(jsonEncode(message.deletedFor)),
     ));
   }
 
+
   /// Get the last message for a conversation
   Future<Message?> getLastMessageByConversationId(String conversationId) async {
     final row = await (select(messagesDb)
       ..where((tbl) => tbl.conversationId.equals(conversationId))
-      ..orderBy([(tbl) => OrderingTerm.desc(tbl.timestamp)])
+      ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)])
       ..limit(1)
     ).getSingleOrNull();
 
@@ -78,7 +85,8 @@ class MessageDatabase extends _$MessageDatabase {
       messageType: row.messageType,
       content: MessageContent.fromJson(jsonDecode(row.content)),
       status: MessageStatus.values.firstWhere((e) => e.name == row.status, orElse: () => MessageStatus.sent),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(row.timestamp),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
       isDeleted: row.isDeleted,
       deletedFor: row.deletedFor != null ? List<String>.from(jsonDecode(row.deletedFor!)) : [],
     );
@@ -88,7 +96,7 @@ class MessageDatabase extends _$MessageDatabase {
   Future<List<Message>> getMessagesForConversation(String conversationId, {int limit = 50, int offset = 0}) async {
     final rows = await (select(messagesDb)
       ..where((tbl) => tbl.conversationId.equals(conversationId))
-      ..orderBy([(tbl) => OrderingTerm.desc(tbl.timestamp)])
+      ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)])
       ..limit(limit, offset: offset)
     ).get();
 
@@ -100,7 +108,8 @@ class MessageDatabase extends _$MessageDatabase {
       messageType: row.messageType,
       content: MessageContent.fromJson(jsonDecode(row.content)),
       status: MessageStatus.values.firstWhere((e) => e.name == row.status, orElse: () => MessageStatus.sent),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(row.timestamp),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
       isDeleted: row.isDeleted,
       deletedFor: row.deletedFor != null ? List<String>.from(jsonDecode(row.deletedFor!)) : [],
     )).toList().reversed.toList();
@@ -110,7 +119,7 @@ class MessageDatabase extends _$MessageDatabase {
   Stream<List<Message>> watchMessagesForConversation(String conversationId, {int limit = 50, int offset = 0}) {
     final query = (select(messagesDb)
       ..where((tbl) => tbl.conversationId.equals(conversationId))
-      ..orderBy([(tbl) => OrderingTerm.desc(tbl.timestamp)])
+      ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)])
       ..limit(limit, offset: offset)
     );
     return query.watch().map((rows) => rows.map((row) => Message(
@@ -121,7 +130,8 @@ class MessageDatabase extends _$MessageDatabase {
       messageType: row.messageType,
       content: MessageContent.fromJson(jsonDecode(row.content)),
       status: MessageStatus.values.firstWhere((e) => e.name == row.status, orElse: () => MessageStatus.sent),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(row.timestamp),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
       isDeleted: row.isDeleted,
       deletedFor: row.deletedFor != null ? List<String>.from(jsonDecode(row.deletedFor!)) : [],
     )).toList().reversed.toList());

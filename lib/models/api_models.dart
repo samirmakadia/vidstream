@@ -514,12 +514,16 @@ class Message {
   final String messageType;
   final MessageContent content;
   final MessageStatus status;
-  final DateTime createdAt;
+  final String createdAt;
+  final String updatedAt;
   final bool isDeleted;
   final List<String> deletedFor;
 
   String get message => content.text ?? '';
-  DateTime get sentAt => createdAt;
+
+  DateTime get sentAt => DateTime.tryParse(createdAt) ?? DateTime.now();
+  DateTime get updatedAtDate => DateTime.tryParse(updatedAt) ?? DateTime.now();
+
   bool get isRead => status == MessageStatus.read;
   bool get isDelivered => status == MessageStatus.delivered;
 
@@ -546,11 +550,14 @@ class Message {
     required this.content,
     required this.status,
     required this.createdAt,
+    required this.updatedAt,
     this.isDeleted = false,
     this.deletedFor = const [],
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
+    final nowIso = DateTime.now().toIso8601String();
+
     return Message(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       messageId: json['messageId']?.toString()
@@ -566,9 +573,8 @@ class Message {
             (e) => e.name == (json['status'] ?? 'sent'),
         orElse: () => MessageStatus.sent,
       ),
-      createdAt: DateTime.tryParse(
-          json['createdAt'] ?? json['created_at'] ?? json['timestamp'] ?? ''
-      ) ?? DateTime.now(),
+      createdAt: (json['createdAt'] ?? json['created_at'] ?? json['timestamp'])?.toString() ?? nowIso,
+      updatedAt: (json['updatedAt'] ?? json['updated_at'] ?? json['createdAt'])?.toString() ?? nowIso,
       isDeleted: json['isDeleted'] ?? false,
       deletedFor: List<String>.from(json['deletedFor'] ?? []),
     );
@@ -584,7 +590,8 @@ class Message {
       'message_type': messageType,
       'content': content.toJson(),
       'status': status.name,
-      'createdAt': createdAt.toIso8601String(), // ✅ use createdAt
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
       'isDeleted': isDeleted,
       'deletedFor': deletedFor,
     };
@@ -611,7 +618,8 @@ class Message {
     String? messageType,
     MessageContent? content,
     MessageStatus? status,
-    DateTime? createdAt, // ✅ updated
+    String? createdAt,
+    String? updatedAt,
     bool? isDeleted,
     List<String>? deletedFor,
   }) {
@@ -625,6 +633,7 @@ class Message {
       content: content ?? this.content,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       isDeleted: isDeleted ?? this.isDeleted,
       deletedFor: deletedFor ?? this.deletedFor,
     );

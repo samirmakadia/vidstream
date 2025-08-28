@@ -67,11 +67,16 @@ class SocketManager {
     final message = Message.fromJson(jsonData);
 
     final currentUserId = _currentUserId ?? "";
-    final receiverId = _getReceiverId(message.conversationId, currentUserId);
+    final receiverId = _getReceiverId(
+      conversationId: message.conversationId,
+      currentUserId: currentUserId,
+      senderId: message.senderId,
+    );
 
     await ConversationDatabase.instance.updateLastMessageIdByConversationId(message.conversationId, message.messageId);
+    print("🔎 Checking IDs: receiverId=$receiverId, currentUserId=$currentUserId, conversationId=${message.conversationId}, senderId=${message.senderId}");
 
-    if (message.status == MessageStatus.sent && receiverId == currentUserId) {
+    if (message.status == MessageStatus.sent && message.senderId != _currentUserId) {
       await _sendDeliveredReceipt(message, message.toSocketJson(), receiverId);
     }
     else {
@@ -80,10 +85,20 @@ class SocketManager {
     }
   }
 
-  String _getReceiverId(String conversationId, String currentUserId) {
-    final parts = conversationId.split('-');
-    if (parts.length != 2) return "";
-    return parts.first == currentUserId ? parts.last : parts.first;
+  String _getReceiverId({
+    required String conversationId,
+    required String currentUserId,
+    required String senderId,
+  }) {
+    // If I am the sender → receiver is the other participant
+    if (senderId == currentUserId) {
+      final parts = conversationId.split('-');
+      if (parts.length != 2) return "";
+      return parts[0] == currentUserId ? parts[1] : parts[0];
+    }
+
+    // If I am NOT the sender → I am the receiver
+    return currentUserId;
   }
 
   Future<void> sendSeenEvent(Message message, String? receiverId) async {
@@ -111,7 +126,7 @@ class SocketManager {
 
       await MessageDatabase.instance.addOrUpdateMessage(message);
 
-      debugPrint("✅ Message sent and saved: ${message.messageId}");
+      debugPrint("✅ Message sent and saved: ${message.content.text}, status: ${message.status}");
     } catch (e, stack) {
       debugPrint("❌ Error sending message: $e\n$stack");
     }
@@ -150,10 +165,14 @@ class SocketManager {
       if (messages != null && messages.isNotEmpty) {
         for (var message in messages) {
           final currentUserId = _currentUserId ?? "";
-          final receiverId = _getReceiverId(message.conversationId, currentUserId);
+          final receiverId = _getReceiverId(
+            conversationId: message.conversationId,
+            currentUserId: currentUserId,
+            senderId: message.senderId,
+          );
 
           if (message.status == MessageStatus.sent && message.senderId != _currentUserId) {
-            await _sendDeliveredReceipt(message, message.toJson(), _currentUserId ?? "");
+            await _sendDeliveredReceipt(message, message.toJson(),receiverId,);
           }
           else {
             await MessageDatabase.instance.addOrUpdateMessage(message);
@@ -176,7 +195,6 @@ class SocketManager {
       String receiverId,
       ) async {
     try {
-      if (_socket == null || !_socket!.connected) return;
 
       final deliveredPayload = {
         ...messageJson,

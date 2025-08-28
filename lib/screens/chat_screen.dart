@@ -78,7 +78,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         messageType: messageType,
         content: content,
         status: MessageStatus.sent,
-        createdAt: DateTime.now(),
+        createdAt: '',
+        updatedAt: '',
       );
 
       _messageController.clear();
@@ -108,7 +109,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Future<void> _pickAndSendImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (image != null) {
       // In a real app, you would upload the image to cloud storage first
       // For now, we'll just send the local path as a placeholder
@@ -122,7 +123,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Future<void> _pickAndSendVideo() async {
     final ImagePicker picker = ImagePicker();
     final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
-    
+
     if (video != null) {
       // In a real app, you would upload the video to cloud storage first
       // For now, we'll just send the local path as a placeholder
@@ -242,10 +243,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               cornerRadius: 30,
             ) :
             CircleAvatar(
-              radius: 17,
-              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-              backgroundImage: _otherUser?.profileImageUrl != null ? NetworkImage(_otherUser!.profileImageUrl!) : null,
-              child: Icon(Icons.person, size: 16, color: Theme.of(context).colorScheme.primary)
+                radius: 17,
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                backgroundImage: _otherUser?.profileImageUrl != null ? NetworkImage(_otherUser!.profileImageUrl!) : null,
+                child: Icon(Icons.person, size: 16, color: Theme.of(context).colorScheme.primary)
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -510,13 +511,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 onPressed: _canSendMessage && !_isSending ? _sendMessage : null,
                 icon: _isSending
                     ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
                     : const Icon(Icons.send, color: Colors.white),
               ),
             ),
