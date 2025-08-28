@@ -1,14 +1,7 @@
-import 'dart:convert';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/services/auth_service.dart';
-import 'package:vidstream/services/socket_manager.dart';
-import 'package:vidstream/storage/chat_storage.dart';
 import 'package:vidstream/storage/conversation_storage_drift.dart';
-import 'package:vidstream/utils/connectivity_service.dart';
-import 'package:vidstream/services/http_client.dart';
-
-import '../models/response_model.dart';
 import 'api_service.dart';
 
 class ChatService {

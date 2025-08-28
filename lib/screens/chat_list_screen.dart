@@ -272,7 +272,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _formatTime(conversation.updatedAt),
+                 _formatTime(conversation.lastMessage != null ? DateTime.parse(conversation.lastMessage!.createdAt) : conversation.updatedAt),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                     fontSize: 11,

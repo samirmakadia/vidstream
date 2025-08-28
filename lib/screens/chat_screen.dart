@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/models/api_models.dart';
@@ -7,6 +9,7 @@ import 'package:vidstream/storage/message_storage_drift.dart';
 import 'package:vidstream/utils/utils.dart';
 import '../services/chat_service.dart';
 import '../services/socket_manager.dart';
+import '../services/video_service.dart';
 import '../utils/app_toaster.dart';
 import '../widgets/custom_image_widget.dart';
 
@@ -29,9 +32,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final db = MessageDatabase.instance;
-  Timer? _timer;
   ApiUser? _otherUser;
-
+  ApiCommonFile? _uploadedFile;
   final bool _isLoading = false;
   bool _isSending = false;
   bool initialScroll = false;
@@ -42,9 +44,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadOtherUser();
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) setState(() {});
-    });
   }
 
 
@@ -66,11 +65,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
 
       final content = MessageContent(
-        text: messageText,
-        mediaUrl: mediaUrl,
+        text: messageText ?? '',
+        mediaUrl: _uploadedFile != null ? _uploadedFile!.url : '',
         mediaSize: 0,
         mediaDuration: 0,
-        thumbnailUrl: '',
+        thumbnailUrl: _uploadedFile != null ? _uploadedFile!.thumbnailUrl : '',
       );
 
       final message = Message(
@@ -84,6 +83,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         createdAt: '',
         updatedAt: '',
       );
+
+      if(messageType == 'image')  {
+        _uploadedFile = null;
+        final nowIso = DateTime.now().toIso8601String();
+        final localMessage = message.copyWith(
+          status: MessageStatus.pending,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        );
+        await MessageDatabase.instance.addOrUpdateMessage(localMessage);
+      }
 
       _messageController.clear();
       SocketManager().sendMessage(message);
@@ -110,18 +120,56 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _pickAndSendImage() async {
-    final ImagePicker picker = ImagePicker();
+    final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-    if (image != null) {
-      // In a real app, you would upload the image to cloud storage first
-      // For now, we'll just send the local path as a placeholder
-      await _sendMessage(
-        mediaUrl: 'https://example.com/placeholder-image.jpg',
-        messageType: 'image',
-      );
+    if (image == null) return;
+
+    final File selectedImage = File(image.path);
+
+    try {
+      final uploadedUrl = await _uploadCommonFile(selectedImage.path);
+      if (uploadedUrl != null) {
+        print("✅ Image uploaded: $uploadedUrl");
+        await _sendMessage(
+          mediaUrl: uploadedUrl,
+          messageType: 'image',
+        );
+      }
+    } catch (e) {
+      debugPrint("❌ Error sending image: $e");
+      if (mounted) {
+        _showErrorSnackBar('Failed to send image: $e');
+      }
     }
   }
+
+  Future<String?> _uploadCommonFile(String filePath) async {
+    try {
+      final videoService = VideoService();
+
+      final uploadedFile = await videoService.uploadCommonFile(
+        filePath: filePath,
+        type: 'image',
+      );
+
+      if (uploadedFile == null) {
+        _showErrorSnackBar("Failed to upload file to server");
+        return null;
+      }
+
+      setState(() {
+        _uploadedFile = uploadedFile;
+        print("Uploaded file URL: ${uploadedFile.url}");
+      });
+
+      return uploadedFile.url;
+    } catch (e) {
+      _showErrorSnackBar('Failed to upload file: $e');
+      return null;
+    }
+  }
+
 
   Future<void> _pickAndSendVideo() async {
     final ImagePicker picker = ImagePicker();
@@ -231,6 +279,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -355,6 +411,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             }
             print("Message seen: ${message.content.text}, Status: ${message.status}, id : ${message.id}");
             print("Message createdAt:  ${message.createdAt}");
+            print("Message mediaUrl:  ${message.content.mediaUrl}");
             return _buildMessageBubble(message, isMe);
           },
         );
@@ -398,31 +455,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (message.messageType == 'image')
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.grey[300],
-                        ),
-                        child: const Icon(Icons.image, size: 50, color: Colors.grey),
-                      )
-                    else if (message.messageType == 'video')
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.grey[300],
-                        ),
-                        child: const Icon(Icons.play_circle_outline, size: 50, color: Colors.grey),
+                    if (message.messageType == 'image' && message.content.mediaUrl != null && message.content.mediaUrl!.isNotEmpty)
+                      CustomImageWidget(
+                        imageUrl: message.content.mediaUrl ?? '',
+                        height: 100,
+                        width: 100,
+                        cornerRadius: 12,
                       ),
                     if (message.message.isNotEmpty)
-                      Text(
-                        message.message,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          message.message,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
                       ),
                   ],
@@ -440,7 +487,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   ),
                   if (isMe) ...[
                     const SizedBox(width: 4),
-                    message.statusIcon(size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
+                    message.statusIcon(
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ],
                 ],
               ),
@@ -473,12 +523,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               icon: const Icon(Icons.image),
               color: Theme.of(context).colorScheme.primary,
             ),
-            IconButton(
-              onPressed: _pickAndSendVideo,
-              icon: const Icon(Icons.videocam),
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            // Text input
+            // IconButton(
+            //   onPressed: _pickAndSendVideo,
+            //   icon: const Icon(Icons.videocam),
+            //   color: Theme.of(context).colorScheme.primary,
+            // ),
+            // // Text input
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -559,7 +609,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
