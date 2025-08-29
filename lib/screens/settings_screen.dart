@@ -648,7 +648,13 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
       if (image == null) return;
 
       setState(() => _isLoading = true);
-
+      setState(() {
+        if (type == 'avatar') {
+          _avatarImageUrl = image.path;
+        } else {
+          _bannerImageUrl = image.path;
+        }
+      });
       final uploadedFile = await _uploadCommonFile(image.path);
 
       if (uploadedFile != null) {
@@ -922,7 +928,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
                           width: 1,
                         ),
                       ),
-                      child: _bannerImageUrl != null
+                      child: _bannerImageUrl != null && _bannerImageUrl!.isNotEmpty
                           ? CustomImageWidget(
                         imageUrl:_bannerImageUrl ?? '',
                         height: 120,
@@ -975,7 +981,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
                             width: 2,
                           ),
                         ),
-                        child: _avatarImageUrl != null
+                        child: _avatarImageUrl != null && _avatarImageUrl!.isNotEmpty
                             ? CustomImageWidget(
                           imageUrl:_avatarImageUrl ?? '',
                           height: 100,
