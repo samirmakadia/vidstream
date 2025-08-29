@@ -934,6 +934,25 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
           videoUrl: widget.video.videoUrl,
           isActive: widget.isActive,
         ),
+
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: 230,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.center,
+                colors: [
+                  Colors.black,
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
         
         Positioned(
           bottom: 6,
@@ -964,10 +983,6 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                       if (widget.video.description.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.symmetric( vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
                           child: Text(
                             widget.video.description,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(

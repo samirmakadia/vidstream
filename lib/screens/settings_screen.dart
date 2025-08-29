@@ -268,80 +268,6 @@ Instagram: @VidStreamOfficial''',
     }
   }
 
-  Future<void> _showNotificationSettings() async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Notification Settings',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Manage your notification preferences:',
-              style: TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              '• Push notifications for likes and comments',
-              style: TextStyle(color: Colors.white70),
-            ),
-            const Text(
-              '• New follower notifications',
-              style: TextStyle(color: Colors.white70),
-            ),
-            const Text(
-              '• App update notifications',
-              style: TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(height: 16),
-            FutureBuilder<String?>(
-              future: NotificationService().getToken(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Device Token:',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${snapshot.data!.substring(0, 20)}...',
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  );
-                }
-                return const Text(
-                  'Loading token...',
-                  style: TextStyle(color: Colors.white54),
-                );
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -432,12 +358,6 @@ Instagram: @VidStreamOfficial''',
                     subtitle: 'See if a new version is available',
                     onTap: _checkForUpdates,
                   ),
-                  // _buildSettingsItem(
-                  //   icon: Icons.notifications,
-                  //   title: 'Notifications',
-                  //   subtitle: 'Manage notification settings',
-                  //   onTap: _showNotificationSettings,
-                  // ),
                   const SizedBox(height: 20),
 
 
@@ -468,19 +388,6 @@ Instagram: @VidStreamOfficial''',
                     onTap: _showLegalComplianceGuide,
                   ),
                   const SizedBox(height: 20),
-
-                  // Development Section (only in debug mode)
-                  // if (kDebugMode) ...[
-                  //   _buildSectionHeader('Development'),
-                  //   _buildSettingsItem(
-                  //     icon: Icons.refresh,
-                  //     title: 'Reset Onboarding',
-                  //     subtitle: 'Show onboarding screens again',
-                  //     onTap: _resetOnboarding,
-                  //     textColor: Colors.blue,
-                  //   ),
-                  //   const SizedBox(height: 20),
-                  // ],
 
                   // Account Section
                   _buildSectionHeader('Account'),
