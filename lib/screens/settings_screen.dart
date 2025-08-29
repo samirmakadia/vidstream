@@ -822,45 +822,71 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () => _showImagePickerOptions('banner'),
-                    child: Container(
-                      width: double.infinity,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[900],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.grey[700]!,
-                          width: 1,
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      GestureDetector(
+                        onTap: () => _showImagePickerOptions('banner'),
+                        child: Container(
+                          width: double.infinity,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.grey[700]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: _bannerImageUrl != null && _bannerImageUrl!.isNotEmpty
+                              ? CustomImageWidget(
+                            imageUrl: _bannerImageUrl ?? '',
+                            height: 120,
+                            width: double.infinity,
+                            cornerRadius: 12,
+                            fit: BoxFit.cover,
+                          )
+                              : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_photo_alternate,
+                                color: Colors.grey[400],
+                                size: 32,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Add Banner Image',
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      child: _bannerImageUrl != null && _bannerImageUrl!.isNotEmpty
-                          ? CustomImageWidget(
-                        imageUrl:_bannerImageUrl ?? '',
-                        height: 120,
-                        width:double.infinity,
-                        cornerRadius: 12,
-                        fit: BoxFit.cover,
-                      ) : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_photo_alternate,
-                                  color: Colors.grey[400],
-                                  size: 32,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Add Banner Image',
-                                  style: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
+                      Positioned(
+                        bottom: -10,
+                        right: -10,
+                        child: GestureDetector(
+                          onTap: () => _showImagePickerOptions('banner'),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
                             ),
-                    ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 20),
@@ -875,32 +901,59 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
                   ),
                   const SizedBox(height: 8),
                   Center(
-                    child: GestureDetector(
-                      onTap: () => _showImagePickerOptions('avatar'),
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey[900],
-                          border: Border.all(
-                            color: Colors.grey[700]!,
-                            width: 2,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        GestureDetector(
+                          onTap: () => _showImagePickerOptions('avatar'),
+                          child: Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.grey[900],
+                              border: Border.all(
+                                color: Colors.grey[700]!,
+                                width: 2,
+                              ),
+                            ),
+                            child: _avatarImageUrl != null &&
+                                _avatarImageUrl!.isNotEmpty
+                                ? CustomImageWidget(
+                              imageUrl: _avatarImageUrl ?? '',
+                              height: 100,
+                              width: 100,
+                              cornerRadius: 50,
+                              fit: BoxFit.cover,
+                            )
+                                : Icon(
+                              Icons.add_a_photo,
+                              color: Colors.grey[400],
+                              size: 32,
+                            ),
                           ),
                         ),
-                        child: _avatarImageUrl != null && _avatarImageUrl!.isNotEmpty
-                            ? CustomImageWidget(
-                          imageUrl:_avatarImageUrl ?? '',
-                          height: 100,
-                          width:100,
-                          cornerRadius: 50,
-                          fit: BoxFit.cover,
-                        ) : Icon(
-                                Icons.add_a_photo,
-                                color: Colors.grey[400],
-                                size: 32,
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: () => _showImagePickerOptions('avatar'),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 1),
                               ),
-                      ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
