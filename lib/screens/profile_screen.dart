@@ -192,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       try {
         final likedVideos = await ApiRepository.instance.videos.getUserLikedVideos(currentUserId);
         if (mounted) {
-          setState(() { 
+          setState(() {
             _likedVideos = likedVideos;
           });
         }

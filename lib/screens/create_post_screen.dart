@@ -1,11 +1,14 @@
+import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:video_player/video_player.dart';
 import 'dart:io';
 
 import '../models/api_models.dart';
 import '../services/socket_manager.dart';
 import '../services/video_service.dart';
+import '../widgets/custom_image_widget.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -130,6 +133,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
 
       setState(() {
         _uploadedFile = uploadedFile;
+        print('Uploaded file object: $_uploadedFile');
       });
     } catch (e) {
       _showErrorSnackBar('Failed to upload video: $e');
@@ -389,54 +393,77 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity,
-            height: 200,
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Stack(
-              children: [
-                _isUploadingVideo
-                    ? const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
+          GestureDetector(
+            onTap: () {
+              if (_uploadedFile != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => FullScreenVideoPlayer(
+                      videoUrl: _uploadedFile!.url,
+                    ),
                   ),
-                )
-                    :
-                Center(
-                  child: Icon(
-                    Icons.play_circle_outline,
-                    size: 64,
-                    color: Colors.white.withValues(alpha: 0.6),
+                );
+              }
+            },
+            child: Container(
+              width: double.infinity,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Stack(
+                children: [
+                  if(_uploadedFile != null)
+                  CustomImageWidget(
+                    imageUrl: _uploadedFile!.thumbnailUrl ?? '',
+                    height: double.infinity,
+                    width:double.infinity,
+                    cornerRadius: 12,
+                    borderWidth: 0,
+                    fit: BoxFit.cover,
                   ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedVideo = null;
-                      });
-                    },
-                    icon: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.black54,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 16,
+                  _isUploadingVideo
+                      ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                      :
+                  Center(
+                    child: Icon(
+                      Icons.play_circle_outline,
+                      size: 64,
+                      color: Colors.white.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedVideo = null;
+                        });
+                      },
+                      icon: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -527,6 +554,54 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
           const SizedBox(height: 40),
         ],
       ),
+    );
+  }
+}
+
+
+class FullScreenVideoPlayer extends StatefulWidget {
+  final String videoUrl;
+  const FullScreenVideoPlayer({super.key, required this.videoUrl});
+
+  @override
+  State<FullScreenVideoPlayer> createState() => _FullScreenVideoPlayerState();
+}
+
+class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
+  late VideoPlayerController _videoController;
+  ChewieController? _chewieController;
+
+  @override
+  void initState() {
+    super.initState();
+    _videoController = VideoPlayerController.network(widget.videoUrl)
+      ..initialize().then((_) {
+        setState(() {
+          _chewieController = ChewieController(
+            videoPlayerController: _videoController,
+            autoPlay: true,
+            looping: false,
+            allowFullScreen: true,
+            allowPlaybackSpeedChanging: true,
+          );
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _videoController.dispose();
+    _chewieController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: _chewieController != null
+          ? Chewie(controller: _chewieController!)
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }
