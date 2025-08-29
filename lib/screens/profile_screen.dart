@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
@@ -8,6 +10,7 @@ import 'package:vidstream/screens/blocked_users_screen.dart';
 import 'package:vidstream/screens/settings_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 
+import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../widgets/common_app_dialog.dart';
 import '../widgets/custom_image_widget.dart';
@@ -29,6 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   int _followerCount = 0;
   int _followingCount = 0;
   double offsetY = 0;
+  late StreamSubscription _videoUploadedSubscription;
 
   @override
   void initState() {
@@ -42,6 +46,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       }
     });
     _loadUserProfile();
+    _videoUploadedSubscription = eventBus.on().listen((event) {
+      if (event == 'newVideo') {
+        print('A new video was uploaded!');
+        _loadUserProfile();
+      }
+    });
   }
 
   Future<void> _refreshFollowCounts() async {
@@ -66,6 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   @override
   void dispose() {
     _tabController.dispose();
+    _videoUploadedSubscription.cancel();
     super.dispose();
   }
 

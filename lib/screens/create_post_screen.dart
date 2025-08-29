@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
 import '../models/api_models.dart';
+import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 
 class CreatePostScreen extends StatefulWidget {
@@ -135,7 +136,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     }
   }
 
-
   void _toggleTag(String tag) {
     setState(() {
       if (_selectedTags.contains(tag)) {
@@ -175,6 +175,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       print('Uploaded video object: $uploadedVideo');
 
       if (uploadedVideo != null && mounted) {
+        eventBus.fire('newVideo');
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
