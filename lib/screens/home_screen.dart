@@ -512,14 +512,14 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     );
   }
 
-  void _updateLikeCount(String videoId, int newCount) {
+  void _updateLikeCount(String videoId, int newCount, status) {
     final i = _videos.indexWhere((v) => v.id == videoId);
     if (i != -1) {
-      _videos[i] = _videos[i].copyWith(likesCount: newCount);
+      _videos[i] = _videos[i].copyWith(likesCount: newCount, isLiked: status);
     }
     final j = _allVideos.indexWhere((v) => v.id == videoId);
     if (j != -1) {
-      _allVideos[j] = _allVideos[j].copyWith(likesCount: newCount);
+      _allVideos[j] = _allVideos[j].copyWith(likesCount: newCount, isLiked: status);
     }
     setState(() {});
   }
@@ -562,7 +562,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                               });
                             },
                             onLikeUpdated: (newCount, isLiked) {
-                              _updateLikeCount(video.id, newCount);
+                              _updateLikeCount(video.id, newCount, isLiked);
                             },
                             onCommentUpdated: (newCount) {
                               setState(() {
@@ -790,7 +790,8 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   void initState() {
     super.initState();
     _localLikeCount = widget.video.likesCount;
-     _checkLikeStatus();
+    _isLiked = widget.video.isLiked;
+     // _checkLikeStatus();
    }
 
   @override
@@ -803,26 +804,6 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
 
     if (!widget.isActive && oldWidget.isActive) {
       _incrementViewCount();
-    }
-  }
-
-
-  Future<void> _checkLikeStatus() async {
-    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    if (currentUserId != null) {
-      try {
-        final isLiked = await ApiRepository.instance.likes.hasUserLiked(
-          userId: currentUserId,
-          targetId: widget.video.id,
-          targetType: 'Video',
-        );
-        if (mounted) {
-          setState(() {
-            _isLiked = isLiked;
-          });
-        }
-      } catch (e) {
-      }
     }
   }
 

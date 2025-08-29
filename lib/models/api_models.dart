@@ -197,6 +197,7 @@ class ApiVideo {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isPublic;
+  late final bool isLiked;
   final ApiUser? user; // Include user data in video responses
 
   ApiVideo({
@@ -214,6 +215,7 @@ class ApiVideo {
     required this.createdAt,
     required this.updatedAt,
     this.isPublic = true,
+    this.isLiked = false,
     this.user,
   });
 
@@ -233,6 +235,7 @@ class ApiVideo {
       createdAt: DateTime.tryParse(json['createdAt'] ?? json['created_at'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? json['updated_at'] ?? '') ?? DateTime.now(),
       isPublic: json['isPublic'] ?? json['is_public'] ?? true,
+      isLiked: json['isLiked'] ?? json['is_liked'] ?? false,
       user: json['userId'] != null ? ApiUser.fromJson(json['userId']) : null, // optional user
     );
   }
@@ -253,6 +256,7 @@ class ApiVideo {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'is_public': isPublic,
+      'is_liked': isLiked,
       if (user != null) 'user': user!.toJson(),
     };
   }
@@ -272,6 +276,7 @@ class ApiVideo {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isPublic,
+    bool? isLiked,
     ApiUser? user,
   }) {
     return ApiVideo(
@@ -289,6 +294,7 @@ class ApiVideo {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isPublic: isPublic ?? this.isPublic,
+      isLiked: isLiked ?? this.isLiked,
       user: user ?? this.user,
     );
   }

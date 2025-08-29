@@ -119,12 +119,11 @@ class VideoFeedItem extends StatefulWidget {
 
 class _VideoFeedItemState extends State<VideoFeedItem> {
   ApiUser? _user;
-  bool _isLiked = false;
+  // bool _isLiked = false;
   bool _isLikeLoading = false;
   bool _isFollowLoading = false;
   int _localLikeCount = 0;
   int _localViewCount = 0;
-  bool _hasIncrementedView = false;
   final _videoKey = GlobalKey<VideoPlayerWidgetState>();
 
   @override
@@ -133,7 +132,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     _localLikeCount = widget.video.likesCount;
     _localViewCount = widget.video.viewsCount;
     _loadUserData();
-    _checkLikeStatus();
+    // _checkLikeStatus();
   }
 
   @override
@@ -158,25 +157,25 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     }
   }
 
-  Future<void> _checkLikeStatus() async {
-    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    if (currentUserId != null) {
-      try {
-        final isLiked = await ApiRepository.instance.likes.hasUserLiked(
-          userId: currentUserId,
-          targetId: widget.video.id,
-          targetType: 'video',
-        );
-        if (mounted) {
-          setState(() {
-            _isLiked = isLiked;
-          });
-        }
-      } catch (e) {
-        // Handle error silently
-      }
-    }
-  }
+  // Future<void> _checkLikeStatus() async {
+  //   final currentUserId = ApiRepository.instance.auth.currentUser?.id;
+  //   if (currentUserId != null) {
+  //     try {
+  //       final isLiked = await ApiRepository.instance.likes.hasUserLiked(
+  //         userId: currentUserId,
+  //         targetId: widget.video.id,
+  //         targetType: 'video',
+  //       );
+  //       if (mounted) {
+  //         setState(() {
+  //           _isLiked = isLiked;
+  //         });
+  //       }
+  //     } catch (e) {
+  //       // Handle error silently
+  //     }
+  //   }
+  // }
 
   Future<void> _toggleLike() async {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
@@ -192,9 +191,10 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
           targetType: 'video',
         );
         setState(() {
-          _isLiked = !_isLiked;
+          // _isLiked = !_isLiked;
+          widget.video.isLiked = !widget.video.isLiked;
           // Update like count locally for immediate UI feedback
-          if (_isLiked) {
+          if (widget.video.isLiked) {
             _localLikeCount++;
           } else {
             _localLikeCount = (_localLikeCount > 0) ? _localLikeCount - 1 : 0;
@@ -385,7 +385,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                   user: _user!,
                   onFollowToggle: _toggleFollow,
                   isFollowLoading: _isFollowLoading,
-                  isLiked: _isLiked,
+                  isLiked: widget.video.isLiked,
                   onLikeToggle: _toggleLike,
                   likeCount: _localLikeCount,
                   isLikeLoading: _isLikeLoading,
