@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "628359371114",
+    "project_id": "yn93iop2hhxnc0jdkzwuepcttcyq00",
+    "storage_bucket": "yn93iop2hhxnc0jdkzwuepcttcyq00.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:628359371114:android:4c20ae0a034b1e4c032d13",
+        "android_client_info": {
+          "package_name": "com.vidmeet.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "628359371114-ne223k10ondvvdi2uhqcbhknn45tn5jh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3q_a2y-F6RzGJIlksEJpE6wxM3rWUEec"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "628359371114-ne223k10ondvvdi2uhqcbhknn45tn5jh.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "628359371114-oip3f0cmf6gcnt59g1e8l2os0u5j7e4r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vidmeet.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
