@@ -401,7 +401,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       ],
                     ),
                   ),
-                  child: _currentUser?.bannerImageUrl != null
+                  child: _currentUser?.bannerImageUrl != null && _currentUser!.bannerImageUrl!.isNotEmpty
                       ? CustomImageWidget(
                     imageUrl:_currentUser!.bannerImageUrl! ?? '',
                     height: double.infinity,
@@ -450,7 +450,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
       ),
     );
-  }
+  } 
 
   Widget _buildProfileInfoWithoutAvatar() {
     return SliverToBoxAdapter(
@@ -581,24 +581,29 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ),
               ],
             ),
-            child: _currentUser?.profileImageUrl != null || _currentUser?.photoURL != null ? ClipOval(
-              child: CustomImageWidget(
-                imageUrl: _currentUser?.profileImageUrl ?? _currentUser?.photoURL ?? '',
-                height: double.infinity,
-                width: double.infinity,
-                cornerRadius: 0,
-                borderWidth: 0,
-                fit: BoxFit.cover,
-              ),
-            ) : CircleAvatar( 
-              radius: 46,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: const Icon(
-                Icons.person,
-                size: 40,
-                color: Colors.white,
-              )
-            ),
+        child: (_currentUser?.profileImageUrl != null && _currentUser!.profileImageUrl!.isNotEmpty) ||
+            (_currentUser?.photoURL != null && _currentUser!.photoURL!.isNotEmpty)
+            ? ClipOval(
+          child: CustomImageWidget(
+            imageUrl: _currentUser?.profileImageUrl?.isNotEmpty == true
+                ? _currentUser!.profileImageUrl!
+                : _currentUser!.photoURL!,
+            height: double.infinity,
+            width: double.infinity,
+            cornerRadius: 0,
+            borderWidth: 0,
+            fit: BoxFit.cover,
+          ),
+        )
+            : CircleAvatar(
+          radius: 46,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          child: const Icon(
+            Icons.person,
+            size: 40,
+            color: Colors.white,
+          ),
+          ),
           ),
           Positioned(
             bottom: 0,
