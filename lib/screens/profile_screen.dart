@@ -290,14 +290,28 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       flexibleSpace: FlexibleSpaceBar(
         background: ClipRect(
           clipBehavior: Clip.none,
-          child: Stack(
-            fit: StackFit.expand,
-            clipBehavior: Clip.none,
-            children: [
-              // Banner background
-              GestureDetector(
-                onTap: _navigateToSettings,
-                child: Container(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              if (_currentUser?.bannerImageUrl != null &&
+                  _currentUser!.bannerImageUrl!.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ImagePreviewScreen(
+                      imageUrl: _currentUser!.bannerImageUrl!,
+                      showUploadButton: false,
+                    ),
+                  ),
+                );
+              }
+            },
+            child: Stack(
+              fit: StackFit.expand,
+              clipBehavior: Clip.none,
+              children: [
+                // Banner background
+                Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -306,11 +320,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       ],
                     ),
                   ),
-                  child: _currentUser?.bannerImageUrl != null && _currentUser!.bannerImageUrl!.isNotEmpty
+                  child: _currentUser?.bannerImageUrl != null &&
+                      _currentUser!.bannerImageUrl!.isNotEmpty
                       ? CustomImageWidget(
-                    imageUrl:_currentUser!.bannerImageUrl! ?? '',
+                    imageUrl: _currentUser!.bannerImageUrl!,
                     height: double.infinity,
-                    width:double.infinity,
+                    width: double.infinity,
                     cornerRadius: 0,
                     borderWidth: 0,
                     fit: BoxFit.cover,
@@ -327,7 +342,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         const SizedBox(height: 8),
                         Text(
                           'Add Banner',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
                             color: Colors.white.withValues(alpha: 0.7),
                           ),
                         ),
@@ -335,22 +353,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ),
                   ),
                 ),
-              ),
 
-              // Gradient overlay
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.6),
-                    ],
+                // Gradient overlay
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.6),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -477,6 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 imageUrl: (_currentUser?.profileImageUrl?.isNotEmpty == true)
                     ? _currentUser!.profileImageUrl
                     : _currentUser?.photoURL,
+                isAvatar: true,
               ),
             ),
           );

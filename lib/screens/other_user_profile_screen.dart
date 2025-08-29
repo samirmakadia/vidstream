@@ -6,6 +6,9 @@ import 'package:vidstream/services/block_service.dart';
 import 'package:vidstream/screens/follower_following_list_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 
+import '../services/socket_manager.dart';
+import '../widgets/image_preview_screen.dart';
+
 class OtherUserProfileScreen extends StatefulWidget {
   final String userId;
   final String? displayName;
@@ -381,34 +384,47 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
   }
 
   Widget _buildFloatingAvatar() {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 4),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+    return GestureDetector(
+      onTap: (){
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ImagePreviewScreen(
+              imageUrl: _user?.profileImageUrl ?? _user?.photoURL,
+              isAvatar: true,
+            ),
           ),
-        ],
-      ),
-      child: CircleAvatar(
-        radius: 46,
-        backgroundImage:
-            _user?.profileImageUrl != null || _user?.photoURL != null
-                ? NetworkImage(_user!.profileImageUrl ?? _user!.photoURL!)
-                : null,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        child: (_user?.profileImageUrl == null && _user?.photoURL == null)
-            ? const Icon(
-                Icons.person,
-                size: 50,
-                color: Colors.white,
-              )
-            : null,
+        );
+      },
+      child: Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 4),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: CircleAvatar(
+          radius: 46,
+          backgroundImage:
+              _user?.profileImageUrl != null || _user?.photoURL != null
+                  ? NetworkImage(_user!.profileImageUrl ?? _user!.photoURL!)
+                  : null,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          child: (_user?.profileImageUrl == null && _user?.photoURL == null)
+              ? const Icon(
+                  Icons.person,
+                  size: 50,
+                  color: Colors.white,
+                )
+              : null,
+        ),
       ),
     );
   }
@@ -454,43 +470,60 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
           ),
       ],
       flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Banner Image
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.tertiary,
-                  ],
+        background: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () {
+            final banner = _user?.bannerImageUrl;
+            if (banner != null && banner.isNotEmpty) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ImagePreviewScreen(
+                    imageUrl: banner,
+                    isAvatar: false,
+                  ),
                 ),
+              );
+            }
+          },
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Banner Image
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.tertiary,
+                    ],
+                  ),
+                ),
+                child: _user?.bannerImageUrl != null
+                    ? Image.network(
+                        _user!.bannerImageUrl!,
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: _user?.bannerImageUrl != null
-                  ? Image.network(
-                      _user!.bannerImageUrl!,
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-            ),
 
-            // Gradient Overlay
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.7),
-                  ],
+              // Gradient Overlay
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.7),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
