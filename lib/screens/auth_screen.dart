@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:vidstream/screens/settings_screen.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/screens/main_app_screen.dart';
 import 'package:vidstream/theme.dart';
+import 'package:flutter/gestures.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -334,12 +336,57 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                     const SizedBox(height: 20),
                     
                     // Terms and Privacy
-                    Text(
-                      'By continuing, you agree to our Terms of Service\nand Privacy Policy',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
+                    RichText(
                       textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                        children: [
+                          const TextSpan(text: 'By continuing, you agree to our '),
+                          TextSpan(
+                            text: 'Terms of Service',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 1),
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                // ✅ Show your legal bottom sheet for Terms
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) => const LegalDocumentViewer(
+                                    title: 'Terms & Conditions',
+                                    fileName: 'terms_and_conditions.md',
+                                  ),
+                                );
+                              },
+                          ),
+                          const TextSpan(text: '\n and '),
+                          TextSpan(
+                            text: 'Privacy Policy',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 1),
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                // ✅ Show your legal bottom sheet for Privacy
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) => const LegalDocumentViewer(
+                                    title: 'Privacy Policy',
+                                    fileName: 'privacy_policy.md',
+                                  ),
+                                );
+                              },
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
