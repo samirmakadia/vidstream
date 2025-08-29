@@ -9,11 +9,11 @@ import 'package:vidstream/screens/follower_following_list_screen.dart';
 import 'package:vidstream/screens/blocked_users_screen.dart';
 import 'package:vidstream/screens/settings_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
-
-import '../services/socket_manager.dart';
+import 'package:vidstream/services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../widgets/common_app_dialog.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/image_preview_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -572,7 +572,19 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildFloatingAvatar() {
     return GestureDetector(
-      onTap: _navigateToSettings,
+      onTap: ()
+        async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ImagePreviewScreen(
+                imageUrl: (_currentUser?.profileImageUrl?.isNotEmpty == true)
+                    ? _currentUser!.profileImageUrl
+                    : _currentUser?.photoURL,
+              ),
+            ),
+          );
+      },
       child: Stack(
         clipBehavior: Clip.none,
         children: [
