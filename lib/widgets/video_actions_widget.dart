@@ -5,6 +5,7 @@ import 'package:vidstream/services/comment_service.dart';
 import 'package:vidstream/services/like_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../screens/home_screen.dart';
 import '../screens/other_user_profile_screen.dart';
 import '../utils/graphics.dart';
 
@@ -20,6 +21,8 @@ class VideoActionsWidget extends StatefulWidget {
   final void Function(ApiVideo video)? onReported;
   final VoidCallback onFollowToggle;
   final bool isFollowLoading;
+  final VoidCallback? onPauseRequested;
+  final VoidCallback? onResumeRequested;
 
   const VideoActionsWidget({
     super.key,
@@ -32,7 +35,7 @@ class VideoActionsWidget extends StatefulWidget {
     this.onCommentUpdated,
     this.onReported,
     required this.onFollowToggle,
-    this.isFollowLoading = false,
+    this.isFollowLoading = false, this.onPauseRequested, this.onResumeRequested,
   });
 
   @override
@@ -42,6 +45,8 @@ class VideoActionsWidget extends StatefulWidget {
 class _VideoActionsWidgetState extends State<VideoActionsWidget> {
 
   Future<void> _showComments(BuildContext context) async {
+    widget.onPauseRequested?.call();
+
     final updatedCommentCount = await  showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -54,6 +59,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
         widget.onCommentUpdated?.call(updatedCommentCount);
       });
     }
+    widget.onResumeRequested?.call();
   }
 
   void _shareVideo(BuildContext context) {

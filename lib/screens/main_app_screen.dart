@@ -69,29 +69,28 @@ class _MainAppScreenState extends State<MainAppScreen> {
 
   void _onTabTapped(int index) {
     if (index == 2) {
+      _homeScreenKey.currentState?.setScreenVisible(false);
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => const CreatePostScreen(),
           fullscreenDialog: true,
         ),
-      );
+      ).then((_) {
+        _homeScreenKey.currentState?.setScreenVisible(true);
+      });
     } else {
       final newIndex = index > 2 ? index - 1 : index;
-      
-      // Notify HomeScreen about visibility change
       if (_currentIndex == 0 && newIndex != 0) {
-        // Moving away from Home screen
         _homeScreenKey.currentState?.setScreenVisible(false);
       } else if (_currentIndex != 0 && newIndex == 0) {
-        // Moving to Home screen
         _homeScreenKey.currentState?.setScreenVisible(true);
       }
-      
       setState(() {
         _currentIndex = newIndex;
       });
     }
   }
+
 
   Future<void> _updateUserLocation() async {
     try {

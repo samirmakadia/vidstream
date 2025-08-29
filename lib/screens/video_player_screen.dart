@@ -21,20 +21,18 @@ class VideoPlayerScreen extends StatefulWidget {
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
 }
 
-class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+class _VideoPlayerScreenState extends State<VideoPlayerScreen> with WidgetsBindingObserver{
   late PageController _pageController;
   late List<ApiVideo> _videos;
   int _currentIndex = 0;
+  bool _isScreenVisible = true;
 
   @override
   void initState() {
     super.initState();
     _videos = List.from(widget.allVideos);
-    
-    // Find the initial video index
     final initialIndex = _videos.indexWhere((v) => v.id == widget.video.id);
     _currentIndex = initialIndex != -1 ? initialIndex : 0;
-    
     _pageController = PageController(initialPage: _currentIndex);
   }
 
@@ -42,6 +40,34 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  void setScreenVisible(bool isVisible) {
+    if (mounted && _isScreenVisible != isVisible) {
+      setState(() {
+        _isScreenVisible = isVisible;
+      });
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        setState(() {
+          _isScreenVisible = false;
+        });
+        break;
+      case AppLifecycleState.resumed:
+        setState(() {
+          _isScreenVisible = true;
+        });
+        break;
+    }
   }
 
   @override
@@ -64,7 +90,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               final video = _videos[index];
               return VideoFeedItem(
                 video: video,
-                isActive: index == _currentIndex,
+                isActive: index == _currentIndex && _isScreenVisible,
                 user: widget.user,
                 onVideoDeleted: () {
                   setState(() {
@@ -76,6 +102,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     }
                   });
                 },
+                onPauseRequested: () => setScreenVisible(false),
+                onResumeRequested: () => setScreenVisible(true),
               );
             },
           ),
@@ -109,13 +137,15 @@ class VideoFeedItem extends StatefulWidget {
   final bool isActive;
   final VoidCallback? onVideoDeleted;
   final ApiUser? user;
+  final VoidCallback? onPauseRequested;
+  final VoidCallback? onResumeRequested;
 
   const VideoFeedItem({
     super.key,
     required this.video,
     required this.isActive,
     this.onVideoDeleted,
-    this.user,
+    this.user, this.onPauseRequested, this.onResumeRequested,
   });
 
   @override
@@ -400,6 +430,8 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                     likeCount: _localLikeCount,
                     isLikeLoading: _isLikeLoading,
                     onVideoDeleted: widget.onVideoDeleted,
+                    onPauseRequested: () => widget.onPauseRequested?.call(),
+                    onResumeRequested: () => widget.onResumeRequested?.call(),
                   ),
               ],
             ),

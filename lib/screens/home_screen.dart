@@ -199,11 +199,13 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     }
   }
   
-  void _showFilterDialog() {
+  Future<void> _showFilterDialog() async {
+    setScreenVisible(false);
+
     // Create a copy of selected tags for the bottom sheet
     List<String> tempSelectedTags = List.from(_selectedTags);
-    
-    showModalBottomSheet(
+
+    await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -512,6 +514,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         ),
       ),
     );
+    setScreenVisible(true);
+
   }
 
   void _updateLikeCount(String videoId, int newCount, status) {
@@ -1025,6 +1029,8 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                       widget.onReported?.call(reportedVideo);
                     });
                   },
+                  onPauseRequested: () => context.findAncestorStateOfType<HomeScreenState>()?.setScreenVisible(false),
+                  onResumeRequested: () => context.findAncestorStateOfType<HomeScreenState>()?.setScreenVisible(true),
                 ),
               ],
             ),

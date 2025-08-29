@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/services.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
@@ -30,8 +31,17 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindin
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initializeVideo();
+    _initializeVideo(); 
   }
+
+  @override
+  void deactivate() {
+    if (controller != null && controller!.value.isPlaying) {
+      controller!.pause();
+    }
+    super.deactivate();
+  }
+
 
   @override
   void didUpdateWidget(VideoPlayerWidget oldWidget) {
@@ -60,6 +70,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindin
     _isInitialized = false;
     _hasError = false;
     _retryCount = 0;
+    controller?.removeListener(_videoListener);
   }
 
   Future<void> _initializeVideo() async {
@@ -203,6 +214,20 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindin
     }
   }
 
+  void _handleVisibilityChanged(VisibilityInfo info) {
+    if (!_isInitialized || controller == null) return;
+    if (info.visibleFraction < 0.25) {
+      if (controller!.value.isPlaying) {
+        controller!.pause();
+      }
+    } else {
+      if (widget.isActive && !_isManuallyPaused) {
+        controller!.play();
+      }
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     if (_hasError) {
@@ -224,10 +249,14 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindin
             Center(
               child: AspectRatio(
                 aspectRatio: controller!.value.aspectRatio,
-                child: VideoPlayer(controller!),
+                child: VisibilityDetector(
+                  key: Key('video_${widget.videoUrl}'),
+                  onVisibilityChanged: _handleVisibilityChanged,
+                  child: VideoPlayer(controller!),
+                ),
               ),
             ),
-            
+
             // Play/Pause icon overlay
             if (_showPlayPauseIcon)
               Center(
@@ -253,6 +282,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindin
       ),
     );
   }
+
 
   Widget _buildLoadingState() {
     return Container(
