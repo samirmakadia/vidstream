@@ -51,6 +51,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         print('A new video was uploaded!');
         _loadUserProfile();
       }
+      if (event == 'like_updated') {
+        print('A new video was uploaded!');
+        _refreshLikedVideos();
+      }
     });
   }
 
@@ -188,16 +192,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       try {
         final likedVideos = await ApiRepository.instance.videos.getUserLikedVideos(currentUserId);
         if (mounted) {
-          setState(() {
+          setState(() { 
             _likedVideos = likedVideos;
           });
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Refreshed: ${likedVideos.length} liked videos found'),
-            backgroundColor: Colors.green,
-          ),
-        );
       } catch (e) {
         print('Failed to refresh liked videos: $e');
       }

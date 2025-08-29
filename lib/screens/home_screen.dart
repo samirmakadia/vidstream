@@ -10,6 +10,8 @@ import 'package:vidstream/widgets/user_info_widget.dart';
 import 'package:vidstream/screens/search_screen.dart';
 import 'dart:async';
 
+import '../services/socket_manager.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -828,6 +830,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
             _localLikeCount = (_localLikeCount > 0) ? _localLikeCount - 1 : 0;
           }
         });
+        eventBus.fire('like_updated');
         widget.onLikeUpdated?.call(_localLikeCount, _isLiked);
       } catch (e) {
         if (mounted) {
