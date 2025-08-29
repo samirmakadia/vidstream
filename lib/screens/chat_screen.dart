@@ -7,11 +7,13 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import 'package:vidstream/storage/message_storage_drift.dart';
 import 'package:vidstream/utils/utils.dart';
+import '../repositories/api_repository.dart';
 import '../services/chat_service.dart';
 import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../utils/app_toaster.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/video_actions_widget.dart';
 import 'other_user_profile_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -205,6 +207,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _onMessageLongPress(ChatMessage message, Offset tapPosition) async {
     final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
+    final isOwner = message.senderId == currentUserId;
 
     final result = await showMenu<String>(
       context: context,
@@ -213,22 +217,33 @@ class _ChatScreenState extends State<ChatScreen> {
         Offset.zero & overlay.size,
       ),
       items: [
-        const PopupMenuItem<String>(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(Icons.delete, color: Colors.red),
-              SizedBox(width: 8),
-              Text("Delete"),
-            ],
+        if (isOwner)
+          const PopupMenuItem<String>(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete, color: Colors.red),
+                SizedBox(width: 8),
+                Text("Delete"),
+              ],
+            ),
           ),
-        ),
+        if (!isOwner)
+          const PopupMenuItem<String>(
+            value: 'report',
+            child: Row(
+              children: [
+                Icon(Icons.report, color: Colors.orange),
+                SizedBox(width: 8),
+                Text("Report"),
+              ],
+            ),
+          ),
       ],
     );
 
     if (result == 'delete') {
       try {
-        print('messageid of message is:${message.id}');
         await _chatService.deleteChatMessage(message.id ?? '');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -248,6 +263,8 @@ class _ChatScreenState extends State<ChatScreen> {
           );
         }
       }
+    } else if (result == 'report') {
+      await _reportChatMessage(context, message);
     }
   }
 
@@ -258,6 +275,72 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
+  }
+
+  Future<void> _reportChatMessage(BuildContext context, ChatMessage message) async {
+    final reasons = {
+      'Spam': 'spam',
+      'Inappropriate content': 'inappropriate_content',
+      'Harassment': 'harassment',
+      'Fake Account': 'fake_account',
+      'Other': 'other',
+    };
+    await showDialog(
+      context: context,
+      builder: (_) => ReportDialog(
+        scaffoldContext: context,
+        title: 'Report Message',
+        reasons: reasons,
+        isDescriptionRequired: true,
+        onSubmit: ({required reason, String? description}) async {
+          return await _handleReport(
+            targetId: message.id ?? '',
+            targetType: 'Message',
+            reason: reason,
+            description: description,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<String> _handleReport({
+    required String targetId,
+    required String targetType,
+    required String reason,
+    String? description,
+  }) async {
+    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User is not logged in. Cannot submit report.'), backgroundColor: Colors.red),
+      );
+      return '';
+    }
+    try {
+      final result = await ApiRepository.instance.reports.reportContent(
+        reporterId: currentUserId,
+        targetId: targetId,
+        targetType: targetType,
+        reason: reason,
+        description: description,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result),
+          backgroundColor: result.toLowerCase().contains('success') ? Colors.green : Colors.red,
+        ),
+      );
+      return result;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit report: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return '';
+    }
   }
 
   void _navigateToUserProfile(ApiUser user) {
