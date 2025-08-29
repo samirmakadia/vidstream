@@ -176,6 +176,8 @@ class ApiService {
     String? bio,
     String? gender,
     DateTime? dateOfBirth,
+    String? profileImageUrl,
+    String? bannerImageUrl,
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final data = <String, dynamic>{};
@@ -183,17 +185,19 @@ class ApiService {
       if (bio != null) data['bio'] = bio;
       if (gender != null) data['gender'] = gender;
       if (dateOfBirth != null) data['dateOfBirth'] = dateOfBirth.toIso8601String();
+      data['profileImageUrl'] = profileImageUrl;
+      data['bannerImageUrl'] = bannerImageUrl;
 
       final response = await _httpClient.put<ApiUser>(
         '/users/profile',
         data: data,
         fromJson: (json) => ApiUser.fromJson(json as Map<String, dynamic>),
       );
-      
+
       if (response.success && response.data != null) {
         return response.data!;
       }
-      
+
       throw response_models.ApiException(response.message);
     });
   }

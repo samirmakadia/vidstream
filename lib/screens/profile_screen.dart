@@ -8,6 +8,7 @@ import 'package:vidstream/screens/blocked_users_screen.dart';
 import 'package:vidstream/screens/settings_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 
+import '../services/video_service.dart';
 import '../widgets/common_app_dialog.dart';
 import '../widgets/custom_image_widget.dart';
 
@@ -28,7 +29,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   int _followerCount = 0;
   int _followingCount = 0;
   double offsetY = 0;
-
 
   @override
   void initState() {
@@ -129,7 +129,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
-
   Future<void> _signOut() async {
     bool confirmed = await CommonDialog.showConfirmationDialog(
       context: context,
@@ -158,69 +157,18 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
-
-  void _navigateToSettings() {
-    Navigator.of(context).push(
+  Future<void> _navigateToSettings() async {
+   final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => SettingsScreen(currentUser: _currentUser),
       ),
     );
-  }
 
-  Future<void> _createSampleVideos() async {
-    try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Creating sample videos...'),
-          backgroundColor: Colors.blue,
-        ),
-      );
-
-      // await DemoDataService.createSampleVideos();
-      await _loadUserProfile(); // Refresh to show new videos
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sample videos created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to create sample videos: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    }
-  }
-
-  Future<void> _createSampleLikes() async {
-    try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Creating sample likes...'),
-          backgroundColor: Colors.blue,
-        ),
-      );
-
-      // await DemoDataService.createSampleLikes();
-      await _loadUserProfile(); // Refresh to show liked videos
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sample likes created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to create sample likes: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    }
+   if(result != null) {
+     setState(() {
+       _loadUserProfile();
+     });
+   }
   }
 
   Future<void> _refreshLikedVideos() async {
@@ -454,8 +402,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ),
                   ),
                   child: _currentUser?.bannerImageUrl != null
-                      ? Image.network(
-                    _currentUser!.bannerImageUrl!,
+                      ? CustomImageWidget(
+                    imageUrl:_currentUser!.bannerImageUrl! ?? '',
+                    height: double.infinity,
+                    width:double.infinity,
+                    cornerRadius: 0,
+                    borderWidth: 0,
                     fit: BoxFit.cover,
                   )
                       : Center(
@@ -629,19 +581,23 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ),
               ],
             ),
-            child: CircleAvatar(
+            child: _currentUser?.profileImageUrl != null || _currentUser?.photoURL != null ? ClipOval(
+              child: CustomImageWidget(
+                imageUrl: _currentUser?.profileImageUrl ?? _currentUser?.photoURL ?? '',
+                height: double.infinity,
+                width: double.infinity,
+                cornerRadius: 0,
+                borderWidth: 0,
+                fit: BoxFit.cover,
+              ),
+            ) : CircleAvatar( 
               radius: 46,
-              backgroundImage: _currentUser?.profileImageUrl != null || _currentUser?.photoURL != null
-                  ? NetworkImage(_currentUser!.profileImageUrl ?? _currentUser!.photoURL!)
-                  : null,
               backgroundColor: Theme.of(context).colorScheme.primary,
-              child: (_currentUser?.profileImageUrl == null && _currentUser?.photoURL == null)
-                  ? const Icon(
+              child: const Icon(
                 Icons.person,
                 size: 40,
                 color: Colors.white,
               )
-                  : null,
             ),
           ),
           Positioned(

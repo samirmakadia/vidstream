@@ -85,10 +85,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     setState(() => _isLoading = true);
     try {
+      await Future.delayed(const Duration(seconds: 2));
       await ApiRepository.instance.auth.signOut();
       await MessageDatabase.instance.clearMessagesTable();
-      await Future.delayed(const Duration(seconds: 2));
-      
+
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const AuthScreen()),
