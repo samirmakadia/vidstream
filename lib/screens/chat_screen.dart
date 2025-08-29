@@ -13,6 +13,7 @@ import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../utils/app_toaster.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/image_preview_screen.dart';
 import '../widgets/video_actions_widget.dart';
 import 'other_user_profile_screen.dart';
 
@@ -94,6 +95,58 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _loadOtherUser() async {
     _otherUser = await _chatService.getUserById(widget.otherUserId);
     setState(() {});
+  }
+
+  Future<void> _pickAndPreviewImage() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image == null) return;
+
+    final File selectedImage = File(image.path);
+
+    // Navigate to preview screen
+    final shouldSend = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => ImagePreviewScreen(
+          imageFile: selectedImage,
+          showUploadButton: true,
+        ),
+      ),
+    );
+
+    if (shouldSend == true) {
+      _sendImage(selectedImage);
+    }
+  }
+
+  Future<void> _sendImage(File selectedImage) async {
+    Message? _message = _getMessage(mediaUrl: selectedImage.path, messageType: 'image');
+    if (_message == null) return;
+
+    await MessageDatabase.instance.addOrUpdateMessage(_message);
+
+    try {
+      final uploadedUrl = await _uploadCommonFile(selectedImage.path);
+      if (uploadedUrl != null) {
+        print("✅ Image uploaded: $uploadedUrl");
+        final updatedMessage = _message.copyWith(
+          content: _message.content.copyWith(
+            text: _message.content.text,
+            mediaUrl: uploadedUrl.url,
+            mediaSize: uploadedUrl.size,
+            mediaDuration: uploadedUrl.duration,
+            thumbnailUrl: uploadedUrl.thumbnailUrl,
+          ),
+        );
+        await _sendMessageWithModel(updatedMessage);
+      }
+    } catch (e) {
+      debugPrint("❌ Error sending image: $e");
+      if (mounted) {
+        _showErrorSnackBar('Failed to send image: $e');
+      }
+    }
   }
 
   Future<void> _pickAndSendImage() async {
@@ -528,11 +581,25 @@ class _ChatScreenState extends State<ChatScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (message.messageType == 'image' && message.content.mediaUrl != null && message.content.mediaUrl!.isNotEmpty)
-                      CustomImageWidget(
-                        imageUrl: message.content.mediaUrl ?? '',
-                        height: 200,
-                        width: 200,
-                        cornerRadius: 12,
+                      GestureDetector(
+                        onTap: () async {
+                          final isNetwork = message.content.mediaUrl!.startsWith('http');
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ImagePreviewScreen(
+                                imageFile: isNetwork ? null : File(message.content.mediaUrl!),
+                                imageUrl: isNetwork ? message.content.mediaUrl! : null,
+                                showUploadButton: false,
+                              ),
+                            ),
+                          );
+                        },
+                        child: CustomImageWidget(
+                          imageUrl: message.content.mediaUrl ?? '',
+                          height: 200,
+                          width: 200,
+                          cornerRadius: 12,
+                        ),
                       ),
                     if (message.message.isNotEmpty)
                       Padding(
@@ -591,7 +658,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             // Media buttons
             IconButton(
-              onPressed: _pickAndSendImage,
+              onPressed: _pickAndPreviewImage,
               icon: const Icon(Icons.image),
               color: Theme.of(context).colorScheme.primary,
             ),
