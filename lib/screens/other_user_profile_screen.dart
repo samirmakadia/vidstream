@@ -926,6 +926,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
         builder: (context) => VideoPlayerScreen(
           video: video,
           allVideos: _userVideos,
+          user: _user,
         ),
       ),
     );

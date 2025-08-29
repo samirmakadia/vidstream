@@ -8,9 +8,11 @@ import 'package:vidstream/widgets/user_info_widget.dart';
 class VideoPlayerScreen extends StatefulWidget {
   final ApiVideo video;
   final List<ApiVideo> allVideos;
+  final ApiUser? user;
 
   const VideoPlayerScreen({
     super.key,
+    this.user,
     required this.video,
     required this.allVideos,
   });
@@ -63,6 +65,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               return VideoFeedItem(
                 video: video,
                 isActive: index == _currentIndex,
+                user: widget.user,
                 onVideoDeleted: () {
                   setState(() {
                     _videos.removeAt(index);
@@ -105,12 +108,14 @@ class VideoFeedItem extends StatefulWidget {
   final ApiVideo video;
   final bool isActive;
   final VoidCallback? onVideoDeleted;
+  final ApiUser? user;
 
   const VideoFeedItem({
     super.key,
     required this.video,
     required this.isActive,
     this.onVideoDeleted,
+    this.user,
   });
 
   @override
@@ -131,7 +136,11 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     super.initState();
     _localLikeCount = widget.video.likesCount;
     _localViewCount = widget.video.viewsCount;
-    _loadUserData();
+    if (widget.user != null) {
+      _user = widget.user;
+    } else {
+      _loadUserData(); // fallback to fetch if not provided
+    }
     // _checkLikeStatus();
   }
 
@@ -377,20 +386,21 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                 const SizedBox(width: 16),
                 
                 // Video Actions
-                VideoActionsWidget(
-                  video: widget.video.copyWith(
-                    likesCount: _localLikeCount,
-                    viewsCount: _localViewCount,
+                if (_user != null)
+                  VideoActionsWidget(
+                    video: widget.video.copyWith(
+                      likesCount: _localLikeCount,
+                      viewsCount: _localViewCount,
+                    ),
+                    user: _user!,
+                    onFollowToggle: _toggleFollow,
+                    isFollowLoading: _isFollowLoading,
+                    isLiked: widget.video.isLiked,
+                    onLikeToggle: _toggleLike,
+                    likeCount: _localLikeCount,
+                    isLikeLoading: _isLikeLoading,
+                    onVideoDeleted: widget.onVideoDeleted,
                   ),
-                  user: _user!,
-                  onFollowToggle: _toggleFollow,
-                  isFollowLoading: _isFollowLoading,
-                  isLiked: widget.video.isLiked,
-                  onLikeToggle: _toggleLike,
-                  likeCount: _localLikeCount,
-                  isLikeLoading: _isLikeLoading,
-                  onVideoDeleted: widget.onVideoDeleted,
-                ),
               ],
             ),
           ),

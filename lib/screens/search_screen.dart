@@ -354,6 +354,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               builder: (context) => VideoPlayerScreen(
                 video: video,
                 allVideos: _videos,
+                user: null,
               ),
             ),
           );

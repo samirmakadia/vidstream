@@ -918,9 +918,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         builder: (context) => VideoPlayerScreen(
           video: video,
           allVideos: videos,
+          user: _currentUser,
         ),
       ),
     );
   }
 }
-
