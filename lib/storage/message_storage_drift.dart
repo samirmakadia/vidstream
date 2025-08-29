@@ -145,6 +145,18 @@ class MessageDatabase extends _$MessageDatabase {
     print("🗑️ Deleted message locally: $messageId");
   }
 
+  /// Delete all messages by conversationId
+  Future<void> deleteMessagesByConversationId(String conversationId) async {
+    await (delete(messagesDb)..where((tbl) => tbl.conversationId.equals(conversationId))).go();
+    print("🗑️ Deleted all messages for conversation: $conversationId");
+  }
+
+  /// Clear the entire messages table
+  Future<void> clearMessagesTable() async {
+    await delete(messagesDb).go();
+    print("🧹 Cleared all messages from the table");
+  }
+
   Future<void> updateMessageStatus(String messageId, String status) async {
     await (update(messagesDb)
       ..where((tbl) => tbl.messageId.equals(messageId)))

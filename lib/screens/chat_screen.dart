@@ -179,6 +179,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _deleteConversation() async {
     try {
       await _chatService.deleteChatConversation(widget.conversation?.id ?? '');
+      await MessageDatabase.instance.deleteMessagesByConversationId(widget.conversation?.id ?? '');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

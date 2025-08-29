@@ -11,6 +11,8 @@ import 'package:vidstream/screens/blocked_users_screen.dart';
 import 'package:vidstream/screens/my_reports_screen.dart';
 import 'package:vidstream/screens/onboarding_screen.dart';
 import 'package:vidstream/models/api_models.dart';
+import 'package:vidstream/storage/conversation_storage_drift.dart';
+import 'package:vidstream/storage/message_storage_drift.dart';
 import 'package:vidstream/widgets/rate_us_dialog.dart';
 import 'package:vidstream/widgets/app_update_dialog.dart';
 import 'package:vidstream/services/dialog_manager_service.dart';
@@ -47,6 +49,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isLoading = true);
     try {
       await ApiRepository.instance.auth.signOut();
+      await MessageDatabase.instance.clearMessagesTable();
+      await ConversationDatabase.instance.clearTable();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const AuthScreen()),
@@ -79,7 +83,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // TODO: Implement account deletion
       // This would involve deleting user data from Firestore and Firebase Auth
       await Future.delayed(const Duration(seconds: 2)); // Simulate API call
-      
+      await ApiRepository.instance.auth.signOut();
+      await MessageDatabase.instance.clearMessagesTable();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const AuthScreen()),

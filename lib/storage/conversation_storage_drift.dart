@@ -126,38 +126,6 @@ class ConversationDatabase extends _$ConversationDatabase {
     }));
   }
 
-  // Stream<List<Conversation>> watchAllConversations(String currentUserId) {
-  //   final query = (select(conversationsDb)
-  //     ..orderBy([(tbl) => OrderingTerm.desc(tbl.updatedAt)]));
-  //
-  //   return query.watch().map((rows) {
-  //     return rows.where((row) {
-  //       if (row.deletedFor != null && row.deletedFor!.isNotEmpty) {
-  //         final deletedForList = List<String>.from(jsonDecode(row.deletedFor!));
-  //         return !deletedForList.contains(currentUserId);
-  //       }
-  //       return true;
-  //     }).map((row) {
-  //       final participants = (jsonDecode(row.participants) as List)
-  //           .map((e) => AppUser.fromJson(Map<String, dynamic>.from(e)))
-  //           .toList();
-  //
-  //       final lastMsg = row.lastMessage != null
-  //           ? await MessageDatabase.instance.getLastMessageByConversationId(row.id)
-  //           : null;
-  //       return Conversation(
-  //         id: row.id,
-  //         conversationId: row.conversationId,
-  //         participants: participants,
-  //         lastMessage: , // can be populated if needed
-  //         unreadCount: row.unreadCount,
-  //         createdAt: DateTime.fromMillisecondsSinceEpoch(row.createdAt),
-  //         updatedAt: DateTime.fromMillisecondsSinceEpoch(row.updatedAt),
-  //       );
-  //     }).toList();
-  //   });
-  // }
-
   Stream<List<Conversation>> watchAllConversations(String currentUserId) {
     final query = (select(conversationsDb)
       ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]));
@@ -260,4 +228,11 @@ class ConversationDatabase extends _$ConversationDatabase {
       ),
     );
   }
+
+  /// Clear the entire conversation table
+  Future<void> clearTable() async {
+    await delete(conversationsDb).go();
+    print("🧹 Cleared all messages from the table");
+  }
+
 }

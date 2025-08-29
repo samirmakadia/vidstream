@@ -123,24 +123,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  // Widget _buildChatList() {
-  //   if (_conversations.isEmpty) {
-  //     return _buildEmptyState();
-  //   }
-  //
-  //   return RefreshIndicator(
-  //     onRefresh: _loadConversations,
-  //     child: ListView.builder(
-  //       padding: const EdgeInsets.symmetric(vertical: 8),
-  //       itemCount: _conversations.length,
-  //       itemBuilder: (context, index) {
-  //         final conversation = _conversations[index];
-  //         return _buildChatTile(conversation);
-  //       },
-  //     ),
-  //   );
-  // }
-
   Widget _buildEmptyState() {
     return Center(
       child: Column(
