@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/chat_screen.dart';
 import 'package:vidstream/services/chat_service.dart';
 import 'package:vidstream/storage/conversation_storage_drift.dart';
+
+import '../services/socket_manager.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -33,9 +37,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   ApiUser? _getOtherParticipant(Conversation conversation) {
     final currentUserId = _authService.currentUser?.id ?? '';
-    var otherUser = conversation.participants?.firstWhere(
-          (user) => user.id != currentUserId
-    );
+    var otherUser = conversation.participants?.firstWhere((user) => user.id != currentUserId);
     return otherUser;
   }
 
@@ -46,10 +48,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   String _formatTime(DateTime? dateTime) {
     if (dateTime == null) return '';
-    
+
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays}d ago';
     } else if (difference.inHours > 0) {
@@ -59,6 +61,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
     } else {
       return 'Just now';
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -96,28 +103,26 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
         return RefreshIndicator(
           onRefresh: () async {
-             _loadConversations();
+            _loadConversations();
           },
           child: conversations.isEmpty
-          // Wrap empty state with scrollable
+              // Wrap empty state with scrollable
               ? SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height * 0.8,
-              child: _buildEmptyState(),
-            ),
-          )
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    child: _buildEmptyState(),
+                  ),
+                )
               : ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: conversations.length,
-            itemBuilder: (context, index) {
-              final conversation = conversations[index];
-              print(
-                  'Building chat tile → id: ${conversation.conversationId}, name: ${conversation.participants?.map((u) => u.displayName).join(', ')}'
-              );
-              return _buildChatTile(conversation);
-            },
-          ),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: conversations.length,
+                  itemBuilder: (context, index) {
+                    final conversation = conversations[index];
+                    print('Building chat tile → id: ${conversation.conversationId}, name: ${conversation.participants?.map((u) => u.displayName).join(', ')}');
+                    return _buildChatTile(conversation);
+                  },
+                ),
         );
       },
     );
@@ -137,15 +142,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
           Text(
             'No conversations yet',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
           ),
           const SizedBox(height: 8),
           Text(
             'Start chatting with users from the Meet tab',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -164,11 +169,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ChatScreen(otherUserId: otherUser?.id ?? '',conversationId: conversation.conversationId,name: displayName,imageUrl: profileImage, conversation: conversation),
-          ),
-        ).then((_) => _loadConversations());
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                builder: (context) => ChatScreen(
+                    otherUserId: otherUser?.id ?? '',
+                    conversationId: conversation.conversationId,
+                    name: displayName,
+                    imageUrl: profileImage,
+                    conversation: conversation),
+              ),
+            )
+            .then((_) => _loadConversations());
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -198,10 +210,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   backgroundImage: profileImage != null ? NetworkImage(profileImage) : null,
                   child: profileImage == null
                       ? Icon(
-                    Icons.person,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 26,
-                  )
+                          Icons.person,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 26,
+                        )
                       : null,
                 ),
                 // Online indicator
@@ -233,8 +245,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   Text(
                     displayName,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
-                    ),
+                          fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
+                        ),
                   ),
                   getLastMsgBaseOnType(conversation),
                 ],
@@ -245,17 +257,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                 _formatTime(conversation.lastMessage != null ? DateTime.parse(conversation.lastMessage!.createdAt) : conversation.updatedAt),
+                  _formatTime(conversation.lastMessage != null ? DateTime.parse(conversation.lastMessage!.createdAt) : conversation.updatedAt),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                    fontSize: 11,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        fontSize: 11,
+                      ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     if (isUnread)
-                    Positioned(
+                      Positioned(
                         top: 0,
                         right: 0,
                         child: Container(
@@ -301,8 +313,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
       return Text(
         'Start conversation',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-        ),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       );
@@ -312,9 +324,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
       return Text(
         lastMessage.content.text ?? "",
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-          fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
-        ),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
+            ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       );
@@ -327,9 +339,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
           Text(
             "Photo",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
-            ),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
+                ),
           ),
         ],
       );
@@ -338,12 +350,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
       return Text(
         'Unsupported message',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-        ),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       );
     }
   }
-
 }

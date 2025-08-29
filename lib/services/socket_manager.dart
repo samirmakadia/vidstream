@@ -53,7 +53,8 @@ class SocketManager {
 
     _socket?.on('message_deleted', _handleMessageDeleted);
 
-
+    _socket?.on('userOnline', _handleUserOnline);
+    _socket?.on('userOffline', _handleUserOffline);
   }
 
   void disconnect() {
@@ -162,6 +163,32 @@ class SocketManager {
     }
   }
 
+  void _handleUserOnline(dynamic data) {
+    try {
+      final userId = data['userId'];
+      if (userId != null) {
+        //eventBus.fire(MeetEvent(userId: userId, type: MeetEventType.online));
+        ConversationDatabase.instance.updateUserOnlineStatus(userId, true);
+        print("🟢 User $userId is online");
+      }
+    } catch (e) {
+      debugPrint("❌ Error handling userOnline: $e");
+    }
+  }
+
+  void _handleUserOffline(dynamic data) {
+    try {
+      final userId = data['userId'];
+      if (userId != null) {
+        // eventBus.fire(MeetEvent(userId: userId, type: MeetEventType.offline));
+        ConversationDatabase.instance.updateUserOnlineStatus(userId, false);
+        print("🔴 User $userId is offline");
+      }
+    } catch (e) {
+      debugPrint("❌ Error handling userOffline: $e");
+    }
+  }
+
   Future<void> _syncMessagesSinceLastSync() async {
     try {
       final DateTime sinceDate = (await Utils.getLastSyncDate())?.toUtc() ?? DateTime.now().subtract(const Duration(days: 1)).toUtc();
@@ -256,7 +283,7 @@ class SocketManager {
 }
 
 
-enum MeetEventType { joined, left }
+enum MeetEventType { joined, left, online, offline }
 
 class MeetEvent {
   final String userId;

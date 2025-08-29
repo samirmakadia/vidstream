@@ -218,26 +218,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
-  void _scrollToBottomInstant() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      }
-    });
-  }
-
   Future<void> _deleteConversation() async {
     try {
       await _chatService.deleteChatConversation(widget.conversation?.id ?? '');
@@ -438,9 +418,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   radius: 17,
                   backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   backgroundImage: _otherUser?.profileImageUrl != null ? NetworkImage(_otherUser!.profileImageUrl!) : null,
-                  child: Icon(Icons.person, size: 16, color: Theme.of(context).colorScheme.primary)
+                  child: Icon(Icons.person, size: 20, color: Theme.of(context).colorScheme.primary)
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   _otherUser?.displayName ?? widget.name ?? 'Loading...',

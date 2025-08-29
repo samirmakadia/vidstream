@@ -229,6 +229,34 @@ class ConversationDatabase extends _$ConversationDatabase {
     );
   }
 
+  Future<void> updateUserOnlineStatus(String userId, bool isOnline) async {
+    final rows = await (select(conversationsDb)).get();
+
+    for (final row in rows) {
+      final participants = (jsonDecode(row.participants) as List)
+          .map((e) => AppUser.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+
+      bool updated = false;
+      for (int i = 0; i < participants.length; i++) {
+        if (participants[i].id == userId) {
+          participants[i] = participants[i].copyWith(isOnline: isOnline);
+          updated = true;
+        }
+      }
+
+      if (updated) {
+        await (update(conversationsDb)
+          ..where((tbl) => tbl.id.equals(row.id)))
+            .write(
+          ConversationsDbCompanion(
+            participants: Value(jsonEncode(participants.map((e) => e.toJson()).toList())),
+          ),
+        );
+      }
+    }
+  }
+
   /// Clear the entire conversation table
   Future<void> clearTable() async {
     await delete(conversationsDb).go();

@@ -26,7 +26,7 @@ void main() async {
 // Initialize services in the background
 Future<void> _initializeServices() async {
   try {
-    //await Firebase.initializeApp();
+    await Firebase.initializeApp();
     await ServiceLocator.initialize();
     await ApiRepository.instance.initialize();
     await NotificationService().initialize();
