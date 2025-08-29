@@ -39,11 +39,15 @@ class _ChatScreenState extends State<ChatScreen> {
   ApiUser? _otherUser;
   final bool _isLoading = false;
   bool initialScroll = false;
+  late Stream<List<ChatMessage>> _messagesStream;
 
   @override
   void initState() {
     super.initState();
     // WidgetsBinding.instance.addObserver(this);
+    final currentUserId = _authService.currentUser?.id;
+    final conversationId = widget.conversationId ?? Utils.generateConversationId(currentUserId!, widget.otherUserId);
+    _messagesStream = db.watchMessagesForConversation(conversationId);
     _loadOtherUser();
   }
 
@@ -93,8 +97,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadOtherUser() async {
-    _otherUser = await _chatService.getUserById(widget.otherUserId);
-    setState(() {});
+    final user = await _chatService.getUserById(widget.otherUserId);
+    if (mounted && user != _otherUser) {
+      setState(() {
+        _otherUser = user;
+      });
+    }
   }
 
   Future<void> _pickAndPreviewImage() async {
@@ -209,7 +217,6 @@ class _ChatScreenState extends State<ChatScreen> {
       return null;
     }
   }
-
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -511,10 +518,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessagesList() {
-    final currentUserId = _authService.currentUser?.id;
-    final conversationId = widget.conversationId ?? Utils.generateConversationId(currentUserId!, widget.otherUserId);
     return StreamBuilder<List<ChatMessage>>(
-      stream: db.watchMessagesForConversation(conversationId),
+      stream: _messagesStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -523,11 +528,20 @@ class _ChatScreenState extends State<ChatScreen> {
           return Center( child: _buildEmptyState());
         }
         final messages = snapshot.data ?? [];
-        _scrollToBottomInstant();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.minScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          }
+        });
         return ListView.builder(
           controller: _scrollController,
           padding: const EdgeInsets.all(16),
           itemCount: messages.length,
+          reverse: true,
           itemBuilder: (context, index) {
             final message = messages[index];
             final isMe = message.senderId == _authService.currentUser?.uid;

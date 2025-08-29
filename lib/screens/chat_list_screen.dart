@@ -161,7 +161,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final displayName = otherUser?.displayName ?? 'Unknown User';
     final profileImage = otherUser?.profileImageUrl;
     print(conversation.lastMessage?.content.text);
-    final lastMessageText = conversation.lastMessage?.content.text ?? 'Start conversation';
 
     return GestureDetector(
       onTap: () {
@@ -237,15 +236,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
                     ),
                   ),
-                  Text(
-                    lastMessageText,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                      fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  getLastMsgBaseOnType(conversation),
                 ],
               ),
             ),
@@ -300,6 +291,59 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
+  Widget getLastMsgBaseOnType(Conversation conversation) {
+    final unreadCount = _getUnreadCount(conversation);
+    final isUnread = unreadCount > 0;
 
+    final lastMessage = conversation.lastMessage;
+
+    if (lastMessage == null) {
+      return Text(
+        'Start conversation',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    if (lastMessage.messageType == "text") {
+      return Text(
+        lastMessage.content.text ?? "",
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+          fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    } else if (lastMessage.messageType == "image") {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(Icons.image, size: 18, color: Color(0xFFAEAEAE)),
+          const SizedBox(width: 4),
+          Text(
+            "Photo",
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
+            ),
+          ),
+        ],
+      );
+    } else {
+      // fallback for unsupported types
+      return Text(
+        'Unsupported message',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+  }
 
 }

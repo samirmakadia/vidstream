@@ -34,14 +34,6 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindin
     _initializeVideo(); 
   }
 
-  @override
-  void deactivate() {
-    if (controller != null && controller!.value.isPlaying) {
-      controller!.pause();
-    }
-    super.deactivate();
-  }
-
 
   @override
   void didUpdateWidget(VideoPlayerWidget oldWidget) {
@@ -65,12 +57,14 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindin
   }
 
   void _disposeController() {
-    controller?.dispose();
-    controller = null;
+    if (controller != null) {
+      controller!.removeListener(_videoListener);
+      controller!.dispose();
+      controller = null;
+    }
     _isInitialized = false;
     _hasError = false;
     _retryCount = 0;
-    controller?.removeListener(_videoListener);
   }
 
   Future<void> _initializeVideo() async {
@@ -216,11 +210,14 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindin
 
   void _handleVisibilityChanged(VisibilityInfo info) {
     if (!_isInitialized || controller == null) return;
-    if (info.visibleFraction < 0.25) {
+
+    if (info.visibleFraction == 0) {
+      // Fully invisible → force pause
       if (controller!.value.isPlaying) {
         controller!.pause();
       }
     } else {
+      // Visible → only play if active & not manually paused
       if (widget.isActive && !_isManuallyPaused) {
         controller!.play();
       }

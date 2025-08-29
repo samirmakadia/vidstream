@@ -120,6 +120,7 @@ class MessageDatabase extends _$MessageDatabase {
       ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)])
       ..limit(limit, offset: offset)
     );
+
     return query.watch().map((rows) => rows.map((row) => Message(
       id: row.id,
       messageId: row.messageId,
@@ -127,13 +128,18 @@ class MessageDatabase extends _$MessageDatabase {
       senderId: row.senderId,
       messageType: row.messageType,
       content: MessageContent.fromJson(jsonDecode(row.content)),
-      status: MessageStatus.values.firstWhere((e) => e.name == row.status, orElse: () => MessageStatus.sent),
+      status: MessageStatus.values.firstWhere(
+              (e) => e.name == row.status,
+          orElse: () => MessageStatus.sent),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       isDeleted: row.isDeleted,
-      deletedFor: row.deletedFor != null ? List<String>.from(jsonDecode(row.deletedFor!)) : [],
-    )).toList().reversed.toList());
+      deletedFor: row.deletedFor != null
+          ? List<String>.from(jsonDecode(row.deletedFor!))
+          : [],
+    )).toList());
   }
+
 
   // Delete a message
   Future<void> deleteMessage(String messageId) async {

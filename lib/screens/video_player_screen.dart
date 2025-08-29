@@ -21,7 +21,7 @@ class VideoPlayerScreen extends StatefulWidget {
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
 }
 
-class _VideoPlayerScreenState extends State<VideoPlayerScreen> with WidgetsBindingObserver{
+class _VideoPlayerScreenState extends State<VideoPlayerScreen>{
   late PageController _pageController;
   late List<ApiVideo> _videos;
   int _currentIndex = 0;
@@ -47,26 +47,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with WidgetsBindi
       setState(() {
         _isScreenVisible = isVisible;
       });
-    }
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    switch (state) {
-      case AppLifecycleState.paused:
-      case AppLifecycleState.inactive:
-      case AppLifecycleState.detached:
-      case AppLifecycleState.hidden:
-        setState(() {
-          _isScreenVisible = false;
-        });
-        break;
-      case AppLifecycleState.resumed:
-        setState(() {
-          _isScreenVisible = true;
-        });
-        break;
     }
   }
 

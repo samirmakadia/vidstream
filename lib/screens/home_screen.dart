@@ -80,28 +80,28 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    
-    switch (state) {
-      case AppLifecycleState.paused:
-      case AppLifecycleState.inactive:
-      case AppLifecycleState.detached:
-      case AppLifecycleState.hidden:
-        // App is going to background or being inactive
-        setState(() {
-          _isScreenVisible = false;
-        });
-        break;
-      case AppLifecycleState.resumed:
-        // App is coming back to foreground
-        setState(() {
-          _isScreenVisible = true;
-        });
-        break;
-    }
-  }
+  // @override
+  // void didChangeAppLifecycleState(AppLifecycleState state) {
+  //   super.didChangeAppLifecycleState(state);
+  //
+  //   switch (state) {
+  //     case AppLifecycleState.paused:
+  //     case AppLifecycleState.inactive:
+  //     case AppLifecycleState.detached:
+  //     case AppLifecycleState.hidden:
+  //       // App is going to background or being inactive
+  //       setState(() {
+  //         _isScreenVisible = false;
+  //       });
+  //       break;
+  //     case AppLifecycleState.resumed:
+  //       // App is coming back to foreground
+  //       setState(() {
+  //         _isScreenVisible = true;
+  //       });
+  //       break;
+  //   }
+  // }
 
   Future<void> _loadVideos() async {
     setState(() => _isLoading = true);
