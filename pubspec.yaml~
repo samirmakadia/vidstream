@@ -42,7 +42,6 @@ dependencies:
   better_player_plus: ^1.0.8
   google_sign_in: ^6.2.2
   firebase_auth: ^5.7.0
-  sign_in_with_apple: ^4.2.0
 
 
 dev_dependencies:

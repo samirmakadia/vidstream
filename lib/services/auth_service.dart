@@ -227,46 +227,56 @@ class AuthService {
   }
 
   // Sign in with Google (simplified for demo)
-  Future<ApiUser?> signInWithGoogle() async {
+  Future<ApiUser?> signInWithGoogleToken({
+    required String idToken,
+  }) async {
     try {
-      // For demo purposes, we'll create a demo email account
-      return await signUpWithEmailAndPassword(
-        email: 'demo@vidstream.com', 
-        password: 'password123',
-        displayName: 'Demo User',
+      final authResponse = await _apiService.googleLogin(
+        token: idToken,
       );
-    } catch (e) {
-      // If user already exists, sign in instead
-      try {
-        return await signInWithEmailAndPassword(
-          email: 'demo@vidstream.com',
-          password: 'password123',
-        );
-      } catch (e) {
-        throw 'Google sign in failed: ${e.toString()}';
+
+      if (authResponse != null) {
+        _accessToken = authResponse.accessToken;
+        _refreshToken = authResponse.refreshToken;
+
+        _currentUser = ApiUser.fromJson(authResponse.user);
+        _authStateController.add(_currentUser);
+
+        await saveSession(_currentUser!);
+
+        return _currentUser;
       }
+
+      return null;
+    } catch (e) {
+      throw 'Google sign in failed: ${e.toString()}';
     }
   }
 
   // Sign in with Apple (simplified for demo)
-  Future<ApiUser?> signInWithApple() async {
+  Future<ApiUser?> signInWithAppleToken({
+    required String token,
+  }) async {
     try {
-      // For demo purposes, we'll create a demo Apple account
-      return await signUpWithEmailAndPassword(
-        email: 'apple@vidstream.com', 
-        password: 'password123',
-        displayName: 'Apple User',
+      final authResponse = await _apiService.appleLogin(
+        token: token,
       );
-    } catch (e) {
-      // If user already exists, sign in instead
-      try {
-        return await signInWithEmailAndPassword(
-          email: 'apple@vidstream.com',
-          password: 'password123',
-        );
-      } catch (e) {
-        throw 'Apple sign in failed: ${e.toString()}';
+
+      if (authResponse != null) {
+        _accessToken = authResponse.accessToken;
+        _refreshToken = authResponse.refreshToken;
+
+        _currentUser = ApiUser.fromJson(authResponse.user);
+        _authStateController.add(_currentUser);
+
+        await saveSession(_currentUser!);
+
+        return _currentUser;
       }
+
+      return null;
+    } catch (e) {
+      throw 'Apple sign in failed: ${e.toString()}';
     }
   }
 

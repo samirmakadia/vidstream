@@ -1,12 +1,16 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:vidstream/screens/settings_screen.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/screens/main_app_screen.dart';
 import 'package:vidstream/theme.dart';
 import 'package:flutter/gestures.dart';
+
+import '../utils/graphics.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -19,18 +23,22 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   bool _isLoading = false;
   bool _isAppleSignInAvailable = Platform.isIOS;
+  late final GoogleSignIn _googleSignIn;
 
   @override
   void initState() {
     super.initState();
+    _googleSignIn = GoogleSignIn(
+      scopes: ['email'],
+    );
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -38,7 +46,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
@@ -46,7 +54,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-    
+
     _animationController.forward();
     // _checkAppleSignInAvailability();
   }
@@ -57,46 +65,15 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      final result = await ApiRepository.instance.auth.signInWithGoogle();
-      if (result != null && mounted) {
-        await ApiRepository.instance.auth.saveSession(result);
-        // Create sample data for demo
-        await _createSampleData();
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainAppScreen()),
-        );
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Google sign in was cancelled or failed'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Google sign in failed: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+  Future<void> _requestAppleLogin(String? idToken, String? firstName, String? lastName) async {
+    if (idToken == null) {
+      Graphics.showTopDialog(context, 'Error!', 'Apple sign-in failed', type: ToastType.error);
+      return;
     }
-  }
 
-  Future<void> _signInWithApple() async {
     setState(() => _isLoading = true);
     try {
-      final result = await ApiRepository.instance.auth.signInWithApple();
+      final result = await ApiRepository.instance.auth.signInWithAppleToken(token: idToken);
       if (result != null && mounted) {
         await ApiRepository.instance.auth.saveSession(result);
         Navigator.of(context).pushReplacement(
@@ -117,14 +94,13 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     }
   }
 
+
   Future<void> _signInAsGuest() async {
     setState(() => _isLoading = true);
     try {
       final result = await ApiRepository.instance.auth.signInAsGuest();
       if (result != null && mounted) {
         await ApiRepository.instance.auth.saveSession(result);
-        // Create sample data for demo
-        await _createSampleData();
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainAppScreen()),
         );
@@ -155,12 +131,77 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _createSampleData() async {
+  Future<void> _handleGoogleSignIn() async {
     try {
-      // await DemoDataService.createSampleVideos();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        await _requestGoogleLogin(googleAuth.idToken, googleAuth.accessToken);
+      } else {
+        Graphics.showTopDialog(context, 'Opps!', 'Google sign-in cancelled', type: ToastType.error);
+      }
+    } catch (error,s) {
+      print(error);
+      print(s);
+      Graphics.showTopDialog(context, 'Error!', 'Error signing in with Google: $error', type: ToastType.error);
+    }
+  }
+
+  Future<void> _requestGoogleLogin(String? idToken, String? accessToken) async {
+    print('idToken: $idToken');
+    if (idToken == null || accessToken == null) {
+      Graphics.showTopDialog(context, 'Error!', 'Google sign-in failed', type: ToastType.error);
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final result = await ApiRepository.instance.auth.signInWithGoogleToken(idToken: idToken);
+      if (result != null && mounted) {
+        await ApiRepository.instance.auth.saveSession(result);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainAppScreen()),
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Google sign in was cancelled or failed'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
     } catch (e) {
-      // Ignore errors - sample data is optional
-      print('Failed to create sample data: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google sign in failed: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+
+  }
+
+  Future<void> _signInWithApple() async {
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.fullName,
+          AppleIDAuthorizationScopes.email,
+        ],
+      );
+      await _requestAppleLogin(
+        credential.identityToken,
+        credential.givenName ?? '',
+        credential.familyName ?? '',
+      );
+    } catch (error) {
+      Graphics.showTopDialog(context, 'Error!', 'Apple sign-in failed: $error', type: ToastType.error);
     }
   }
 
@@ -189,7 +230,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Spacer(),
-                    
+
                     // App Logo and Title
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -223,9 +264,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 60),
-                    
+
                     // Sign in buttons
                     Column(
                       children: [
@@ -234,7 +275,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _signInWithGoogle,
+                            onPressed: _isLoading ? null : _handleGoogleSignIn,
                             icon: Icon(
                               Icons.g_mobiledata,
                               size: 32,
@@ -258,9 +299,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Apple Sign In (only on iOS)
                         if (_isAppleSignInAvailable) ...[
                           SizedBox(
@@ -293,7 +334,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                           ),
                           const SizedBox(height: 16),
                         ],
-                        
+
                         // Guest Sign In
                         SizedBox(
                           width: double.infinity,
@@ -324,17 +365,17 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
-                    
+
                     const Spacer(),
-                    
+
                     // Loading indicator
                     if (_isLoading)
                       const CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     // Terms and Privacy
                     RichText(
                       textAlign: TextAlign.center,

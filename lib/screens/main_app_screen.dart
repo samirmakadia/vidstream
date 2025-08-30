@@ -13,6 +13,7 @@ import 'package:vidstream/screens/chat_list_screen.dart';
 import '../manager/firebase_manager.dart';
 import '../manager/session_manager.dart';
 import '../services/meet_service.dart';
+import '../services/notification_service.dart';
 import '../services/socket_manager.dart';
 
 class MainAppScreen extends StatefulWidget {
@@ -34,7 +35,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
     super.initState();
     _requestPermissions();
     _updateUserLocation();
-    // FirebaseManager().initNotification();
+    NotificationService().initialize();
     _connectSocket();
     _screens = [
       HomeScreen(key: _homeScreenKey),

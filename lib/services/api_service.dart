@@ -1344,6 +1344,52 @@ class ApiService {
     });
   }
 
+  Future<response_models.AuthResponse?> googleLogin({
+    required String token,
+  }) async {
+    return ErrorHandler.safeApiCall(() async {
+      final response = await _httpClient.post<response_models.AuthResponse>(
+        '/users/google-login',
+        data: {
+          'token': token,
+        },
+        fromJson: (json) => response_models.AuthResponse.fromJson(json as Map<String, dynamic>),
+      );
+
+      if (response.success && response.data != null) {
+        final authData = response.data!;
+        _httpClient.setTokens(authData.accessToken, authData.refreshToken);
+        return authData;
+      }
+
+      throw response_models.ApiException(response.message);
+    });
+  }
+
+  Future<response_models.AuthResponse?> appleLogin({
+    required String token,
+  }) async {
+    return ErrorHandler.safeApiCall(() async {
+      final response = await _httpClient.post<response_models.AuthResponse>(
+        '/users/apple-login',
+        data: {
+          'token': token,
+        },
+        fromJson: (json) => response_models.AuthResponse.fromJson(
+          json as Map<String, dynamic>,
+        ),
+      );
+
+      if (response.success && response.data != null) {
+        final authData = response.data!;
+        _httpClient.setTokens(authData.accessToken, authData.refreshToken);
+        return authData;
+      }
+
+      throw response_models.ApiException(response.message);
+    });
+  }
+
   // Meet/Online user methods
   Future<void> joinMeet() async {
     return ErrorHandler.safeApiCall(() async {

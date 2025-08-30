@@ -29,7 +29,6 @@ Future<void> _initializeServices() async {
     await Firebase.initializeApp();
     await ServiceLocator.initialize();
     await ApiRepository.instance.initialize();
-    await NotificationService().initialize();
     await DialogManagerService().initialize();
     // await ChatService().initialize();
      print('✅ All services initialized successfully');
