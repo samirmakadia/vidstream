@@ -236,8 +236,8 @@ class AuthService {
       );
 
       if (authResponse != null) {
-        _accessToken = authResponse.accessToken;
-        _refreshToken = authResponse.refreshToken;
+        _accessToken = authResponse.token;
+        _refreshToken = authResponse.token;
 
         _currentUser = ApiUser.fromJson(authResponse.user);
         _authStateController.add(_currentUser);
@@ -263,8 +263,8 @@ class AuthService {
       );
 
       if (authResponse != null) {
-        _accessToken = authResponse.accessToken;
-        _refreshToken = authResponse.refreshToken;
+        _accessToken = authResponse.token;
+        _refreshToken = authResponse.token;
 
         _currentUser = ApiUser.fromJson(authResponse.user);
         _authStateController.add(_currentUser);
