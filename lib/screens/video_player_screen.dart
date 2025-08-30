@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/screens/home/widget/video_actions_widget.dart';
-import 'package:vidstream/widgets/user_info_widget.dart';
-import 'home/widget/video_player_widget.dart';
+import 'home/widget/video_feed_item_widget.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final ApiVideo video;
@@ -21,11 +18,14 @@ class VideoPlayerScreen extends StatefulWidget {
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
 }
 
-class _VideoPlayerScreenState extends State<VideoPlayerScreen>{
+class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKeepAliveClientMixin{
   late PageController _pageController;
   late List<ApiVideo> _videos;
   int _currentIndex = 0;
   bool _isScreenVisible = true;
+
+  @override
+  bool get wantKeepAlive => false;
 
   @override
   void initState() {
@@ -57,7 +57,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>{
       body: SafeArea(
         child: Stack(
           children: [
-            // Video PageView
             PageView.builder(
               controller: _pageController,
               scrollDirection: Axis.vertical,
@@ -69,7 +68,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>{
               },
               itemBuilder: (context, index) {
                 final video = _videos[index];
-                return VideoFeedItem(
+                return VideoFeedItemWidget(
                   video: video,
                   isActive: index == _currentIndex && _isScreenVisible,
                   user: widget.user,
@@ -88,10 +87,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>{
                 );
               },
             ),
-
-            // Back button
             Positioned(
-              top: MediaQuery.of(context).padding.top + 16,
+              top: 16,
               left: 16,
               child: Container(
                 decoration: BoxDecoration(
@@ -110,324 +107,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>{
           ],
         ),
       ),
-    );
-  }
-}
-
-class VideoFeedItem extends StatefulWidget {
-  final ApiVideo video;
-  final bool isActive;
-  final VoidCallback? onVideoDeleted;
-  final ApiUser? user;
-  final VoidCallback? onPauseRequested;
-  final VoidCallback? onResumeRequested;
-
-  const VideoFeedItem({
-    super.key,
-    required this.video,
-    required this.isActive,
-    this.onVideoDeleted,
-    this.user, this.onPauseRequested, this.onResumeRequested,
-  });
-
-  @override
-  State<VideoFeedItem> createState() => _VideoFeedItemState();
-}
-
-class _VideoFeedItemState extends State<VideoFeedItem> {
-  ApiUser? _user;
-  // bool _isLiked = false;
-  bool _isLikeLoading = false;
-  bool _isFollowLoading = false;
-  int _localLikeCount = 0;
-  int _localViewCount = 0;
-  final _videoKey = GlobalKey<VideoPlayerWidgetState>();
-
-  @override
-  void initState() {
-    super.initState();
-    _localLikeCount = widget.video.likesCount;
-    _localViewCount = widget.video.viewsCount;
-    if (widget.user != null) {
-      _user = widget.user;
-    } else {
-      _loadUserData();
-    }
-    // _checkLikeStatus();
-  }
-
-  @override
-  void didUpdateWidget(VideoFeedItem oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (!widget.isActive && oldWidget.isActive) {
-      _incrementViewCount();
-    }
-  }
-
-  Future<void> _loadUserData() async {
-    try {
-      final user = await ApiRepository.instance.auth.getUserProfile(widget.video.userId);
-      if (mounted) {
-        setState(() {
-          _user = user;
-        });
-      }
-    } catch (e) {
-      // Handle error silently
-    }
-  }
-
-  // Future<void> _checkLikeStatus() async {
-  //   final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-  //   if (currentUserId != null) {
-  //     try {
-  //       final isLiked = await ApiRepository.instance.likes.hasUserLiked(
-  //         userId: currentUserId,
-  //         targetId: widget.video.id,
-  //         targetType: 'video',
-  //       );
-  //       if (mounted) {
-  //         setState(() {
-  //           _isLiked = isLiked;
-  //         });
-  //       }
-  //     } catch (e) {
-  //       // Handle error silently
-  //     }
-  //   }
-  // }
-
-  Future<void> _toggleLike() async {
-    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    if (currentUserId != null && !_isLikeLoading) {
-      setState(() {
-        _isLikeLoading = true;
-      });
-
-      try {
-        await ApiRepository.instance.likes.toggleLike(
-          userId: currentUserId,
-          targetId: widget.video.id,
-          targetType: 'video',
-        );
-        setState(() {
-          // _isLiked = !_isLiked;
-          widget.video.isLiked = !widget.video.isLiked;
-          // Update like count locally for immediate UI feedback
-          if (widget.video.isLiked) {
-            _localLikeCount++;
-          } else {
-            _localLikeCount = (_localLikeCount > 0) ? _localLikeCount - 1 : 0;
-          }
-          print('Like status toggled. New like count: $_localLikeCount');
-        });
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to update like: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLikeLoading = false;
-          });
-        }
-      }
-    }
-  }
-
-  Future<void> _toggleFollow() async {
-    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    if (currentUserId != null && currentUserId != widget.video.userId && !_isFollowLoading) {
-      setState(() {
-        _isFollowLoading = true;
-      });
-
-      try {
-        await ApiRepository.instance.follows.toggleFollow(
-          followerId: currentUserId,
-          followedId: widget.video.userId,
-        );
-        setState(() {
-          if (_user != null) {
-            if (_user!.isFollow) {
-              _user = _user!.copyWith(
-                followersCount: _user!.followersCount - 1,
-                isFollow: false,
-              );
-            } else {
-              _user = _user!.copyWith(
-                followersCount: _user!.followersCount + 1,
-                isFollow: true,
-              );
-            }
-          }
-        });
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to update follow: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isFollowLoading = false;
-          });
-        }
-      }
-    }
-  }
-
-  Future<void> _incrementViewCount() async {
-    final betterController = _videoKey.currentState?.controller;
-    if (betterController == null) return;
-
-    final videoController = betterController.videoPlayerController;
-    if (videoController == null) {
-      // Retry if underlying controller is not ready
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (mounted) _incrementViewCount();
-      });
-      return;
-    }
-
-    final videoValue = videoController.value;
-    final totalDuration = videoValue.duration;
-    final currentPosition = videoValue.position;
-
-    // If duration is null, the video is not initialized yet
-    if (totalDuration == null) {
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (mounted) _incrementViewCount();
-      });
-      return;
-    }
-
-    final watchTime = currentPosition.inSeconds;
-    final watchPercentage = totalDuration.inSeconds > 0
-        ? (watchTime / totalDuration.inSeconds) * 100
-        : 0.0;
-
-    await ApiRepository.instance.videos.incrementViewCount(
-      widget.video.id,
-      watchTime: watchTime,
-      watchPercentage: watchPercentage.round().toDouble(),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        VideoPlayerWidget(
-          key: _videoKey,
-          videoUrl: widget.video.videoUrl,
-          isActive: widget.isActive,
-        ),
-
-        Positioned(
-          bottom: 100,
-          left: 0,
-          right: 0,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // Video Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // User Info
-                      if (_user != null)
-                        UserInfoWidget(
-                          user: _user!,
-                        ),
-
-                      const SizedBox(height: 12),
-
-                      // Video Description
-                      if (widget.video.description.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            widget.video.description,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white,
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-
-                      const SizedBox(height: 8),
-
-                      // Tags
-                      if (widget.video.tags.isNotEmpty)
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: widget.video.tags.take(3).map((tag) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '#$tag',
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 16),
-
-                // Video Actions
-                if (_user != null)
-                  VideoActionsWidget(
-                    video: widget.video.copyWith(
-                      likesCount: _localLikeCount,
-                      viewsCount: _localViewCount,
-                    ),
-                    user: _user!,
-                    onFollowToggle: _toggleFollow,
-                    isFollowLoading: _isFollowLoading,
-                    isLiked: widget.video.isLiked,
-                    onLikeToggle: _toggleLike,
-                    likeCount: _localLikeCount,
-                    isLikeLoading: _isLikeLoading,
-                    onVideoDeleted: widget.onVideoDeleted,
-                    onPauseRequested: () => widget.onPauseRequested?.call(),
-                    onResumeRequested: () => widget.onResumeRequested?.call(),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

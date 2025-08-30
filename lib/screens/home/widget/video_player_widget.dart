@@ -43,6 +43,8 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
 
   void _initializePlayer() {
+    if (!widget.isActive) return;
+
     controller = BetterPlayerController(
       BetterPlayerConfiguration(
         autoPlay: false,
@@ -92,19 +94,40 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       _initialized = true;
     }
   }
+
   @override
   void didUpdateWidget(VideoPlayerWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.videoUrl != widget.videoUrl) {
+    // Stop old controller if video became inactive
+    if (oldWidget.isActive && !widget.isActive) {
+      controller?.pause();
       controller?.dispose();
+      controller = null;
+    }
+
+    // Initialize controller if this video became active
+    if (!oldWidget.isActive && widget.isActive) {
       _initializePlayer();
     }
 
-    if (widget.isActive) {
-      controller?.play();
-    } else {
-      controller?.pause();
+    // Replace video source if URL changed
+    if (oldWidget.videoUrl != widget.videoUrl && widget.isActive) {
+      controller?.dispose();
+      _initializePlayer();
+    }
+  }
+
+
+  void playVideo() {
+    if (controller != null && !(controller!.isPlaying() ?? false)) {
+      controller!.play();
+    }
+  }
+
+  void pauseVideo() {
+    if (controller != null && (controller!.isPlaying() ?? false)) {
+      controller!.pause();
     }
   }
 
@@ -136,31 +159,28 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTap: _togglePlayPause,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox.expand(
-              child: BetterPlayer(controller: controller!),
-            ),
-            if (_showPlayPauseIcon)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  controller!.isPlaying() ?? false ? Icons.pause : Icons.play_arrow,
-                  size: 48,
-                  color: Colors.white,
-                ),
+    return GestureDetector(
+      onTap: _togglePlayPause,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox.expand(
+            child: BetterPlayer(controller: controller!),
+          ),
+          if (_showPlayPauseIcon)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                shape: BoxShape.circle,
               ),
-          ],
-        ),
+              child: Icon(
+                controller!.isPlaying() ?? false ? Icons.pause : Icons.play_arrow,
+                size: 48,
+                color: Colors.white,
+              ),
+            ),
+        ],
       ),
     );
   }
