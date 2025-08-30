@@ -118,8 +118,8 @@ class NotificationService {
     try {
       const AndroidNotificationDetails androidPlatformChannelSpecifics = 
           AndroidNotificationDetails(
-        'vidstream_channel',
-        'VidStream Notifications',
+        'default_channel',
+        'Default channel',
         channelDescription: 'Notifications for VidStream app',
         importance: Importance.max,
         priority: Priority.high,
