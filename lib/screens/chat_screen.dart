@@ -14,7 +14,7 @@ import '../services/video_service.dart';
 import '../utils/app_toaster.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
-import '../widgets/video_actions_widget.dart';
+import 'home/widget/video_actions_widget.dart';
 import 'home/bottomsheet/report_dialog.dart';
 import 'other_user_profile_screen.dart';
 

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:flutter/services.dart';
 import 'package:vidstream/repositories/api_repository.dart';
-import '../screens/home/bottomsheet/comments_bottom_sheet.dart';
-import '../screens/home/bottomsheet/report_dialog.dart';
-import '../screens/other_user_profile_screen.dart';
-import '../utils/graphics.dart';
-import 'custom_image_widget.dart';
+import '../bottomsheet/comments_bottom_sheet.dart';
+import '../bottomsheet/report_dialog.dart';
+import '../../other_user_profile_screen.dart';
+import '../../../utils/graphics.dart';
+import '../../../widgets/custom_image_widget.dart';
 
 class VideoActionsWidget extends StatefulWidget {
   final ApiUser user;

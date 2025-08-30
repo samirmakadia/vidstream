@@ -1,13 +1,12 @@
 import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:vidstream/screens/home/widget/video_player_widget.dart';
 import '../../../models/api_models.dart';
 import '../../../repositories/api_repository.dart';
 import '../../../services/socket_manager.dart';
 import '../../../widgets/user_info_widget.dart';
-import '../../../widgets/video_actions_widget.dart';
-import '../../../widgets/video_player_widget.dart';
+import 'video_actions_widget.dart';
 
 class VideoFeedItemWidget extends StatefulWidget {
   final ApiVideo video;

@@ -180,8 +180,7 @@ class NotificationService {
   Future<void> updateFcmToken(String token) async {
     try {
       final platform = Utils.getDeviceType();
-      final deviceInfo = await Utils.getDeviceInfo();
-
+      final deviceInfo = await Utils.getDeviceUniqueId();
       await ApiService().registerFcmToken(
         token: token,
         platform: platform,

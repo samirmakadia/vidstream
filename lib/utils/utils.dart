@@ -144,19 +144,20 @@ class Utils{
     }
   }
 
-  static Future<String> getDeviceInfo() async {
+  static Future<String> getDeviceUniqueId() async {
     final deviceInfoPlugin = DeviceInfoPlugin();
 
     if (Platform.isAndroid) {
       final info = await deviceInfoPlugin.androidInfo;
-      return "${info.brand} ${info.model} (SDK ${info.version.sdkInt})";
+      return info.id;
     } else if (Platform.isIOS) {
       final info = await deviceInfoPlugin.iosInfo;
-      return "${info.utsname.machine} (iOS ${info.systemVersion})";
+      return info.identifierForVendor ?? "unknown";
     } else {
-      return "Unknown Device";
+      return "unknown";
     }
   }
+
 
   static String generateConversationId(String userId1, String userId2) {
     final ids = [userId1, userId2]..sort();

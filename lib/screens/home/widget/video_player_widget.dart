@@ -45,7 +45,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   void _initializePlayer() {
     controller = BetterPlayerController(
       BetterPlayerConfiguration(
-        autoPlay: false,  
+        autoPlay: false,
         looping: true,
         handleLifecycle: true,
         expandToFill: true,

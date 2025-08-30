@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/widgets/video_player_widget.dart';
-import 'package:vidstream/widgets/video_actions_widget.dart';
+import 'package:vidstream/screens/home/widget/video_actions_widget.dart';
 import 'package:vidstream/widgets/user_info_widget.dart';
-
-import 'home/widget/video_feed_item_widget.dart';
+import 'home/widget/video_player_widget.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final ApiVideo video;
