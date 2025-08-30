@@ -381,9 +381,6 @@ class ApiService {
         endpoint: '/common/upload',
         filePath: videoPath,
         fieldName: 'file',
-        additionalData: {
-          'type': type,
-        },
         fromJson: (json) => ApiCommonFile.fromJson(json as Map<String, dynamic>),
       );
 
@@ -1379,7 +1376,7 @@ class ApiService {
           json as Map<String, dynamic>,
         ),
       );
- 
+
       if (response.success && response.data != null) {
         final authData = response.data!;
         _httpClient.setTokens(authData.token, authData.token);

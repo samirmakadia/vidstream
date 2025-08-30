@@ -5,6 +5,8 @@ import 'package:vidstream/widgets/video_player_widget.dart';
 import 'package:vidstream/widgets/video_actions_widget.dart';
 import 'package:vidstream/widgets/user_info_widget.dart';
 
+import 'home/widget/video_feed_item_widget.dart';
+
 class VideoPlayerScreen extends StatefulWidget {
   final ApiVideo video;
   final List<ApiVideo> allVideos;
@@ -54,59 +56,61 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>{
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Video PageView
-          PageView.builder(
-            controller: _pageController,
-            scrollDirection: Axis.vertical,
-            itemCount: _videos.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              final video = _videos[index];
-              return VideoFeedItem(
-                video: video,
-                isActive: index == _currentIndex && _isScreenVisible,
-                user: widget.user,
-                onVideoDeleted: () {
-                  setState(() {
-                    _videos.removeAt(index);
-                    if (_videos.isEmpty) {
-                      Navigator.of(context).pop();
-                    } else if (index <= _currentIndex && _currentIndex > 0) {
-                      _currentIndex--;
-                    }
-                  });
-                },
-                onPauseRequested: () => setScreenVisible(false),
-                onResumeRequested: () => setScreenVisible(true),
-              );
-            },
-          ),
-          
-          // Back button
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 16,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Video PageView
+            PageView.builder(
+              controller: _pageController,
+              scrollDirection: Axis.vertical,
+              itemCount: _videos.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final video = _videos[index];
+                return VideoFeedItemWidget(
+                  video: video,
+                  isActive: index == _currentIndex && _isScreenVisible,
+                  user: widget.user,
+                  onVideoDeleted: () {
+                    setState(() {
+                      _videos.removeAt(index);
+                      if (_videos.isEmpty) {
+                        Navigator.of(context).pop();
+                      } else if (index <= _currentIndex && _currentIndex > 0) {
+                        _currentIndex--;
+                      }
+                    });
+                  },
+                  onPauseRequested: () => setScreenVisible(false),
+                  onResumeRequested: () => setScreenVisible(true),
+                );
+              },
+            ),
+
+            // Back button
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              left: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -149,7 +153,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     if (widget.user != null) {
       _user = widget.user;
     } else {
-      _loadUserData(); // fallback to fetch if not provided
+      _loadUserData();
     }
     // _checkLikeStatus();
   }
@@ -202,7 +206,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
       setState(() {
         _isLikeLoading = true;
       });
-      
+
       try {
         await ApiRepository.instance.likes.toggleLike(
           userId: currentUserId,
@@ -245,7 +249,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
       setState(() {
         _isFollowLoading = true;
       });
-      
+
       try {
         await ApiRepository.instance.follows.toggleFollow(
           followerId: currentUserId,
@@ -286,22 +290,34 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   }
 
   Future<void> _incrementViewCount() async {
-    final videoController = _videoKey.currentState?.controller;
+    final betterController = _videoKey.currentState?.controller;
+    if (betterController == null) return;
+
+    final videoController = betterController.videoPlayerController;
     if (videoController == null) {
-      return;
-    }
-    if (!videoController.value.isInitialized) {
+      // Retry if underlying controller is not ready
       Future.delayed(const Duration(milliseconds: 200), () {
         if (mounted) _incrementViewCount();
       });
       return;
     }
 
-    final currentPosition = videoController.value.position;
-    final totalDuration = videoController.value.duration;
+    final videoValue = videoController.value;
+    final totalDuration = videoValue.duration;
+    final currentPosition = videoValue.position;
+
+    // If duration is null, the video is not initialized yet
+    if (totalDuration == null) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) _incrementViewCount();
+      });
+      return;
+    }
 
     final watchTime = currentPosition.inSeconds;
-    final watchPercentage = totalDuration.inSeconds > 0 ? (watchTime / totalDuration.inSeconds) * 100 : 0.0;
+    final watchPercentage = totalDuration.inSeconds > 0
+        ? (watchTime / totalDuration.inSeconds) * 100
+        : 0.0;
 
     await ApiRepository.instance.videos.incrementViewCount(
       widget.video.id,
@@ -309,7 +325,6 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
       watchPercentage: watchPercentage.round().toDouble(),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -321,7 +336,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
           videoUrl: widget.video.videoUrl,
           isActive: widget.isActive,
         ),
-        
+
         Positioned(
           bottom: 100,
           left: 0,
@@ -340,13 +355,10 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                       if (_user != null)
                         UserInfoWidget(
                           user: _user!,
-                          onFollowToggle: _toggleFollow,
-                          showFollowButton: ApiRepository.instance.auth.currentUser?.uid != widget.video.userId,
-                          isFollowLoading: _isFollowLoading,
                         ),
-                      
+
                       const SizedBox(height: 12),
-                      
+
                       // Video Description
                       if (widget.video.description.isNotEmpty)
                         Container(
@@ -364,9 +376,9 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // Tags
                       if (widget.video.tags.isNotEmpty)
                         Wrap(
@@ -392,9 +404,9 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(width: 16),
-                
+
                 // Video Actions
                 if (_user != null)
                   VideoActionsWidget(

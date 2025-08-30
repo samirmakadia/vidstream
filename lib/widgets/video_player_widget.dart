@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:better_player_plus/better_player_plus.dart';
 import 'package:flutter/services.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
@@ -17,323 +16,151 @@ class VideoPlayerWidget extends StatefulWidget {
   State<VideoPlayerWidget> createState() => VideoPlayerWidgetState();
 }
 
-class VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindingObserver {
-  VideoPlayerController? controller;
-  bool _isInitialized = false;
-  bool _hasError = false;
-  int _retryCount = 0;
-  static const int _maxRetries = 3;
-  bool _wasPlayingBeforeBackground = false;
-  bool _isManuallyPaused = false;
+class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
+  BetterPlayerController? controller;
   bool _showPlayPauseIcon = false;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _initializeVideo(); 
-  }
-
-
-  @override
-  void didUpdateWidget(VideoPlayerWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    
-    if (oldWidget.videoUrl != widget.videoUrl) {
-      _disposeController();
-      _initializeVideo();
-    }
-    
-    if (oldWidget.isActive != widget.isActive) {
-      _handleActiveStateChange();
-    }
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp,]);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _disposeController();
+    controller?.dispose();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+
     super.dispose();
   }
 
-  void _disposeController() {
-    if (controller != null) {
-      controller!.removeListener(_videoListener);
-      controller!.dispose();
-      controller = null;
-    }
-    _isInitialized = false;
-    _hasError = false;
-    _retryCount = 0;
+
+  void _initializePlayer() {
+    controller = BetterPlayerController(
+      BetterPlayerConfiguration(
+        autoPlay: false,
+        looping: true,
+        handleLifecycle: true,
+        fullScreenByDefault: false,
+        allowedScreenSleep: false,
+        expandToFill: true,
+        autoDetectFullscreenAspectRatio: true,
+        deviceOrientationsAfterFullScreen: [
+          DeviceOrientation.portraitUp,
+        ],
+        fit: BoxFit.cover,
+        controlsConfiguration: const BetterPlayerControlsConfiguration(
+          showControls: false,
+        ),
+      ),
+      betterPlayerDataSource: _ds(widget.videoUrl),
+    );
+
+    controller!.setupDataSource(controller!.betterPlayerDataSource!).then((_) {
+      final aspect = controller!.videoPlayerController!.value.aspectRatio;
+      debugPrint("Video aspect ratio: $aspect");
+
+      controller!.setOverriddenAspectRatio(aspect);
+      setState(() {});
+    });
   }
 
-  Future<void> _initializeVideo() async {
-    try {
-      // Use the actual video URL from widget
-      if (widget.videoUrl.isEmpty) {
-        throw Exception('Video URL is empty');
-      }
 
-      controller = VideoPlayerController.networkUrl(
-        Uri.parse(widget.videoUrl),
-      );
-      
-      await controller!.initialize();
-      
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-          _hasError = false;
-        });
-        
-        // Set looping and handle active state
-        controller!.setLooping(true);
-        _handleActiveStateChange();
-        
-        // Add listener for when video ends
-        controller!.addListener(_videoListener);
-      }
-    } catch (e) {
-      print('Video initialization error: $e');
-      if (mounted) {
-        setState(() {
-          _hasError = true;
-          _isInitialized = false;
-        });
-        
-        // Auto-retry with exponential backoff
-        if (_retryCount < _maxRetries) {
-          _retryCount++;
-          final retryDelay = Duration(seconds: _retryCount * 2);
-          Future.delayed(retryDelay, () {
-            if (mounted && _hasError) {
-              _initializeVideo();
-            }
-          });
-        }
-      }
-    }
-  }
-
-  void _videoListener() {
-    if (controller != null && mounted) {
-      final position = controller!.value.position;
-      final duration = controller!.value.duration;
-      
-      // Only handle completion if we're near the end and video is actually playing
-      if (position.inMilliseconds > 0 && 
-          duration.inMilliseconds > 0 && 
-          position.inMilliseconds >= duration.inMilliseconds - 100) {
-        // Video completed - just restart without triggering listener again
-        controller!.removeListener(_videoListener);
-        controller!.seekTo(Duration.zero).then((_) {
-          if (mounted && widget.isActive) {
-            controller!.play();
-          }
-          // Re-add listener after a short delay
-          Future.delayed(const Duration(milliseconds: 100), () {
-            if (mounted && controller != null) {
-              controller!.addListener(_videoListener);
-            }
-          });
-        });
-      }
-    }
-  }
-
-  void _handleActiveStateChange() {
-    if (controller != null && _isInitialized) {
-      if (widget.isActive && !_isManuallyPaused) {
-        controller!.play();
-      } else {
-        controller!.pause();
-      }
-    }
+  BetterPlayerDataSource _ds(String url) {
+    return BetterPlayerDataSource(
+      BetterPlayerDataSourceType.network,
+      url,
+      cacheConfiguration: BetterPlayerCacheConfiguration(
+        useCache: true,
+        preCacheSize: 5 * 1024 * 1024,
+        maxCacheSize: 500 * 1024 * 1024,
+        maxCacheFileSize: 60 * 1024 * 1024,
+      ),
+    );
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    
-    if (controller == null || !_isInitialized) return;
-    
-    switch (state) {
-      case AppLifecycleState.paused:
-      case AppLifecycleState.inactive:
-      case AppLifecycleState.detached:
-        // App is going to background or being inactive
-        _wasPlayingBeforeBackground = controller!.value.isPlaying;
-        controller!.pause();
-        break;
-      case AppLifecycleState.resumed:
-        // App is coming back to foreground
-        if (_wasPlayingBeforeBackground && widget.isActive && !_isManuallyPaused) {
-          controller!.play();
-        }
-        break;
-      case AppLifecycleState.hidden:
-        // Handle hidden state (platform specific)
-        _wasPlayingBeforeBackground = controller!.value.isPlaying;
-        controller!.pause();
-        break;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initializePlayer();
+      _initialized = true;
+    }
+  }
+  @override
+  void didUpdateWidget(VideoPlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.videoUrl != widget.videoUrl) {
+      controller?.dispose();
+      _initializePlayer();
+    }
+
+    if (widget.isActive) {
+      controller?.play();
+    } else {
+      controller?.pause();
     }
   }
 
   void _togglePlayPause() {
-    if (controller != null && _isInitialized) {
-      if (controller!.value.isPlaying) {
-        controller!.pause();
-        _isManuallyPaused = true;
-      } else {
-        controller!.play();
-        _isManuallyPaused = false;
-      }
-      
-      // Show play/pause icon briefly
-      setState(() {
-        _showPlayPauseIcon = true;
-      });
-      
-      // Hide the icon after a short delay
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          setState(() {
-            _showPlayPauseIcon = false;
-          });
-        }
-      });
-      
-      // Provide haptic feedback for better user experience
-      HapticFeedback.selectionClick();
-    }
-  }
+    if (controller == null) return;
 
-  void _handleVisibilityChanged(VisibilityInfo info) {
-    if (!_isInitialized || controller == null) return;
-
-    if (info.visibleFraction == 0) {
-      // Fully invisible → force pause
-      if (controller!.value.isPlaying) {
-        controller!.pause();
-      }
+    if (controller!.isPlaying() ?? false) {
+      controller!.pause();
     } else {
-      // Visible → only play if active & not manually paused
-      if (widget.isActive && !_isManuallyPaused) {
-        controller!.play();
-      }
+      controller!.play();
     }
-  }
 
+    setState(() {
+      _showPlayPauseIcon = true;
+    });
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _showPlayPauseIcon = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (_hasError) {
-      return _buildErrorState();
+    if (controller == null) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    if (!_isInitialized) {
-      return _buildLoadingState();
-    }
-
-    return GestureDetector(
-      onTap: _togglePlayPause,
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.black,
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        onTap: _togglePlayPause,
         child: Stack(
+          alignment: Alignment.center,
           children: [
-            Center(
-              child: AspectRatio(
-                aspectRatio: controller!.value.aspectRatio,
-                child: VisibilityDetector(
-                  key: Key('video_${widget.videoUrl}'),
-                  onVisibilityChanged: _handleVisibilityChanged,
-                  child: VideoPlayer(controller!),
-                ),
-              ),
+            SizedBox.expand(
+              child: BetterPlayer(controller: controller!),
             ),
-
-            // Play/Pause icon overlay
             if (_showPlayPauseIcon)
-              Center(
-                child: AnimatedOpacity(
-                  opacity: _showPlayPauseIcon ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                      size: 48,
-                      color: Colors.white,
-                    ),
-                  ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  controller!.isPlaying() ?? false ? Icons.pause : Icons.play_arrow,
+                  size: 48,
+                  color: Colors.white,
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildLoadingState() {
-    return Container(
-      color: Colors.black,
-      child: const Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      ),
-    );
-  }
-
-  Widget _buildErrorState() {
-    return Container(
-      color: Colors.black,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.white.withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load video',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _retryCount >= _maxRetries 
-                ? 'Max retries reached' 
-                : 'Retrying... (${_retryCount}/$_maxRetries)',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.white.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _hasError = false;
-                  _retryCount = 0;
-                });
-                _initializeVideo();
-              },
-              child: Text(
-                'Retry',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
           ],
         ),
       ),

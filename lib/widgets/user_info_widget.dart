@@ -4,17 +4,11 @@ import 'package:vidstream/screens/other_user_profile_screen.dart';
 
 class UserInfoWidget extends StatelessWidget {
   final ApiUser user;
-  final VoidCallback onFollowToggle;
-  final bool showFollowButton;
-  final bool isFollowLoading;
   final bool isClickable;
 
   const UserInfoWidget({
     super.key,
     required this.user,
-    required this.onFollowToggle,
-    this.showFollowButton = true,
-    this.isFollowLoading = false,
     this.isClickable = true,
   });
 

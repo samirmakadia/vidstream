@@ -171,7 +171,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           );
         }
       }
-    } catch (e) {
+    } catch (e,s) {
+      print(e);
+      print(s);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
