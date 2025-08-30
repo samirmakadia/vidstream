@@ -96,7 +96,7 @@ class FirebaseManager {
     print('Notification data: ${message.data}');
 
     const androidDetails = AndroidNotificationDetails(
-      'Default',
+      'default_channel',
       'Default channel',
       importance: Importance.high,
       priority: Priority.high,
