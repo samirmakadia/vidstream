@@ -58,7 +58,7 @@ class ApiRepository {
   
   // Dispose all resources
   void dispose() {
-    _auth?.dispose();
+    //_auth?.dispose();
     _videos?.dispose();
     // _chat?.dispose();
   }

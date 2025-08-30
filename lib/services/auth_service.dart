@@ -376,10 +376,10 @@ class AuthService {
     }
   }
   
-  // Dispose resources
-  void dispose() {
-    _authStateController.close();
-  }
+  // // Dispose resources
+  // void dispose() {
+  //   _authStateController.close();
+  // }
 
 
 }
