@@ -139,65 +139,6 @@ class _MeetScreenState extends State<MeetScreen> {
     }
   }
 
-  void _showGenderFilterDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.onSecondary,
-          title: const Text('Filter by Gender'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RadioListTile<String>(
-                title: const Text('All Users'),
-                value: 'all',
-                groupValue: _selectedGenderFilter,
-                onChanged: (value) {
-                  Navigator.of(context).pop();
-                  _onGenderFilterChanged(value!);
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text('Male'),
-                value: 'male',
-                groupValue: _selectedGenderFilter,
-                onChanged: (value) {
-                  Navigator.of(context).pop();
-                  _onGenderFilterChanged(value!);
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text('Female'),
-                value: 'female',
-                groupValue: _selectedGenderFilter,
-                onChanged: (value) {
-                  Navigator.of(context).pop();
-                  _onGenderFilterChanged(value!);
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text('Other'),
-                value: 'other',
-                groupValue: _selectedGenderFilter,
-                onChanged: (value) {
-                  Navigator.of(context).pop();
-                  _onGenderFilterChanged(value!);
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _showGenderFilterBottomSheet() {
     showModalBottomSheet(
       context: context,
