@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/models/response_model.dart' as response_models;
@@ -15,6 +16,9 @@ class AuthService {
   // Use lazy getter to avoid circular dependency
   ApiService get _apiService => ApiService();
   final StreamController<ApiUser?> _authStateController = StreamController<ApiUser?>.broadcast();
+
+  bool _isGoogleLogin = false;
+  bool get isGoogleLogin => _isGoogleLogin;
 
   /// Always provide the latest value immediately to new listeners (BehaviorSubject-like)
   Stream<ApiUser?> get authStateChanges async* {
@@ -58,6 +62,7 @@ class AuthService {
       await prefs.setString('refresh_token', _refreshToken!);
     }
     await prefs.setString('user', jsonEncode(user.toJson())); // store user JSON
+    await prefs.setBool('is_google_login', _isGoogleLogin);
   }
 
   Future<ApiUser?> restoreSession() async {
@@ -65,6 +70,9 @@ class AuthService {
     final token = prefs.getString('access_token');
     final refresh = prefs.getString('refresh_token');
     final userJson = prefs.getString('user');
+    final googleFlag = prefs.getBool('is_google_login') ?? false;
+
+    _isGoogleLogin = googleFlag;
 
     if (token != null && userJson != null) {
       try {
@@ -98,6 +106,7 @@ class AuthService {
     await prefs.remove('access_token');
     await prefs.remove('refresh_token');
     await prefs.remove('user');
+    await prefs.remove('is_google_login');
   }
 
   // Get current user
@@ -170,6 +179,12 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
+      if (_isGoogleLogin) {
+        final googleSignIn = GoogleSignIn();
+        await googleSignIn.signOut();
+        _isGoogleLogin = false;
+      }
+
       // Clean up FCM token before signing out
       await NotificationService().deleteToken();
       
@@ -242,6 +257,7 @@ class AuthService {
         _currentUser = ApiUser.fromJson(authResponse.user);
         _authStateController.add(_currentUser);
 
+        _isGoogleLogin = true;
         await saveSession(_currentUser!);
 
         return _currentUser;

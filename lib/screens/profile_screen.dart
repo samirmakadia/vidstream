@@ -144,34 +144,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
-  Future<void> _signOut() async {
-    bool confirmed = await CommonDialog.showConfirmationDialog(
-      context: context,
-      title: "Sign Out",
-      content:
-      "Are you sure you want to sign out of your account?",
-      confirmText: "Sign Out",
-      confirmColor: Colors.orange,
-    );
-    if (!confirmed) return;
-    try {
-      await ApiRepository.instance.auth.signOut();
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const AuthScreen()),
-              (route) => false,
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to sign out: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    }
-  }
-
   Future<void> _navigateToSettings() async {
    final result = await Navigator.of(context).push(
       MaterialPageRoute(
