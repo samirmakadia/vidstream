@@ -267,7 +267,9 @@ class AuthService {
         _refreshToken = authResponse.token;
 
         _currentUser = ApiUser.fromJson(authResponse.user);
-        _authStateController.add(_currentUser);
+        if (!_authStateController.isClosed) {
+          _authStateController.add(_currentUser);
+        }
 
         await saveSession(_currentUser!);
 

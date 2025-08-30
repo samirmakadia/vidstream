@@ -1358,7 +1358,7 @@ class ApiService {
 
       if (response.success && response.data != null) {
         final authData = response.data!;
-        _httpClient.setTokens(authData.accessToken, authData.refreshToken);
+        _httpClient.setTokens(authData.token, authData.token);
         return authData;
       }
 
@@ -1379,10 +1379,10 @@ class ApiService {
           json as Map<String, dynamic>,
         ),
       );
-
+ 
       if (response.success && response.data != null) {
         final authData = response.data!;
-        _httpClient.setTokens(authData.accessToken, authData.refreshToken);
+        _httpClient.setTokens(authData.token, authData.token);
         return authData;
       }
 
