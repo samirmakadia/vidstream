@@ -71,7 +71,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>{
               },
               itemBuilder: (context, index) {
                 final video = _videos[index];
-                return VideoFeedItemWidget(
+                return VideoFeedItem(
                   video: video,
                   isActive: index == _currentIndex && _isScreenVisible,
                   user: widget.user,

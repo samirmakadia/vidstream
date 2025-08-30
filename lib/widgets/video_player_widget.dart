@@ -45,16 +45,10 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   void _initializePlayer() {
     controller = BetterPlayerController(
       BetterPlayerConfiguration(
-        autoPlay: false,
+        autoPlay: false,  
         looping: true,
         handleLifecycle: true,
-        fullScreenByDefault: false,
-        allowedScreenSleep: false,
         expandToFill: true,
-        autoDetectFullscreenAspectRatio: true,
-        deviceOrientationsAfterFullScreen: [
-          DeviceOrientation.portraitUp,
-        ],
         fit: BoxFit.cover,
         controlsConfiguration: const BetterPlayerControlsConfiguration(
           showControls: false,
@@ -66,11 +60,15 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     controller!.setupDataSource(controller!.betterPlayerDataSource!).then((_) {
       final aspect = controller!.videoPlayerController!.value.aspectRatio;
       debugPrint("Video aspect ratio: $aspect");
-
       controller!.setOverriddenAspectRatio(aspect);
+
+      if (widget.isActive) {
+        controller!.play();
+      }
       setState(() {});
     });
   }
+
 
 
   BetterPlayerDataSource _ds(String url) {
