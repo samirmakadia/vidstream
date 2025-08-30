@@ -28,12 +28,18 @@ android {
     }
 
     signingConfigs {
-       release {
-           keyAlias keystoreProperties['keyAlias']
-           keyPassword keystoreProperties['keyPassword']
-           storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-           storePassword keystoreProperties['storePassword']
-       }
+        debug {
+            storeFile file('D:\\nikunj_projects\\vidstream\\android\\app\\keystore\\vidmeet-release-key.jks')
+            storePassword '123456'
+            keyAlias 'vidmeet-key'
+            keyPassword '123456'
+        }
+        release {
+            storeFile file('D:\\nikunj_projects\\vidstream\\android\\app\\keystore\\vidmeet-release-key.jks')
+            storePassword '123456'
+            keyAlias 'vidmeet-key'
+            keyPassword '123456'
+        }
     }
 
     defaultConfig {
