@@ -7,6 +7,7 @@ import 'package:vidstream/screens/follower_following_list_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 
 import '../services/socket_manager.dart';
+import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
 
 class OtherUserProfileScreen extends StatefulWidget {
@@ -410,20 +411,28 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
             ),
           ],
         ),
-        child: CircleAvatar(
+        child: (_user?.profileImageUrl != null && _user!.profileImageUrl!.isNotEmpty) ||
+            (_user?.photoURL != null && _user!.photoURL!.isNotEmpty)
+            ? ClipOval(
+          child: CustomImageWidget(
+            imageUrl: _user?.profileImageUrl?.isNotEmpty == true
+                ? _user!.profileImageUrl!
+                : _user!.photoURL!,
+            height: double.infinity,
+            width: double.infinity,
+            cornerRadius: 0,
+            borderWidth: 0,
+            fit: BoxFit.cover,
+          ),
+        )
+            : CircleAvatar(
           radius: 46,
-          backgroundImage:
-              _user?.profileImageUrl != null || _user?.photoURL != null
-                  ? NetworkImage(_user!.profileImageUrl ?? _user!.photoURL!)
-                  : null,
           backgroundColor: Theme.of(context).colorScheme.primary,
-          child: (_user?.profileImageUrl == null && _user?.photoURL == null)
-              ? const Icon(
-                  Icons.person,
-                  size: 50,
-                  color: Colors.white,
-                )
-              : null,
+          child: const Icon(
+            Icons.person,
+            size: 40,
+            color: Colors.white,
+          ),
         ),
       ),
     );
@@ -501,11 +510,15 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                     ],
                   ),
                 ),
-                child: _user?.bannerImageUrl != null
-                    ? Image.network(
-                        _user!.bannerImageUrl!,
-                        fit: BoxFit.cover,
-                      )
+                child: _user?.bannerImageUrl != null && _user!.bannerImageUrl!.isNotEmpty
+                    ? CustomImageWidget(
+                  imageUrl: _user!.bannerImageUrl!,
+                  height: double.infinity,
+                  width: double.infinity,
+                  cornerRadius: 0,
+                  borderWidth: 0,
+                  fit: BoxFit.cover,
+                )
                     : null,
               ),
 
