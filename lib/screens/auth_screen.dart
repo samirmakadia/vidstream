@@ -242,12 +242,12 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                       ),
                       child: Column(
                         children: [
-                          Icon(
-                            Icons.video_library_rounded,
-                            size: 80,
-                            color: Colors.white,
+                          Image.asset(
+                            "assets/icon/white_logo.png",
+                            width: 180,
+                            height: 180,
+                            fit: BoxFit.contain,
                           ),
-                          const SizedBox(height: 16),
                           Text(
                             'VidMeet',
                             style: Theme.of(context).textTheme.displaySmall?.copyWith(
