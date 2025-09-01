@@ -20,14 +20,18 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   final ReportService _reportService = ReportService();
   List<Report> _reports = [];
   bool _isLoading = true;
+  final Set<String> _deletingReports = {};
 
   @override
   void initState() {
     super.initState();
     _fetchReports();
   }
-  Future<void> _fetchReports() async {
-    setState(() => _isLoading = true);
+
+  Future<void> _fetchReports({bool isLoadingShow = true} ) async {
+    if(isLoadingShow){
+      setState(() => _isLoading = true);
+    }
     try {
       final fetchedReports =
       await _reportService.getUserReports(widget.currentUserId);
@@ -41,17 +45,20 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   }
 
   Future<void> _deleteReport(Report report) async {
-    setState(() => _isLoading = true);
+    setState(() => _deletingReports.add(report.id));
     try {
       await _reportService.deleteReport(report.id);
-      await _fetchReports(); // refresh after delete
+      await _fetchReports(isLoadingShow: false);
       if (mounted) {
         AppSnackBar.showSuccess(context, 'Report deleted successfully');
       }
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
         AppSnackBar.showError(context, 'Failed to delete report: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _deletingReports.remove(report.id));
       }
     }
   }
@@ -110,47 +117,55 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : _reports.isEmpty
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.report_off, color: Colors.grey[400], size: 64),
-            const SizedBox(height: 16),
-            const Text(
-              'No Reports Yet',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'You haven\'t reported any content yet.\nHelp keep our community safe by reporting inappropriate content.',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      )
-          : RefreshIndicator(
-        onRefresh: _fetchReports,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _reports.length,
-          itemBuilder: (context, index) {
-            final report = _reports[index];
-            return _buildReportItem(report);
-          },
-        ),
-      ),
+          ? SafeArea( 
+            child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.report_off, color: Colors.grey[400], size: 64),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'No Reports Yet',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'You haven\'t reported any content yet.\nHelp keep our community safe by reporting inappropriate content.',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                      ),
+                    ),
+                  ),
+          )
+          : SafeArea(
+            child: RefreshIndicator(
+                    onRefresh: _fetchReports,
+                    child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: _reports.length,
+            itemBuilder: (context, index) {
+              final report = _reports[index];
+              return _buildReportItem(report);
+            },
+                    ),
+                  ),
+          ),
     );
   }
 
   Widget _buildReportItem(Report report) {
+    final isDeleting = _deletingReports.contains(report.id);
     Color statusColor;
     IconData statusIcon;
     String statusText;
@@ -342,26 +357,25 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                 ],
               ),
             ),
-            
             const SizedBox(height: 12),
-            
-            // Delete button
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton.icon(
-                  onPressed: () => _showDeleteConfirmation(report),
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.red,
-                    size: 18,
-                  ),
-                  label: const Text(
-                    'Delete Report',
-                    style: TextStyle(
+                  onPressed: isDeleting ? null : () => _showDeleteConfirmation(report),
+                  icon: isDeleting
+                      ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
                       color: Colors.red,
-                      fontSize: 14,
                     ),
+                  )
+                      : const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                  label: Text(
+                    isDeleting ? 'Deleting...' : 'Delete Report',
+                    style: const TextStyle(color: Colors.red, fontSize: 14),
                   ),
                   style: TextButton.styleFrom(
                     backgroundColor: Colors.red.withValues(alpha: 0.1),

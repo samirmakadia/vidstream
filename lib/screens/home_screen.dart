@@ -43,7 +43,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'updatedVideo') {
         print('A new video was uploaded!');
-        _loadVideos();
+        _loadVideos(isLoadingShow: false);
       }
     });
   }
@@ -56,8 +56,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
 
-  Future<void> _loadVideos() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadVideos({bool isLoadingShow = true}) async {
+    if(isLoadingShow) {
+      setState(() => _isLoading = true);
+    }
     try {
       final videos = await ApiRepository.instance.videos.getVideosOnce();
       setState(() {
