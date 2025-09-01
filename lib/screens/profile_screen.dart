@@ -33,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      if (_tabController.indexIsChanging) {
+      if (!_tabController.indexIsChanging) {
         setState(() {
           _selectedTabIndex = _tabController.index;
         });
@@ -43,15 +43,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _refreshFollowCounts();
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'newVideo') {
-        print('A new video was uploaded!');
         _loadUserProfile();
       }
       if (event == 'like_updated') {
-        print('A new video was uploaded!');
         _refreshLikedVideos();
       }
     });
   }
+
 
   Future<void> _refreshFollowCounts() async {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
@@ -582,11 +581,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: TabBar(
           controller: _tabController,
-          onTap: (index) {
-            setState(() {
-              _selectedTabIndex = index;
-            });
-          },
           indicator: BoxDecoration(
             color: Theme.of(context).colorScheme.primary,
             borderRadius: BorderRadius.circular(20),
@@ -613,7 +607,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   const Icon(Icons.favorite_outline, size: 18),
                   const SizedBox(width: 6),
                   Text('Liked (${_likedVideos.length})'),
-                ],
+                ], 
               ),
             ),
           ],
