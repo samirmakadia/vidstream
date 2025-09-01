@@ -35,11 +35,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       features: ['Like & comment', 'Follow creators', 'Trending content'],
     ),
     OnboardingPage(
-      icon: Icons.video_chat,
+      icon: Icons.chat,
       title: '🎥 Meet & Chat',
       description: 'Join live meets, chat with friends, and build your community in real-time',
       gradient: const [Color(0xFF55A3FF), Color(0xFF1E3A8A)],
-      features: ['Live video meets', 'Real-time chat', 'Community building'],
+      features: ['Live meets', 'Real-time chat', 'Community building'],
     ),
   ];
 
@@ -138,7 +138,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     children: [
                       // Logo
                       Text(
-                        'VidStream',
+                        'VidMeet',
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,

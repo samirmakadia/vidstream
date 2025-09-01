@@ -244,7 +244,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
                 isActive ? activeIcon : icon,
                 key: ValueKey(isActive),
                 color: isActive 
-                    ? Color(0xFFFF1744)
+                    ? Theme.of(context).colorScheme.primary
                     : Color(0xFFE0E0E0).withValues(alpha: 0.6),
                 size: iconSize?.toDouble(),
               ),
@@ -254,7 +254,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: isActive 
-                    ? Color(0xFFFF1744)
+                    ? Theme.of(context).colorScheme.primary
                     : Color(0xFFE0E0E0).withValues(alpha: 0.6),
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),

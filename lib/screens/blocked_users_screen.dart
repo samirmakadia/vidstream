@@ -214,7 +214,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.red.withValues(alpha: 0.3),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -266,14 +266,14 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.2),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)),
               ),
-              child: const Text(
+              child: Text(
                 'BLOCKED',
                 style: TextStyle(
-                  color: Colors.red,
+                  color: Theme.of(context).colorScheme.primary,
                   fontSize: 8,
                   fontWeight: FontWeight.bold,
                 ),

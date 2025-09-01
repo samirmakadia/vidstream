@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LightModeColors {
-  static const lightPrimary = Color(0xFFFF1744);
+  static const lightPrimary = Color(0xFF576EFA);
   static const lightOnPrimary = Color(0xFFFFFFFF);
   static const lightPrimaryContainer = Color(0xFFFFE8E8);
   static const lightOnPrimaryContainer = Color(0xFF8B0015);
@@ -24,7 +24,7 @@ class LightModeColors {
 }
 
 class DarkModeColors {
-  static const darkPrimary = Color(0xFFFF1744);
+  static const darkPrimary = Color(0xFF576EFA);
   static const darkOnPrimary = Color(0xFFFFFFFF);
   static const darkPrimaryContainer = Color(0xFF8B0015);
   static const darkOnPrimaryContainer = Color(0xFFFFE8E8);
