@@ -1,17 +1,11 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/screens/auth_screen.dart';
-import 'package:vidstream/utils/auth_utils.dart';
 import 'package:vidstream/screens/follower_following_list_screen.dart';
-import 'package:vidstream/screens/blocked_users_screen.dart';
 import 'package:vidstream/screens/settings_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 import 'package:vidstream/services/socket_manager.dart';
-import '../services/video_service.dart';
-import '../widgets/common_app_dialog.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
 
@@ -803,9 +797,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  void _openVideoPlayer(ApiVideo video) {
+  Future<void> _openVideoPlayer(ApiVideo video) async {
     final videos = _selectedTabIndex == 0 ? _userVideos : _likedVideos;
-    Navigator.of(context).push(
+    final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => VideoPlayerScreen(
           video: video,
@@ -814,5 +808,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
       ),
     );
+    if(result != null) {
+      if (result is String) {
+        setState(() {
+          if (_selectedTabIndex == 0) {
+            _userVideos.removeWhere((v) => v.id == result);
+          } else {
+            _likedVideos.removeWhere((v) => v.id == result);
+          }
+        });
+      }
+      _loadUserProfile();
+    }
   }
 }

@@ -347,8 +347,8 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+        final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => VideoPlayerScreen(
@@ -358,6 +358,12 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               ),
             ),
           );
+        if(result != null) {
+          _loadDefaultContent();
+          if(_currentQuery.isNotEmpty) {
+            _performSearch(_currentQuery);
+          }
+         }
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(

@@ -3,6 +3,7 @@ import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/search_screen.dart';
 import 'dart:async';
+import '../services/socket_manager.dart';
 import 'home/bottomsheet/filter_bottom_sheet.dart';
 import 'home/widget/video_feed_item_widget.dart';
 
@@ -21,6 +22,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   int _currentIndex = 0;
   List<String> _selectedTags = [];
   bool _isScreenVisible = true;
+  late StreamSubscription _videoUploadedSubscription;
 
   @override
   bool get wantKeepAlive => true;
@@ -38,6 +40,12 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadVideos();
+    _videoUploadedSubscription = eventBus.on().listen((event) {
+      if (event == 'newVideo') {
+        print('A new video was uploaded!');
+        _loadVideos();
+      }
+    });
   }
 
   @override
@@ -281,7 +289,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             key: ValueKey(video.id),
             video: video,
             isActive: index == _currentIndex && _isScreenVisible,
-            onVideoDeleted: () => _modifyVideo(video.id, (_) => null),
+            onVideoDeleted: (deletedVideo) {
+              _modifyVideo(video.id, (_) => null);
+            },
             onLikeUpdated: (newCount, isLiked) => _modifyVideo(video.id, (v) {
               return v.copyWith(likesCount: newCount, isLiked: isLiked,);
             }),

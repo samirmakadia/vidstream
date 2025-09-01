@@ -966,8 +966,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
     );
   }
 
-  void _openVideoPlayer(ApiVideo video) {
-    Navigator.of(context).push(
+  Future<void> _openVideoPlayer(ApiVideo video) async {
+   final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => VideoPlayerScreen(
           video: video,
@@ -976,5 +976,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
         ),
       ),
     );
+   if(result != null) {
+     _loadUserProfile();
+   }
   }
 }

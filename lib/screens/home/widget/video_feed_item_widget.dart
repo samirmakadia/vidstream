@@ -11,7 +11,7 @@ import 'video_actions_widget.dart';
 class VideoFeedItemWidget extends StatefulWidget {
   final ApiVideo video;
   final bool isActive;
-  final VoidCallback? onVideoDeleted;
+  final void Function(ApiVideo video)? onVideoDeleted;
   final void Function(int likeCount, bool isLiked)? onLikeUpdated;
   final void Function(int commentCount)? onCommentUpdated;
   final void Function(ApiVideo video)? onReported;

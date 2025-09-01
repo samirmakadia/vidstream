@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:flutter/services.dart';
 import 'package:vidstream/repositories/api_repository.dart';
+import '../../../services/socket_manager.dart';
 import '../bottomsheet/comments_bottom_sheet.dart';
 import '../bottomsheet/report_dialog.dart';
 import '../../other_user_profile_screen.dart';
@@ -14,7 +15,7 @@ class VideoActionsWidget extends StatefulWidget {
   final bool isLiked;
   final VoidCallback onLikeToggle;
   final bool isLikeLoading;
-  final VoidCallback? onVideoDeleted;
+  final void Function(ApiVideo video)? onVideoDeleted;
   final int likeCount;
   final void Function(int commentCount)? onCommentUpdated;
   final void Function(ApiVideo video)? onReported;
@@ -154,15 +155,14 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
     if (confirmed == true) {
       try {
         await ApiRepository.instance.videos.deleteVideo(widget.video.id);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Video deleted successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          widget.onVideoDeleted?.call();
-        }
+        widget.onVideoDeleted?.call(widget.video);
+        eventBus.fire('newVideo');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Video deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

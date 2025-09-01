@@ -50,63 +50,111 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
     }
   }
 
+  void _modifyVideo(String videoId, ApiVideo? Function(ApiVideo video) modifyFn) {
+    bool changed = false;
+
+    void updateList(List<ApiVideo> list) {
+      final i = list.indexWhere((v) => v.id == videoId);
+      if (i != -1) {
+        final newVideo = modifyFn(list[i]);
+        if (newVideo == null) {
+          list.removeAt(i);
+        } else {
+          list[i] = newVideo;
+        }
+        changed = true;
+      }
+    }
+
+    updateList(_videos);
+
+    if (changed) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _pageController,
-              scrollDirection: Axis.vertical,
-              itemCount: _videos.length,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                final video = _videos[index];
-                return VideoFeedItemWidget(
-                  video: video,
-                  isActive: index == _currentIndex && _isScreenVisible,
-                  user: widget.user,
-                  onVideoDeleted: () {
-                    setState(() {
-                      _videos.removeAt(index);
-                      if (_videos.isEmpty) {
-                        Navigator.of(context).pop();
-                      } else if (index <= _currentIndex && _currentIndex > 0) {
-                        _currentIndex--;
-                      }
-                    });
-                  },
-                  onPauseRequested: () => setScreenVisible(false),
-                  onResumeRequested: () => setScreenVisible(true),
-                );
-              },
-            ),
-            Positioned(
-              top: 16,
-              left: 16,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                  ),
-                ),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop(true);
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              _buildVideo(),
+              Positioned(
+                top: 16,
+                left: 16,
+                child: _buildBackButton(),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+
+  Widget _buildVideo() {
+    return PageView.builder(
+      controller: _pageController,
+      scrollDirection: Axis.vertical,
+      itemCount: _videos.length,
+      onPageChanged: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+      itemBuilder: (context, index) {
+        final video = _videos[index];
+        return VideoFeedItemWidget(
+          video: video,
+          isActive: index == _currentIndex && _isScreenVisible,
+          user: widget.user,
+          onVideoDeleted: (deletedVideo) {
+            setState(() {
+              print('Video deleted: ${deletedVideo.id}');
+              _videos.removeWhere((v) => v.id == deletedVideo.id);
+
+              if (_videos.isEmpty) {
+                Navigator.of(context).pop(deletedVideo.id);
+              } else if (_currentIndex >= _videos.length) {
+                _currentIndex = _videos.length - 1;
+              }
+            });
+          },
+          onLikeUpdated: (newCount, isLiked) => _modifyVideo(video.id, (v) {
+            return v.copyWith(likesCount: newCount, isLiked: isLiked,);
+          }),
+          onCommentUpdated: (newCount) => _modifyVideo(video.id, (v) {
+            return v.copyWith(commentsCount: newCount,);
+          }),
+          onReported: (reportedVideo) => _modifyVideo(reportedVideo.id, (_) => null),
+          onFollowUpdated: (updatedUser) => _modifyVideo(video.id, (v) {
+            return v.copyWith(user: updatedUser);
+          }),
+          onPauseRequested: () => setScreenVisible(false),
+          onResumeRequested: () => setScreenVisible(true),
+        );
+      },
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        onPressed: () => Navigator.of(context).pop(),
+        icon: const Icon(
+          Icons.arrow_back,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
 }
