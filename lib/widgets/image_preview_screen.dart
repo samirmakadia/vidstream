@@ -75,7 +75,7 @@ class ImagePreviewScreen extends StatelessWidget {
         return Icon(
           Icons.person,
           size: 120,
-          color: Colors.red,
+          color: Theme.of(context).colorScheme.primary,
         );
       } else {
         return Container(

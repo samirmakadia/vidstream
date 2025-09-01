@@ -349,7 +349,7 @@ Instagram: @VidStreamOfficial''',
                   ),
                   _buildSettingsItem(
                     icon: Icons.star,
-                    title: 'Rate VidStream',
+                    title: 'Rate VidMeet',
                     subtitle: 'Share your experience with us',
                     onTap: _showRateUsDialog,
                   ),
