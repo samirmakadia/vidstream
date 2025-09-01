@@ -164,6 +164,19 @@ class Utils{
     return '${ids[0]}-${ids[1]}';
   }
 
+  static String? getOtherUserIdFromConversation(
+      String? conversationId, String? currentUserId, String? otherUserId) {
+    if (conversationId == null || currentUserId == null) return otherUserId;
+
+    if (otherUserId == null) {
+      final parts = conversationId.split('-');
+      if (parts.length == 2) {
+        return parts[0] == currentUserId ? parts[1] : parts[0];
+      }
+    }
+    return otherUserId;
+  }
+
   static String _generateRandomString(int length) {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rand = Random();

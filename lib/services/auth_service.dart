@@ -185,9 +185,6 @@ class AuthService {
         _isGoogleLogin = false;
       }
 
-      // Clean up FCM token before signing out
-      await NotificationService().deleteToken();
-      
       // Call logout API
       await _apiService.logout();
       clearSession();

@@ -14,18 +14,17 @@ import '../services/video_service.dart';
 import '../utils/app_toaster.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
-import 'home/widget/video_actions_widget.dart';
 import 'home/bottomsheet/report_dialog.dart';
 import 'other_user_profile_screen.dart';
 
 class ChatScreen extends StatefulWidget {
-  final String otherUserId;
+  final String? otherUserId;
   final String? conversationId;
   final String? name;
   final String? imageUrl;
   final Conversation? conversation;
 
-  const ChatScreen({super.key, required this.otherUserId, this.conversationId, this.name, this.imageUrl,  this.conversation});
+  const ChatScreen({super.key, this.otherUserId, this.conversationId, this.name, this.imageUrl,  this.conversation});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -41,14 +40,19 @@ class _ChatScreenState extends State<ChatScreen> {
   final bool _isLoading = false;
   bool initialScroll = false;
   late Stream<List<ChatMessage>> _messagesStream;
+  String? otherUserId;
 
   @override
   void initState() {
     super.initState();
-    // WidgetsBinding.instance.addObserver(this);
     final currentUserId = _authService.currentUser?.id;
-    final conversationId = widget.conversationId ?? Utils.generateConversationId(currentUserId!, widget.otherUserId);
-    _messagesStream = db.watchMessagesForConversation(conversationId);
+    final otherUser = Utils.getOtherUserIdFromConversation(widget.conversationId, currentUserId, widget.otherUserId);
+    otherUserId = widget.otherUserId ?? otherUser ?? '';
+    final conversationId = widget.conversationId ?? (currentUserId != null && otherUserId != null ? Utils.generateConversationId(currentUserId, otherUserId!) : null);
+
+    if (conversationId != null) {
+      _messagesStream = db.watchMessagesForConversation(conversationId);
+    }
     _loadOtherUser();
   }
 
@@ -60,7 +64,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     final nowIso = DateTime.now().toIso8601String();
     final currentUserId = _authService.currentUser?.id;
-    final conversationId = widget.conversationId ?? Utils.generateConversationId(currentUserId!, widget.otherUserId);
+    final conversationId = widget.conversationId ?? Utils.generateConversationId(currentUserId!, otherUserId!);
     final content = MessageContent(
       text: _messageController.text.trim(),
       mediaUrl: mediaUrl ?? '',
@@ -73,7 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
       messageId: Utils.generateMessageId(),
       conversationId: conversationId,
       senderId: currentUserId!,
-      receiverId: widget.otherUserId,
+      receiverId: otherUserId,
       messageType: messageType,
       content: content,
       status: MessageStatus.sent,
@@ -98,7 +102,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadOtherUser() async {
-    final user = await _chatService.getUserById(widget.otherUserId);
+    final user = await _chatService.getUserById(otherUserId!);
     if (mounted && user != _otherUser) {
       setState(() {
         _otherUser = user;

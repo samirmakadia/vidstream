@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 import '../services/api_service.dart';
 import '../services/error_handler.dart';
 import '../services/socket_manager.dart';
@@ -19,8 +20,6 @@ class ServiceLocator {
   late HttpClient _httpClient;
   late SocketManager _socketManager;
   
-  // Navigation key for error handler
-  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   // Getters
   ApiService get apiService => _apiService;
@@ -144,7 +143,7 @@ class Services {
   static ConnectivityService get connectivity => ServiceLocator().connectivityService;
   static HttpClient get http => ServiceLocator().httpClient;
   static SocketManager get socket => ServiceLocator().socketManager;
-  static GlobalKey<NavigatorState> get navigatorKey => ServiceLocator().navigatorKey;
+  static GlobalKey<NavigatorState> get navigatorKey => navigatorKey;
 }
 
 /// Usage examples and helper methods

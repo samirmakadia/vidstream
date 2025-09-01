@@ -1,5 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
-import 'package:device_info_plus/device_info_plus.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,12 +8,16 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/utils/utils.dart';
 
+import '../main.dart';
+import '../screens/chat_screen.dart';
 import 'api_service.dart';
 
 class NotificationService {
+
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
+
 
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   final ApiRepository _apiRepository = ApiRepository.instance;
@@ -30,16 +35,112 @@ class NotificationService {
         await updateFcmToken(fcmToken);
       }
 
-      // Listen for token refresh
-      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-        await updateFcmToken(newToken);
-      });
+      FirebaseMessaging.instance.onTokenRefresh.listen(updateFcmToken);
+
+      _setForegroundMessageHandler();
+      _setBackgroundMessageHandler();
+
+      await listenToNotifications();
 
       _isInitialized = true;
       debugPrint('✅ NotificationService initialized successfully');
     } catch (e) {
       debugPrint('❌ NotificationService initialization failed: $e');
     }
+  }
+
+  void _setForegroundMessageHandler() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      print('Received a foreground message: ${message.notification?.title}');
+      await _showNotification(message);
+    });
+  }
+
+  Future<void> _setBackgroundMessageHandler() async {
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
+
+  Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+    await Firebase.initializeApp();
+    NotificationService.handleNotificationClickPayload(jsonEncode(message.data));
+  }
+
+  static Future<void> handleNotificationClickPayload(String payload) async {
+    if (payload.isEmpty) return;
+    try {
+      final data = jsonDecode(payload);
+      final String? conversationId = data['conversationId'];
+      final String? title = data['title'];
+      if (conversationId != null && navigatorKey.currentState != null) {
+        navigatorKey.currentState!.push(
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              conversationId: conversationId,
+              name: title ?? '',
+              imageUrl: '',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("❌ Error parsing notification payload: $e");
+    }
+  }
+
+
+  Future<void> _showNotification(RemoteMessage message) async {
+    const androidDetails = AndroidNotificationDetails(
+      'Default',
+      'Default channel',
+      importance: Importance.high,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+
+    var iosDetails = const DarwinNotificationDetails();
+    var platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    final payload = jsonEncode({
+      ...message.data,
+      "title": message.notification?.title ?? '',
+      "body": message.notification?.body ?? '',
+    });
+
+    print('payload $payload');
+
+    await _localNotifications.show(
+      0,
+      message.notification?.title ?? 'No Title',
+      message.notification?.body ?? 'No Body',
+      platformDetails,
+      payload: payload,
+    );
+  }
+
+
+  Future<void> listenToNotifications() async {
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      if (message != null) {
+        final payload = jsonEncode({
+          ...message.data,
+          "title": message.notification?.title ?? '',
+          "body": message.notification?.body ?? '',
+        });
+        NotificationService.handleNotificationClickPayload(payload);
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      final payload = jsonEncode({
+        ...message.data,
+        "title": message.notification?.title ?? '',
+        "body": message.notification?.body ?? '',
+      });
+      NotificationService.handleNotificationClickPayload(payload);
+    });
   }
 
   Future<void> _initializeLocalNotifications() async {
@@ -99,50 +200,10 @@ class NotificationService {
   }
 
 
-  void _onDidReceiveNotificationResponse(NotificationResponse notificationResponse) async {
-    final String? payload = notificationResponse.payload;
-    if (payload != null) {
-      debugPrint('Notification payload: $payload');
-      // Handle navigation based on payload
-      // TODO: Implement navigation logic
-    }
-  }
-
-  // Show local notification
-  Future<void> showLocalNotification({
-    required int id,
-    required String title,
-    required String body,
-    String? payload,
-  }) async {
-    try {
-      const AndroidNotificationDetails androidPlatformChannelSpecifics = 
-          AndroidNotificationDetails(
-        'default_channel',
-        'Default channel',
-        channelDescription: 'Notifications for VidStream app',
-        importance: Importance.max,
-        priority: Priority.high,
-        showWhen: false,
-      );
-
-      const DarwinNotificationDetails iOSPlatformChannelSpecifics = 
-          DarwinNotificationDetails();
-
-      const NotificationDetails platformChannelSpecifics = NotificationDetails(
-        android: androidPlatformChannelSpecifics,
-        iOS: iOSPlatformChannelSpecifics,
-      );
-
-      await _localNotifications.show(
-        id,
-        title,
-        body,
-        platformChannelSpecifics,
-        payload: payload,
-      );
-    } catch (e) {
-      debugPrint('Error showing local notification: $e');
+  void _onDidReceiveNotificationResponse(NotificationResponse response) async {
+    final String? payload = response.payload;
+    if (payload != null && payload.isNotEmpty) {
+      await NotificationService.handleNotificationClickPayload(payload);
     }
   }
 
@@ -209,25 +270,7 @@ class NotificationService {
     }
   }
 
-  Future<void> saveNotification({
-    required String userId,
-    required String title,
-    required String body,
-    required String type,
-    Map<String, dynamic>? data,
-  }) async {
-    try {
-      await _apiRepository.api.saveNotification(
-        title: title,
-        body: body,
-        data: data?.cast<String, String>(),
-      );
-    } catch (e) {
-      debugPrint('Error saving notification: $e');
-    }
-  }
 
-  // Clear all notifications
   Future<void> clearAllNotifications() async {
     try {
       await _localNotifications.cancelAll();
@@ -236,8 +279,7 @@ class NotificationService {
     }
   }
 
-  // Clear specific notification
-  Future<void> clearNotification(int id) async {
+   Future<void> clearNotification(int id) async {
     try {
       await _localNotifications.cancel(id);
     } catch (e) {
@@ -245,20 +287,6 @@ class NotificationService {
     }
   }
 
-  // Get token (for backwards compatibility)
-  Future<String?> getToken() async {
-    return getFcmToken();
-  }
-
-  // Delete token
-  Future<void> deleteToken() async {
-    try {
-      // In API-based implementation, clear token on backend
-      await _apiRepository.api.updateFcmToken('');
-    } catch (e) {
-      debugPrint('Error deleting FCM token: $e');
-    }
-  }
 
   // Send notification to user (for backwards compatibility)
   Future<void> sendNotificationToUser({

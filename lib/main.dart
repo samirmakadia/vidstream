@@ -23,6 +23,8 @@ void main() async {
   runApp(const MyApp());
 }
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 // Initialize services in the background
 Future<void> _initializeServices() async {
   try {
@@ -48,7 +50,7 @@ class MyApp extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: ThemeMode.system,
-      navigatorKey: ServiceLocator().navigatorKey,
+      navigatorKey: navigatorKey,
       home: const AuthWrapper(),
     );
   }
