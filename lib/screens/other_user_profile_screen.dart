@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
@@ -44,12 +46,12 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
   final FollowService _followService = FollowService();
   final BlockService _blockService = BlockService();
   double offsetY = 0;
+  late StreamSubscription _videoUploadedSubscription;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-        length: 1, vsync: this); // Only show user's videos, not liked videos
+    _tabController = TabController(length: 1, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         setState(() {
@@ -57,7 +59,23 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
         });
       }
     });
+    _initAnimations();
+    _loadUserProfile();
+    _videoUploadedSubscription = eventBus.on().listen((event) {
+     if (event == 'updatedUser') {
+        _loadUserProfile();
+      }
+    });
+  }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _initAnimations() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -78,16 +96,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
       parent: _animationController,
       curve: Curves.elasticOut,
     ));
-
-    _loadUserProfile();
     _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _animationController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadUserProfile({bool isLoadingShow = true}) async {
@@ -166,9 +175,9 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
 
   Future<void> _toggleFollow() async {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    if (currentUserId == null || currentUserId == widget.userId || _isBlocked)
+    if (currentUserId == null || currentUserId == widget.userId || _isBlocked) {
       return;
-
+    }
     setState(() => _isFollowLoading = true);
 
     try {
@@ -195,6 +204,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
           backgroundColor: Colors.green,
         ),
       );
+      eventBus.fire('updatedUser');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

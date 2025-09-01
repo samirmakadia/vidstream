@@ -46,6 +46,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         _loadUserProfile();
         _refreshLikedVideos();
       }
+      else if (event == 'updatedUser') {
+        _loadUserProfile();
+      }
     });
   }
 

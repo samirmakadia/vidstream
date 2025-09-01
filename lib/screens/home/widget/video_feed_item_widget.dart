@@ -126,6 +126,7 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
           );
 
           widget.onFollowUpdated?.call(updatedUser);
+          eventBus.fire('updatedUser');
         }
       } catch (e) {
         if (mounted) {

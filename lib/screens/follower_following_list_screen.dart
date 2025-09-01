@@ -4,6 +4,8 @@ import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
 
+import '../services/socket_manager.dart';
+
 class FollowerFollowingListScreen extends StatefulWidget {
   final String userId;
   final int initialTabIndex; // 0 for followers, 1 for following
@@ -377,6 +379,7 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
         followerId: _currentUserId!,
         followedId: targetUserId,
       );
+      eventBus.fire('updatedUser');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
