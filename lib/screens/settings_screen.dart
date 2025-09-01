@@ -85,8 +85,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await ApiRepository.instance.auth.signOut();
+      await ApiRepository.instance.auth.deleteAccount();
       await MessageDatabase.instance.clearMessagesTable();
+      await ConversationDatabase.instance.clearTable();
       await Future.delayed(const Duration(seconds: 2));
       
       if (mounted) {

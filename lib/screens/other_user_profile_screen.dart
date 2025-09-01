@@ -231,7 +231,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
           // If we just blocked the user, also unfollow them
           if (_isFollowing) {
             _isFollowing = false;
-            _followerCount--;
+            // _followerCount--;
           }
         }
       });

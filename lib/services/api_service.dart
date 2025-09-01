@@ -101,6 +101,13 @@ class ApiService {
     });
   }
 
+  Future<void> deleteAccount() async {
+    return ErrorHandler.safeApiCall(() async {
+      await _httpClient.delete('/users/delete-account');
+      _httpClient.clearTokens();
+    });
+  }
+
   Future<void> registerFcmToken({
     required String token,
     required String platform,

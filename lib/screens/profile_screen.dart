@@ -46,6 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       }
     });
     _loadUserProfile();
+    _refreshFollowCounts();
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'newVideo') {
         print('A new video was uploaded!');
@@ -116,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             print('Permission denied for liked videos - this is likely a Firestore rules issue');
           }
         }
-
+        _refreshFollowCounts();
         if (mounted) {
           setState(() {
             _currentUser = user;

@@ -197,6 +197,31 @@ class AuthService {
     }
   }
 
+  Future<void> deleteAccount() async {
+    try {
+      if (_isGoogleLogin) {
+        final googleSignIn = GoogleSignIn();
+        await googleSignIn.disconnect();
+        await googleSignIn.signOut();
+        _isGoogleLogin = false;
+      }
+
+      await NotificationService().deleteToken();
+      NotificationService().reset();
+      await _apiService.deleteAccount();
+      await clearSession();
+
+      _currentUser = null;
+      _accessToken = null;
+      _refreshToken = null;
+
+      _authStateController.add(null);
+      print("✅ Account deleted successfully");
+    } catch (e) {
+      throw 'Delete account failed: ${e.toString()}';
+    }
+  }
+
   // Reset password
   Future<void> resetPassword(String email) async {
     try {
