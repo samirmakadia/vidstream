@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../utils/utils.dart';
+
 typedef ReportSubmitCallback = Future<String> Function({
 required String reason,
 String? description,
@@ -76,25 +78,28 @@ class _ReportDialogState extends State<ReportDialog> {
         ),
         ElevatedButton(
           onPressed: (selectedReason == null ||
-              (widget.isDescriptionRequired &&
-                  descriptionController.text.trim().isEmpty))
+              descriptionController.text.trim().isEmpty)
               ? null
               : () async {
             final reasonApi = widget.reasons[selectedReason!]!;
             final description = descriptionController.text.trim();
+            await Utils.showLoaderWhile(
+              context,
+                  () async {
+                try {
+                  final message = await widget.onSubmit(
+                    reason: reasonApi,
+                    description: description,
+                  );
 
-            try {
-              final message = await widget.onSubmit(
-                reason: reasonApi,
-                description: description,
-              );
-              print('Report submitted: $message');
-              // Close the dialog and return the message
-              if (mounted) Navigator.pop(context, message);
-            } catch (e) {
-              // Close the dialog and return error message
-              if (mounted) Navigator.pop(context, 'Failed to submit report: $e');
-            }
+                  print('Report submitted: $message');
+
+                  if (mounted) Navigator.pop(context, message);
+                } catch (e) {
+                  if (mounted) Navigator.pop(context, 'Failed to submit report: $e');
+                }
+              },
+            );
           },
           child: const Text('Send'),
         ),

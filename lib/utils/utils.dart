@@ -177,6 +177,22 @@ class Utils{
     return otherUserId;
   }
 
+  static Future<void> showLoaderWhile(BuildContext context, Future<void> Function() task) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(strokeWidth: 1,)),
+    );
+    try {
+      await task();
+    } finally {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
+
   static String _generateRandomString(int length) {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rand = Random();
