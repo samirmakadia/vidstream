@@ -92,7 +92,6 @@ class _MainAppScreenState extends State<MainAppScreen> {
     }
   }
 
-
   Future<void> _updateUserLocation() async {
     try {
       Position? position;
@@ -161,18 +160,12 @@ class _MainAppScreenState extends State<MainAppScreen> {
                   index: 1,
                   isActive: _currentIndex == 1,
                 ),
-                
-                // Create Post (Center Button)
+
                 Container(
                   height: 42,
                   width: 42,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.tertiary,
-                      ],
-                    ),
+                    color: Theme.of(context).colorScheme.primary,  
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
@@ -188,16 +181,15 @@ class _MainAppScreenState extends State<MainAppScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(28),
                       onTap: () => _onTabTapped(2),
-                      child: Icon(
+                      child: const Icon(
                         Icons.add,
-                        color: Colors.white,
+                        color: Colors.black,
                         size: 26,
                       ),
                     ),
                   ),
                 ),
-                
-                // Chat
+
                 _buildNavItem(
                   icon: Icons.chat_bubble_outline,
                   activeIcon: Icons.chat_bubble,
