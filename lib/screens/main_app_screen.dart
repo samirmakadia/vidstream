@@ -123,7 +123,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
+          color: Colors.black,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.1),
@@ -133,7 +133,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
           ],
           border: Border(
             top: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               width: 0.5,
             ),
           ),
@@ -244,8 +244,8 @@ class _MainAppScreenState extends State<MainAppScreen> {
                 isActive ? activeIcon : icon,
                 key: ValueKey(isActive),
                 color: isActive 
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ? Color(0xFFFF1744)
+                    : Color(0xFFE0E0E0).withValues(alpha: 0.6),
                 size: iconSize?.toDouble(),
               ),
             ),
@@ -254,8 +254,8 @@ class _MainAppScreenState extends State<MainAppScreen> {
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: isActive 
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ? Color(0xFFFF1744)
+                    : Color(0xFFE0E0E0).withValues(alpha: 0.6),
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
