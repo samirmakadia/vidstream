@@ -244,7 +244,7 @@ class _RateUsDialogState extends State<RateUsDialog> with TickerProviderStateMix
                 const SizedBox(height: 20),
                 
                 Text(
-                  'Rate VidStream',
+                  'Rate VidMeet',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -363,11 +363,11 @@ class _RateUsDialogState extends State<RateUsDialog> with TickerProviderStateMix
       case 2:
         return 'Thank you for your honesty. We\'d love to know how we can do better.';
       case 3:
-        return 'Thanks for the feedback. We\'re working to make VidStream even better!';
+        return 'Thanks for the feedback. We\'re working to make VidMeet even better!';
       case 4:
-        return 'Great! We\'re glad you\'re enjoying VidStream.';
+        return 'Great! We\'re glad you\'re enjoying VidMeet.';
       case 5:
-        return 'Awesome! Thank you for loving VidStream!';
+        return 'Awesome! Thank you for loving VidMeet!';
       default:
         return '';
     }

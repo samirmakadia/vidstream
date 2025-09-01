@@ -185,7 +185,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         content: const SingleChildScrollView(
           child: Text(
-            '''VidStream Help & Support
+            '''VidMeet Help & Support
 
 Need help? We're here for you!
 

@@ -228,7 +228,7 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
                     ),
                   ] else ...[
                     Text(
-                      user.isGuest == true ? 'Guest User' : 'VidStream User',
+                      user.isGuest == true ? 'Guest User' : 'VidMeet User',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 12,
