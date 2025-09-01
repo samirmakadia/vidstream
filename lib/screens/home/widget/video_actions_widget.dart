@@ -204,7 +204,6 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
             },
           );
         },
-
       ),
     );
   }
@@ -234,12 +233,10 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
         reason: reason,
         description: description,
       );
-
       Graphics.showToast(
         message: result,
         isSuccess: result.toLowerCase().contains('success'),
       );
-
       if (result.toLowerCase().contains('success')) {
         onSuccess?.call();
       }

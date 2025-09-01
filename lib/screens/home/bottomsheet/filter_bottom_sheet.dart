@@ -221,7 +221,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         _tempSelectedTags.isEmpty
                             ? 'Show All Videos'
                             : 'Apply Filters (${_tempSelectedTags.length})',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600,color: Colors.black),
                       ),
                     ),
                   ),

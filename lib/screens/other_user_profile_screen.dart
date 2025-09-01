@@ -7,6 +7,7 @@ import 'package:vidstream/screens/follower_following_list_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 
 import '../services/socket_manager.dart';
+import '../utils/utils.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
 
@@ -212,50 +213,49 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
     if (currentUserId == null || currentUserId == widget.userId) return;
 
     setState(() => _isBlockLoading = true);
-
-    try {
-      if (_isBlocked) {
-        await _blockService.unblockUser(
-          blockerId: currentUserId,
-          blockedId: widget.userId,
-        );
-      } else {
-        await _blockService.blockUser(
-          blockerId: currentUserId,
-          blockedId: widget.userId,
-        );
-      }
-
-      // Update UI state
-      setState(() {
-        _isBlocked = !_isBlocked;
+    await Utils.showLoaderWhile(context, () async {
+      try {
         if (_isBlocked) {
-          // If we just blocked the user, also unfollow them
-          if (_isFollowing) {
-            _isFollowing = false;
-            // _followerCount--;
-          }
+          await _blockService.unblockUser(
+            blockerId: currentUserId,
+            blockedId: widget.userId,
+          );
+        } else {
+          await _blockService.blockUser(
+            blockerId: currentUserId,
+            blockedId: widget.userId,
+          );
         }
-      });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isBlocked
-              ? 'Blocked ${_user?.displayName}'
-              : 'Unblocked ${_user?.displayName}'),
-          backgroundColor: _isBlocked ? Colors.red : Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to ${_isBlocked ? 'unblock' : 'block'}: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    } finally {
-      setState(() => _isBlockLoading = false);
-    }
+        setState(() {
+          _isBlocked = !_isBlocked;
+          if (_isBlocked) {
+            if (_isFollowing) {
+              _isFollowing = false;
+              // _followerCount--;
+            }
+          }
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isBlocked
+                ? 'Blocked ${_user?.displayName}'
+                : 'Unblocked ${_user?.displayName}'),
+            backgroundColor: _isBlocked ? Colors.red : Colors.green,
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to ${_isBlocked ? 'unblock' : 'block'}: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      } finally {
+        setState(() => _isBlockLoading = false);
+      }
+    });
   }
 
   void _showBlockConfirmationDialog() {
@@ -556,12 +556,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            SizedBox(
-              height: 50,
-            ),
-            const SizedBox(height: 16),
-
-            // User Name
+            SizedBox(height: 40,),
             Text(
               _user?.displayName ?? 'User',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -569,13 +564,10 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                     fontWeight: FontWeight.bold,
                   ),
             ),
-
             const SizedBox(height: 8),
-
-            // Bio
             if (_user?.bio != null) ...[
               Text(
-                _user!.bio!,
+                _user!.bio ?? '',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.white.withValues(alpha: 0.8),
                     ),
@@ -583,12 +575,10 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
               ),
               const SizedBox(height: 16),
             ],
-
-            // Guest badge
             if (_user?.isGuest == true)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.orange.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
@@ -602,15 +592,12 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                       ),
                 ),
               ),
-
-            // Follow Button (only show if not own profile)
             if (!isOwnProfile) ...[
               const SizedBox(height: 16),
               if (_isBlocked) ...[
-                // Show blocked state
                 Container(
                   width: double.infinity,
-                  height: 50,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(25),
@@ -627,7 +614,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                           style: TextStyle(
                             color: Colors.red,
                             fontSize: 16,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
@@ -635,10 +621,9 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                   ),
                 ),
               ] else ...[
-                // Show follow button
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 40,
                   child: ElevatedButton(
                     onPressed: _isFollowLoading ? null : _toggleFollow,
                     style: ElevatedButton.styleFrom(
@@ -672,14 +657,14 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                                     ? Icons.person_remove
                                     : Icons.person_add,
                                 size: 20,
-                                color: Colors.white,
+                                color: _isFollowing ? Colors.white : Colors.black,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 _isFollowing ? 'Following' : 'Follow',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                  color: _isFollowing ? Colors.white :Colors.black,
                                 ),
                               ),
                             ],
@@ -735,6 +720,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                 color: Colors.white.withValues(alpha: 0.7),
               ),
         ),
+        const SizedBox(height: 10),
       ],
     );
 
@@ -742,7 +728,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
       return GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             color: Colors.transparent,

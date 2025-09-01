@@ -215,7 +215,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   _buildSliverAppBar(),
-
                   _buildProfileInfoWithoutAvatar(),
                   _buildStatsSection(),
                   _buildTabBar(),
@@ -345,10 +344,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16,  ),
         child: Column(
           children: [
-            SizedBox(height: 50,),
-            const SizedBox(height: 30),
-
-            // User Name
+            SizedBox(height: 70,),
             Text(
               _currentUser?.displayName ?? 'User',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -357,12 +353,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ),
             ),
 
-            const SizedBox(height: 8),
-
-            // Bio
             if (_currentUser?.bio != null) ...[
               Text(
-                _currentUser!.bio!,
+                _currentUser!.bio ?? '',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.8),
                 ),
@@ -371,7 +364,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               const SizedBox(height: 8),
             ],
 
-            // Date of Birth and Gender
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -519,24 +511,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 _buildStatItem('Following', _followingCount.toString(), onTap: () => _navigateToFollowersList(1)),
               ],
             ),
-            const SizedBox(height: 16),
-            // Settings Button
-            // SizedBox(
-            //   width: double.infinity,
-            //   height: 45,
-            //   child: ElevatedButton.icon(
-            //     onPressed: _navigateToSettings,
-            //     icon: const Icon(Icons.settings, size: 18),
-            //     label: const Text('Settings'),
-            //     style: ElevatedButton.styleFrom(
-            //       backgroundColor: Colors.grey[800],
-            //       foregroundColor: Colors.white,
-            //       shape: RoundedRectangleBorder(
-            //         borderRadius: BorderRadius.circular(22),
-            //       ),
-            //     ),
-            //   ),
-            // ),
           ],
         ),
       ),
@@ -609,7 +583,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ),
             ),
           ],
-          labelColor: Colors.white,
+          labelColor: Colors.black,
           unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
         ),
       ),

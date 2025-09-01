@@ -24,7 +24,7 @@ class LightModeColors {
 }
 
 class DarkModeColors {
-  static const darkPrimary = Color(0xFF5BEF01);
+  static const darkPrimary = Color(0xFF59EA03);
   static const darkOnPrimary = Color(0xFFFFFFFF);
   static const darkPrimaryContainer = Color(0xFF8B0015);
   static const darkOnPrimaryContainer = Color(0xFFFFE8E8);
