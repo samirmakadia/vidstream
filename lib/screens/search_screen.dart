@@ -687,7 +687,7 @@ class UserCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${user.followers.length} followers',
+                          '${user.followersCount} followers',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         

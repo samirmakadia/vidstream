@@ -607,7 +607,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   const Icon(Icons.favorite_outline, size: 18),
                   const SizedBox(width: 6),
                   Text('Liked (${_likedVideos.length})'),
-                ], 
+                ],
               ),
             ),
           ],
@@ -630,7 +630,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       padding: const EdgeInsets.all(16),
       sliver: videos.isEmpty
           ? SliverToBoxAdapter(
-        child: Container(
+        child: SizedBox(
           height: 250,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
