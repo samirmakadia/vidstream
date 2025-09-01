@@ -239,6 +239,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                 style: GoogleFonts.inter(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
+                                  color: Colors.black
                                 ),
                               ),
                               const SizedBox(width: 8),

@@ -63,7 +63,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
     _loadUserProfile();
     _videoUploadedSubscription = eventBus.on().listen((event) {
      if (event == 'updatedUser') {
-        _loadUserProfile();
+        _loadUserProfile(isLoadingShow: false);
       }
     });
   }
@@ -330,7 +330,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
           title: Text(widget.displayName ?? 'Profile'),
         ),
         body: const Center(
-          child: CircularProgressIndicator(color: Colors.white),
+          child: CircularProgressIndicator(),
         ),
       );
     }

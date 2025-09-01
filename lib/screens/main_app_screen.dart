@@ -165,7 +165,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
                   height: 42,
                   width: 42,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,  
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(

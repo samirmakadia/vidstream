@@ -633,7 +633,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ElevatedButton.icon(
                   onPressed: _refreshLikedVideos,
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Refresh Liked Videos'),
+                  label: const Text('Refresh Liked Videos', style: TextStyle(color: Colors.black)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,

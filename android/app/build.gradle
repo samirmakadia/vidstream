@@ -54,12 +54,12 @@ android {
     }
 
     buildTypes {
-        release {
-            // Do NOT set signingConfig if you want unsigned APK
-            minifyEnabled false
-            shrinkResources false
-            // You can keep proguard rules if you want
-            // proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        buildTypes {
+            release {
+                minifyEnabled false
+                shrinkResources false
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

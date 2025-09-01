@@ -350,7 +350,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                 _clearFilters();
               },
               icon: const Icon(Icons.clear),
-              label: const Text('Clear Search'),
+              label: Text('Clear Search',style: TextStyle(color: Colors.black),),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
@@ -363,7 +363,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             ElevatedButton.icon(
               onPressed: _refreshVideos,
               icon: const Icon(Icons.refresh),
-              label: const Text('Refresh'),
+              label: const Text('Refresh',style: TextStyle(color: Colors.black)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,

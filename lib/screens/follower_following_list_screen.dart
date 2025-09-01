@@ -5,6 +5,7 @@ import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
 
 import '../services/socket_manager.dart';
+import '../widgets/custom_image_widget.dart';
 
 class FollowerFollowingListScreen extends StatefulWidget {
   final String userId;
@@ -27,6 +28,9 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
   late TabController _tabController;
   final FollowService _followService = FollowService();
   String? _currentUserId;
+  final Set<String> _loadingFollowUsers = {};
+  bool _isFirstLoadFollowers = true;
+  bool _isFirstLoadFollowing = true;
 
   @override
   void initState() {
@@ -80,17 +84,21 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
     return FutureBuilder<List<ApiUser>>(
       future: _followService.getFollowers(widget.userId),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        final followers = snapshot.data ?? [];
+
+        if (snapshot.connectionState == ConnectionState.waiting && _isFirstLoadFollowers) {
           return const Center(
             child: CircularProgressIndicator(color: Colors.white),
           );
         }
 
+        if (snapshot.connectionState != ConnectionState.waiting) {
+          _isFirstLoadFollowers = false;
+        }
+
         if (snapshot.hasError) {
           return _buildErrorWidget('Failed to load followers: ${snapshot.error}');
         }
-
-        final followers = snapshot.data ?? [];
 
         if (followers.isEmpty) {
           return _buildEmptyWidget(
@@ -116,17 +124,22 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
     return FutureBuilder<List<ApiUser>>(
       future: _followService.getFollowing(widget.userId),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        final following = snapshot.data ?? [];
+
+        if (snapshot.connectionState == ConnectionState.waiting && _isFirstLoadFollowing) {
           return const Center(
             child: CircularProgressIndicator(color: Colors.white),
           );
         }
 
+        if (snapshot.connectionState != ConnectionState.waiting) {
+          _isFirstLoadFollowing = false;
+        }
+
+
         if (snapshot.hasError) {
           return _buildErrorWidget('Failed to load following: ${snapshot.error}');
         }
-
-        final following = snapshot.data ?? [];
 
         if (following.isEmpty) {
           return _buildEmptyWidget(
@@ -181,25 +194,25 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
               ),
-              child: CircleAvatar(
+              child: (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty) ||
+                  (user.photoURL != null && user.photoURL!.isNotEmpty) ?
+              CustomImageWidget(
+                imageUrl: user.profileImageUrl ?? user.photoURL ?? '',
+                height: 55,
+                width: 55,
+                cornerRadius: 24,
+              ) :
+               CircleAvatar(
                 radius: 24,
-                backgroundImage: user.profileImageUrl != null || user.photoURL != null
-                    ? NetworkImage(user.profileImageUrl ?? user.photoURL!)
-                    : null,
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                child: (user.profileImageUrl == null && user.photoURL == null)
-                    ? Icon(
+                child: Icon(
                         Icons.person,
                         size: 24,
                         color: Colors.white,
                       )
-                    : null,
               ),
             ),
-            
             const SizedBox(width: 12),
-            
-            // User Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,17 +253,25 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
                 ],
               ),
             ),
-
-            // Follow/Unfollow popup menu
-            if (!isCurrentUser)
-              FutureBuilder<bool>(
+            if (!isCurrentUser)_loadingFollowUsers.contains(user.id)
+                  ? Padding(
+                padding: const EdgeInsets.all(15),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1,
+                    color: Colors.white,
+                  ),
+                ),
+              ) : FutureBuilder<bool>(
                 future: _followService.isFollowing(
                   followerId: _currentUserId!,
                   followedId: user.id,
                 ),
                 builder: (context, snapshot) {
                   final isFollowing = snapshot.data ?? false;
-                  final isLoading = snapshot.connectionState == ConnectionState.waiting;
+                  final isLoading = _loadingFollowUsers.contains(user.id) || snapshot.connectionState == ConnectionState.waiting;
 
                   return PopupMenuButton<String>(
                     icon: Icon(
@@ -263,7 +284,6 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
                         case 'toggle_follow':
                           if (!isLoading) {
                             await _toggleFollow(user.id);
-                            setState(() {});
                           }
                           break;
                         case 'view_profile':
@@ -286,7 +306,16 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
                       PopupMenuItem<String>(
                         value: 'toggle_follow',
                         child: ListTile(
-                          leading: Icon(
+                          leading: isLoading
+                              ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                              : Icon(
                             isFollowing ? Icons.person_remove : Icons.person_add,
                             color: isFollowing ? Colors.red : Colors.green,
                           ),
@@ -307,72 +336,18 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
                   );
                 },
               ),
-            // if (!isCurrentUser) ...[
-            //   const SizedBox(width: 12),
-            //   GestureDetector(
-            //     onTap: () {}, // Prevent navigation when tapping follow button
-            //     child: _buildFollowButton(user.id),
-            //   ),
-            // ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFollowButton(String targetUserId) {
-    if (_currentUserId == null) {
-      return Container(); // Don't show follow button if not authenticated
-    }
-
-    return FutureBuilder<bool>(
-      future: _followService.isFollowing(
-        followerId: _currentUserId!,
-        followedId: targetUserId,
-      ),
-      builder: (context, snapshot) {
-        final isFollowing = snapshot.data ?? false;
-        final isLoading = snapshot.connectionState == ConnectionState.waiting;
-
-        return SizedBox(
-          width: 100,
-          height: 36,
-          child: ElevatedButton(
-            onPressed: isLoading ? null : () => _toggleFollow(targetUserId),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isFollowing 
-                  ? Colors.grey[700] 
-                  : Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-            ),
-            child: isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    isFollowing ? 'Following' : 'Follow',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-          ),
-        );
-      },
-    );
-  }
-
   Future<void> _toggleFollow(String targetUserId) async {
     if (_currentUserId == null) return;
+
+    setState(() {
+      _loadingFollowUsers.add(targetUserId);
+    });
 
     try {
       await _followService.toggleFollow(
@@ -389,8 +364,15 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingFollowUsers.remove(targetUserId);
+        });
+      }
     }
   }
+
 
   Widget _buildEmptyWidget({
     required IconData icon,
@@ -462,7 +444,7 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
             ElevatedButton.icon(
               onPressed: () => setState(() {}), // Trigger rebuild
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: const Text('Retry',style: TextStyle(color: Colors.black)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
