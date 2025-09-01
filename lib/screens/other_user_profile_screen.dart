@@ -89,9 +89,11 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
     super.dispose();
   }
 
-  Future<void> _loadUserProfile() async {
+  Future<void> _loadUserProfile({bool isLoadingShow = true}) async {
     try {
-      setState(() => _isLoading = true);
+      if(isLoadingShow) {
+        setState(() => _isLoading = true);
+      }
 
       // Load user profile
       final user =
@@ -343,42 +345,48 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
     final isOwnProfile = currentUserId == widget.userId;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: NotificationListener<ScrollNotification>(
-        onNotification: (scrollInfo) {
-          setState(() {
-            offsetY = scrollInfo.metrics.pixels;
-          });
-          return true;
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: RefreshIndicator(
-                  onRefresh: _loadUserProfile,
-                  child: CustomScrollView(
-                    slivers: [
-                      _buildSliverAppBar(isOwnProfile),
-                      _buildProfileInfo(isOwnProfile),
-                      _buildStatsSection(),
-                      _buildTabBar(),
-                      _buildTabContent(),
-                    ],
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop(true);
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: NotificationListener<ScrollNotification>(
+          onNotification: (scrollInfo) {
+            setState(() {
+              offsetY = scrollInfo.metrics.pixels;
+            });
+            return true;
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: RefreshIndicator(
+                    onRefresh: _loadUserProfile,
+                    child: CustomScrollView(
+                      slivers: [
+                        _buildSliverAppBar(isOwnProfile),
+                        _buildProfileInfo(isOwnProfile),
+                        _buildStatsSection(),
+                        _buildTabBar(),
+                        _buildTabContent(),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              top: 300 - offsetY - 70,
-              left: MediaQuery.of(context).size.width / 2 - 100 / 2,
-              child: _buildFloatingAvatar(),
-            ),
-          ],
+              Positioned(
+                top: 300 - offsetY - 70,
+                left: MediaQuery.of(context).size.width / 2 - 100 / 2,
+                child: _buildFloatingAvatar(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -664,6 +672,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                                     ? Icons.person_remove
                                     : Icons.person_add,
                                 size: 20,
+                                color: Colors.white,
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -690,14 +699,19 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildStatItem('Videos', _userVideos.length.toString(),
-                onTap: null),
-            _buildStatItem('Followers', _followerCount.toString(),
-                onTap: () => _navigateToFollowersList(0)),
-            _buildStatItem('Following', _followingCount.toString(),
-                onTap: () => _navigateToFollowersList(1)),
+            Expanded(
+              child: _buildStatItem('Videos', _userVideos.length.toString(),
+                  onTap: null),
+            ),
+            Expanded(
+              child: _buildStatItem('Followers', _followerCount.toString(),
+                  onTap: () => _navigateToFollowersList(0)),
+            ),
+            Expanded(
+              child: _buildStatItem('Following', _followingCount.toString(),
+                  onTap: () => _navigateToFollowersList(1)),
+            ),
           ],
         ),
       ),
@@ -766,7 +780,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
           ],
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
-          indicatorColor: Theme.of(context).colorScheme.primary,
+          indicator: const BoxDecoration(),
+          dividerColor: Colors.grey[700],
         ),
       ),
     );
@@ -977,7 +992,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
       ),
     );
    if(result != null) {
-     _loadUserProfile();
+     _loadUserProfile(isLoadingShow: false);
    }
   }
 }
