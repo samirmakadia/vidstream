@@ -287,6 +287,23 @@ class NotificationService {
     }
   }
 
+  Future<void> deleteToken() async {
+    try {
+      final token = await getFcmToken();
+      if (token != null && token.isNotEmpty) {
+        await _apiRepository.api.deactivateFcmToken(token: token);
+        await FirebaseMessaging.instance.deleteToken();
+      } else {
+        debugPrint("⚠️ No FCM token found to delete");
+      }
+    } catch (e) {
+      debugPrint('❌ Error deleting FCM token: $e');
+    }
+  }
+
+  void reset() {
+    _isInitialized = false;
+  }
 
   // Send notification to user (for backwards compatibility)
   Future<void> sendNotificationToUser({

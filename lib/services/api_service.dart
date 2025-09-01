@@ -1273,15 +1273,18 @@ class ApiService {
     });
   }
 
-  Future<void> updateFcmToken(String token) async {
+  Future<void> deactivateFcmToken({
+    required String token,
+  }) async {
     return ErrorHandler.safeApiCall(() async {
-      final response = await _httpClient.put(
-        '/users/me/fcm-token',
+      final response = await _httpClient.post<void>(
+        '/fcm/deactivate',
         data: {
           'token': token,
         },
+        fromJson: (_) => null,
       );
-      
+
       if (!response.success) {
         throw response_models.ApiException(response.message);
       }

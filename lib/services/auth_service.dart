@@ -185,15 +185,12 @@ class AuthService {
         _isGoogleLogin = false;
       }
 
-      // Call logout API
-      await _apiService.logout();
+      await NotificationService().deleteToken();
+      NotificationService().reset();
       clearSession();
-      
-      // Clear local state
       _currentUser = null;
       _accessToken = null;
       _refreshToken = null;
-
       _authStateController.add(null);
     } catch (e) {
       throw 'Sign out failed: ${e.toString()}';

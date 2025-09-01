@@ -281,14 +281,14 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                             icon: Icon(
                               Icons.g_mobiledata,
                               size: 32,
-                              color: Theme.of(context).colorScheme.onSurface,
+                              color: Colors.black,
                             ),
                             label: Text(
                               'Continue with Google',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Colors.black,
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -392,6 +392,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: Colors.white.withValues(alpha: 1),
                               decoration: TextDecoration.underline,
+                              decorationColor: Colors.white
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
@@ -413,6 +414,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: Colors.white.withValues(alpha: 1),
                               decoration: TextDecoration.underline,
+                              decorationColor: Colors.white
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
