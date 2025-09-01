@@ -41,7 +41,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     WidgetsBinding.instance.addObserver(this);
     _loadVideos();
     _videoUploadedSubscription = eventBus.on().listen((event) {
-      if (event == 'newVideo') {
+      if (event == 'updatedVideo') {
         print('A new video was uploaded!');
         _loadVideos();
       }

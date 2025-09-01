@@ -42,10 +42,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _loadUserProfile();
     _refreshFollowCounts();
     _videoUploadedSubscription = eventBus.on().listen((event) {
-      if (event == 'newVideo') {
+      if (event == 'updatedVideo') {
         _loadUserProfile();
-      }
-      if (event == 'like_updated') {
         _refreshLikedVideos();
       }
     });

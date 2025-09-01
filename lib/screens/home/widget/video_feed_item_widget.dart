@@ -81,7 +81,7 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
             _localLikeCount = (_localLikeCount > 0) ? _localLikeCount - 1 : 0;
           }
         });
-        eventBus.fire('like_updated');
+        eventBus.fire('updatedVideo');
         widget.onLikeUpdated?.call(_localLikeCount, _isLiked);
       } catch (e) {
         if (mounted) {

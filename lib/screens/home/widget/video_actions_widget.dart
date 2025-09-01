@@ -156,7 +156,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
       try {
         await ApiRepository.instance.videos.deleteVideo(widget.video.id);
         widget.onVideoDeleted?.call(widget.video);
-        eventBus.fire('newVideo');
+        eventBus.fire('updatedVideo');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Video deleted successfully'),

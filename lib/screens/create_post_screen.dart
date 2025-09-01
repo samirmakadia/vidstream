@@ -179,7 +179,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       print('Uploaded video object: $uploadedVideo');
 
       if (uploadedVideo != null && mounted) {
-        eventBus.fire('newVideo');
+        eventBus.fire('updatedVideo');
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

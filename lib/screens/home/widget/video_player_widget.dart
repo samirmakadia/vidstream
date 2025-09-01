@@ -156,12 +156,14 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   Widget build(BuildContext context) {
     if (controller == null) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white,));
+      return const Center(child: CircularProgressIndicator());
     }
 
-    final videoValue = controller!.videoPlayerController?.value;
+    final videoController = controller?.videoPlayerController;
+    final videoValue = videoController?.value;
+
     final isBuffering = videoValue?.isBuffering ?? false;
-    final isInitialized = controller!.isVideoInitialized();
+    final isInitialized = controller!.isVideoInitialized() ?? false;
 
     return GestureDetector(
       onTap: _togglePlayPause,
@@ -172,10 +174,9 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             child: BetterPlayer(controller: controller!),
           ),
 
-          if (!isInitialized! || isBuffering)
+          if (!isInitialized || isBuffering)
             const Center(
               child: CircularProgressIndicator(
-                color: Colors.white,
               ),
             ),
 

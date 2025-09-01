@@ -28,7 +28,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadDefaultContent();
+    _loadDefaultContent(true);
   }
 
   @override
@@ -38,10 +38,12 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  void _loadDefaultContent() async {
-    setState(() {
-      _isLoading = true;
-    });
+  void _loadDefaultContent(bool isLoading) async {
+    if(isLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final trendingVideos = await _searchService.getTrendingVideos(limit: 20);
@@ -60,9 +62,9 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     }
   }
 
-  void _performSearch(String query) async {
+  void _performSearch(String query, {bool isLoading = true}) async {
     if (query.trim().isEmpty) {
-      _loadDefaultContent();
+      _loadDefaultContent(true);
       setState(() {
         _hasSearched = false;
         _currentQuery = '';
@@ -71,7 +73,9 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     }
 
     setState(() {
-      _isLoading = true;
+      if(isLoading) {
+        _isLoading = true;
+      }
       _hasSearched = true;
       _currentQuery = query.trim();
     });
@@ -327,13 +331,21 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               final user = _users[index];
               return UserCard(
                 user: user,
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                 final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => OtherUserProfileScreen(userId: user.id),
                     ),
                   );
+                 if(result != null) {
+                    if(_currentQuery.isNotEmpty) {
+                      _performSearch(_currentQuery, isLoading: false);
+                    }
+                    else {
+                      _loadDefaultContent(false);
+                    }
+                 }
                 },
               );
             },
@@ -359,9 +371,11 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
             ),
           );
         if(result != null) {
-          _loadDefaultContent();
           if(_currentQuery.isNotEmpty) {
-            _performSearch(_currentQuery);
+            _performSearch(_currentQuery, isLoading: false);
+          }
+          else {
+            _loadDefaultContent(false);
           }
          }
         },
