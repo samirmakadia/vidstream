@@ -112,11 +112,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           }
         }
         _refreshFollowCounts();
+        final updatedVideos = likedVideos.map((video) => video.copyWith(isLiked: true)).toList();
         if (mounted) {
           setState(() {
             _currentUser = user;
             _userVideos = videos;
-            _likedVideos = likedVideos;
+            _likedVideos = updatedVideos;
             _isLoading = false;
           });
         }
@@ -158,9 +159,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     if (currentUserId != null) {
       try {
         final likedVideos = await ApiRepository.instance.videos.getUserLikedVideos(currentUserId);
+        final updatedVideos = likedVideos.map((video) => video.copyWith(isLiked: true)).toList();
         if (mounted) {
           setState(() {
-            _likedVideos = likedVideos;
+            _likedVideos = updatedVideos;
           });
         }
       } catch (e) {
