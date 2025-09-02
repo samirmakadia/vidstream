@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/response_model.dart';
 import '../services/auth_service.dart';
+import '../utils/graphics.dart';
 
 class ErrorHandler {
   // Service locator instance (implement your own)
@@ -147,20 +148,11 @@ class ErrorHandler {
     try {
       final context = _navigatorKey?.currentContext;
       if (context != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              textColor: Theme.of(context).colorScheme.onError,
-              onPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              },
-            ),
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error",
+          message,
+          type: ToastType.error,
         );
       } else {
         // Fallback to debug print if no context available
