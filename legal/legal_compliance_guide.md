@@ -1,4 +1,4 @@
-# Legal Compliance Guide for VidStream
+# Legal Compliance Guide for VidMeet
 
 **Last Updated: [Current Date]**
 

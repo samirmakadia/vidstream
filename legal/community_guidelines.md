@@ -1,10 +1,10 @@
-# Community Guidelines for VidStream
+# Community Guidelines for VidMeet
 
 **Last Updated: [Current Date]**
 
-## Welcome to VidStream
+## Welcome to VidMeet
 
-VidStream is a creative platform where people come together to share their stories, express themselves, and connect with others. Our community guidelines help ensure that everyone can participate in a safe, welcoming, and authentic environment.
+VidMeet is a creative platform where people come together to share their stories, express themselves, and connect with others. Our community guidelines help ensure that everyone can participate in a safe, welcoming, and authentic environment.
 
 ## Our Community Principles
 
@@ -225,7 +225,7 @@ VidStream is a creative platform where people come together to share their stori
 ## Working Together
 
 ### Community Involvement
-- Your reports help keep VidStream safe
+- Your reports help keep VidMeet safe
 - Feedback improves our guidelines
 - Community leaders help educate others
 - Everyone plays a role in maintaining our community
@@ -240,27 +240,27 @@ VidStream is a creative platform where people come together to share their stori
 
 ### Reporting Violations
 - **In-App**: Use the report feature
-- **Email**: safety@vidstream.app
+- **Email**: safety@vidmeet.app
 - **Emergency**: Contact local authorities first
 
 ### Policy Questions
-- **Email**: policy@vidstream.app
+- **Email**: policy@vidmeet.app
 - **Community Forum**: [Forum Link]
 
 ### Legal Concerns
-- **Email**: legal@vidstream.app
-- **DMCA**: copyright@vidstream.app
+- **Email**: legal@vidmeet.app
+- **DMCA**: copyright@vidmeet.app
 
 ---
 
 ## Final Note
 
-These Community Guidelines reflect our shared values and help create a positive environment for everyone. By using VidStream, you agree to follow these guidelines and help us build an inclusive, creative, and safe community.
+These Community Guidelines reflect our shared values and help create a positive environment for everyone. By using VidMeet, you agree to follow these guidelines and help us build an inclusive, creative, and safe community.
 
-Remember: When in doubt, ask yourself if your content or behavior would make VidStream a better place for everyone. If the answer is yes, you're on the right track.
+Remember: When in doubt, ask yourself if your content or behavior would make VidMeet a better place for everyone. If the answer is yes, you're on the right track.
 
-**Thank you for being part of the VidStream community!**
+**Thank you for being part of the VidMeet community!**
 
 ---
 
-*These Community Guidelines are effective as of [Current Date] and apply to all users of the VidStream platform. They may be updated periodically to address new challenges and community needs.*
+*These Community Guidelines are effective as of [Current Date] and apply to all users of the VidMeet platform. They may be updated periodically to address new challenges and community needs.*

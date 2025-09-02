@@ -1,10 +1,10 @@
-# Privacy Policy for VidStream
+# Privacy Policy for VidMeet
 
 **Last Updated: [Current Date]**
 
 ## Introduction
 
-VidStream ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application and related services.
+VidMeet ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application and related services.
 
 ## Information We Collect
 
@@ -31,7 +31,7 @@ VidStream ("we," "our," or "us") is committed to protecting your privacy. This P
 ## How We Use Your Information
 
 ### Primary Uses
-- **Service Provision**: Operate and maintain the VidStream platform
+- **Service Provision**: Operate and maintain the VidMeet platform
 - **Content Delivery**: Show personalized video feeds and recommendations
 - **Account Management**: Create and manage your user account
 - **Communication**: Send notifications about app updates and activities
@@ -84,7 +84,7 @@ VidStream ("we," "our," or "us") is committed to protecting your privacy. This P
 
 ## Children's Privacy
 
-VidStream is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13. If we discover that a child under 13 has provided us with personal information, we will delete such information immediately.
+VidMeet is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13. If we discover that a child under 13 has provided us with personal information, we will delete such information immediately.
 
 ## International Data Transfers
 
@@ -118,7 +118,7 @@ We may update this Privacy Policy periodically. We will notify you of any materi
 
 If you have questions about this Privacy Policy or our privacy practices, please contact us:
 
-**Email**: privacy@vidstream.app
+**Email**: privacy@vidmeet.app
 **Address**: [Your Company Address]
 **Phone**: [Your Contact Number]
 
@@ -138,8 +138,8 @@ California residents have additional rights including:
 - Right to opt-out of sale of personal information
 - Right to non-discrimination for exercising privacy rights
 
-To exercise these rights, contact us at privacy@vidstream.app.
+To exercise these rights, contact us at privacy@vidmeet.app.
 
 ---
 
-This Privacy Policy is effective as of [Current Date] and applies to all users of the VidStream application.
+This Privacy Policy is effective as of [Current Date] and applies to all users of the VidMeet application.

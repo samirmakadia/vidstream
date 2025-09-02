@@ -24,7 +24,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       icon: Icons.video_library,
       title: '📱 Create & Share Videos',
       description: 'Record amazing videos, add descriptions, and share your creativity with the world',
-      gradient: const [Color(0xFF6C5CE7), Color(0xFF74B9FF)],
+      gradient: const [Color(0xFF5BEF01), Color(0xFF66BB6A)],
       features: ['Record HD videos', 'Add descriptions & tags', 'Share instantly'],
     ),
     OnboardingPage(

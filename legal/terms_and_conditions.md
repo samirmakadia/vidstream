@@ -1,14 +1,14 @@
-# Terms and Conditions for VidStream
+# Terms and Conditions for VidMeet
 
 **Last Updated: [Current Date]**
 
 ## 1. Acceptance of Terms
 
-By downloading, installing, or using the VidStream mobile application ("App," "Service," or "Platform"), you agree to be bound by these Terms and Conditions ("Terms"). If you do not agree to these Terms, do not use our Service.
+By downloading, installing, or using the VidMeet mobile application ("App," "Service," or "Platform"), you agree to be bound by these Terms and Conditions ("Terms"). If you do not agree to these Terms, do not use our Service.
 
 ## 2. Description of Service
 
-VidStream is a social media platform that allows users to:
+VidMeet is a social media platform that allows users to:
 - Create, upload, and share short-form video content
 - Discover and interact with content from other users
 - Follow other users and build communities
@@ -18,7 +18,7 @@ VidStream is a social media platform that allows users to:
 ## 3. Eligibility
 
 ### Age Requirements
-- You must be at least 13 years old to use VidStream
+- You must be at least 13 years old to use VidMeet
 - Users between 13-17 must have parental/guardian consent
 - We reserve the right to request proof of age at any time
 
@@ -89,7 +89,7 @@ We reserve the right to:
 ## 7. Intellectual Property
 
 ### Our Property
-- VidStream and its features are protected by intellectual property laws
+- VidMeet and its features are protected by intellectual property laws
 - Our trademarks, logos, and brand elements are our property
 - You may not use our intellectual property without permission
 
@@ -101,7 +101,7 @@ We reserve the right to:
 
 ### Copyright Policy
 - We respect intellectual property rights
-- Report copyright infringement to copyright@vidstream.app
+- Report copyright infringement to copyright@vidmeet.app
 - Repeat infringers will have accounts terminated
 - We provide counter-notification procedures
 
@@ -121,7 +121,7 @@ We reserve the right to:
 ## 9. Commercial Terms
 
 ### Free Service
-- VidStream is currently provided free of charge
+- VidMeet is currently provided free of charge
 - We reserve the right to introduce paid features
 - Free features may have usage limitations
 
@@ -153,7 +153,7 @@ TO THE MAXIMUM EXTENT PERMITTED BY LAW:
 
 ## 11. Indemnification
 
-You agree to indemnify and hold harmless VidStream, its affiliates, officers, directors, employees, and agents from any claims, losses, damages, or expenses arising from:
+You agree to indemnify and hold harmless VidMeet, its affiliates, officers, directors, employees, and agents from any claims, losses, damages, or expenses arising from:
 - Your use of the Service
 - Your content or conduct
 - Your violation of these Terms
@@ -204,13 +204,13 @@ These Terms are governed by [Your Jurisdiction] law, without regard to conflict 
 4. **Class Action Waiver**: No class action lawsuits permitted
 
 ### Contact for Disputes
-**Email**: legal@vidstream.app
+**Email**: legal@vidmeet.app
 **Address**: [Your Legal Address]
 
 ## 15. General Provisions
 
 ### Entire Agreement
-These Terms constitute the entire agreement between you and VidStream regarding the Service.
+These Terms constitute the entire agreement between you and VidMeet regarding the Service.
 
 ### Severability
 If any provision is found unenforceable, the remaining provisions remain in effect.
@@ -228,10 +228,10 @@ We are not liable for delays or failures due to circumstances beyond our control
 
 For questions about these Terms, please contact us:
 
-**General Inquiries**: support@vidstream.app
-**Legal Matters**: legal@vidstream.app
-**Privacy Concerns**: privacy@vidstream.app
-**Copyright Issues**: copyright@vidstream.app
+**General Inquiries**: support@vidmeet.app
+**Legal Matters**: legal@vidmeet.app
+**Privacy Concerns**: privacy@vidmeet.app
+**Copyright Issues**: copyright@vidmeet.app
 
 **Mailing Address**:
 [Your Company Name]
@@ -243,6 +243,6 @@ For questions about these Terms, please contact us:
 
 ---
 
-These Terms and Conditions are effective as of [Current Date] and apply to all users of the VidStream application.
+These Terms and Conditions are effective as of [Current Date] and apply to all users of the VidMeet application.
 
-By using VidStream, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.
+By using VidMeet, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.

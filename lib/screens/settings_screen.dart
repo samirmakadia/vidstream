@@ -211,8 +211,8 @@ Email: support@vidstream.com
 Response time: 24-48 hours
 
 Follow us:
-Twitter: @VidStreamApp
-Instagram: @VidStreamOfficial''',
+Twitter: @VidMeetApp
+Instagram: @VidMeetOfficial''',
             style: TextStyle(color: Colors.white70),
           ),
         ),
