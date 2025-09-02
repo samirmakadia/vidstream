@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:vidstream/screens/setting/bottomsheet/legal_document_viewer.dart';
 import 'package:vidstream/screens/settings_screen.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';

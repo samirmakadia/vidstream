@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/services/search_service.dart';
@@ -23,6 +24,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   bool _isLoading = false;
   bool _hasSearched = false;
   String _currentQuery = '';
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -101,51 +103,92 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Search'),
-        bottom: PreferredSize(
+        title: _isSearching
+            ? Container(
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade900,
+            borderRadius: BorderRadius.circular(50),
+          ),
+          child: TextField(
+            controller: _searchController,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Search videos, users...',
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                icon: Icon(
+                  Icons.clear,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                onPressed: () {
+                  _searchController.clear();
+                  _performSearch('');
+                  setState(() {});
+                },
+              )
+                  : null,
+            ),
+            onChanged: _performSearch,
+            textInputAction: TextInputAction.search,
+          ),
+        )
+            : const Text('Search'),
+        leading: _isSearching
+            ? IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            setState(() {
+              _isSearching = false;
+              _searchController.clear();
+            });
+            _performSearch('');
+          },
+        )
+            : null,
+        // leadingWidth: _isSearching ? 28 : 56,
+        bottom: !_isSearching
+            ? PreferredSize(
           preferredSize: const Size.fromHeight(120),
           child: Column(
             children: [
-              // Search Bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search videos, users...',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isSearching = true;
+                    });
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                       ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                              onPressed: () {
-                                _searchController.clear();
-                                _performSearch('');
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
-                    onChanged: _performSearch,
-                    textInputAction: TextInputAction.search,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Search videos, users...',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              
+
               // Tabs
               TabBar(
                 controller: _tabController,
@@ -175,8 +218,10 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               ),
             ],
           ),
-        ),
+        )
+            : null,
       ),
+
       body: TabBarView(
         controller: _tabController,
         children: [
