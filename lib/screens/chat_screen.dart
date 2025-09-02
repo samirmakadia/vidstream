@@ -56,7 +56,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadOtherUser();
   }
 
-  Message? _getMessage({String? mediaUrl, int mediaSize = 0, double mediaDuration =0, String messageType = 'text'}) {
+  MessageModel? _getMessage({String? mediaUrl, int mediaSize = 0, double mediaDuration =0, String messageType = 'text'}) {
     final messageText = _messageController.text.trim();
     if (messageText.isEmpty && mediaUrl == null) {
       AppToast.showError("Enter message or attach media");
@@ -73,7 +73,7 @@ class _ChatScreenState extends State<ChatScreen> {
       thumbnailUrl: '',
     );
 
-    return Message(
+    return MessageModel(
       messageId: Utils.generateMessageId(),
       conversationId: conversationId,
       senderId: currentUserId!,
@@ -87,7 +87,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   }
 
-  Future<void> _sendMessageWithModel(Message msg) async {
+  Future<void> _sendMessageWithModel(MessageModel msg) async {
     try {
       SocketManager().sendMessage(msg);
       _messageController.clear();
@@ -134,7 +134,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendImage(File selectedImage) async {
-    Message? _message = _getMessage(mediaUrl: selectedImage.path, messageType: 'image');
+    MessageModel? _message = _getMessage(mediaUrl: selectedImage.path, messageType: 'image');
     if (_message == null) return;
 
     await MessageDatabase.instance.addOrUpdateMessage(_message);
@@ -169,7 +169,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (image == null) return;
 
     final File selectedImage = File(image.path);
-    Message? _message = _getMessage(mediaUrl: selectedImage.path, messageType: 'image');
+    MessageModel? _message = _getMessage(mediaUrl: selectedImage.path, messageType: 'image');
     if (_message == null) {
       return;
     }
@@ -698,7 +698,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: IconButton(
                     onPressed: () async {
                       if (_canSendMessage) {
-                        Message? tmpMessage = _getMessage();
+                        MessageModel? tmpMessage = _getMessage();
                         if (tmpMessage != null) {
                           await MessageDatabase.instance.addOrUpdateMessage(tmpMessage);
                           _sendMessageWithModel(tmpMessage);

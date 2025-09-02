@@ -89,7 +89,7 @@ class ChatStorage {
   }
 
   /// Add or update a message in the database
-  Future<void> addOrUpdateMessage(Message message) async {
+  Future<void> addOrUpdateMessage(MessageModel message) async {
     final db = await database;
     try {
       final count = await db.update(
@@ -130,7 +130,7 @@ class ChatStorage {
     }
   }
 
-  Future<List<Message>> getMessagesForConversation(
+  Future<List<MessageModel>> getMessagesForConversation(
     String conversationId, {
     int limit = 50,
     int offset = 0,
@@ -383,8 +383,8 @@ class ChatStorage {
   }
 
   // Helper methods
-  Message _messageFromMap(Map<String, dynamic> map) {
-    return Message(
+  MessageModel _messageFromMap(Map<String, dynamic> map) {
+    return MessageModel(
       id: map['id'] as String,
       messageId: map['messageId'] as String,
       conversationId: map['conversation_id'] as String,
@@ -457,17 +457,17 @@ class ChatStorage {
   }
 
   // Add message method for compatibility with old interface
-  Future<void> addMessage(Message message) async {
+  Future<void> addMessage(MessageModel message) async {
     // await saveMessage(message);
   }
 
   // Get messages method for compatibility
-  Future<List<Message>> getMessages(String conversationId) async {
+  Future<List<MessageModel>> getMessages(String conversationId) async {
     return getMessagesForConversation(conversationId);
   }
 
   // Cache messages method for batch operations
-  Future<void> cacheMessages(List<Message> messages) async {
+  Future<void> cacheMessages(List<MessageModel> messages) async {
     final db = await database;
     final batch = db.batch();
     

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import '../models/response_model.dart' as response_models;
 import '../models/api_models.dart';
 import '../services/http_client.dart';
@@ -277,6 +278,8 @@ class ApiService {
         queryParameters: queryParams,
         fromJson: (json) {
           final videosJson = (json as Map<String, dynamic>)['videos'] as List<dynamic>? ?? [];
+          debugPrint("Fetched videos count: ${videosJson.length}");
+
           return response_models.PaginatedResponse.fromJson(
             {'data': videosJson}, // wrap in 'data' to match your PaginatedResponse
                 (item) => ApiVideo.fromJson(item as Map<String, dynamic>),
@@ -414,6 +417,7 @@ class ApiService {
     int page = 1,
     int limit = 20,
     String? category,
+    CancelToken? cancelToken,
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final queryParams = <String, dynamic>{
@@ -427,6 +431,7 @@ class ApiService {
       final response = await _httpClient.get<response_models.PaginatedResponse<ApiVideo>>(
         '/videos/search',
         queryParameters: queryParams,
+        cancelToken: cancelToken,
         fromJson: (json) {
           final videoJson = (json as Map<String, dynamic>)['videos'] as List<dynamic>? ?? [];
           return response_models.PaginatedResponse.fromJson(
@@ -751,11 +756,11 @@ class ApiService {
     });
   }
 
-  Future<response_models.PaginatedResponse<Message>?> getSyncChatMessages({
+  Future<response_models.PaginatedResponse<MessageModel>?> getSyncChatMessages({
     required DateTime date,
   }) async {
     return ErrorHandler.safeApiCall(() async {
-      final response = await _httpClient.get<response_models.PaginatedResponse<Message>>(
+      final response = await _httpClient.get<response_models.PaginatedResponse<MessageModel>>(
         '/chat/messages/sync',
         queryParameters: {
           // Encode ISO8601 string for URL
@@ -765,7 +770,7 @@ class ApiService {
           final messageJson = (json as Map<String, dynamic>)['messages'] as List<dynamic>? ?? [];
           return response_models.PaginatedResponse.fromJson(
             {'data': messageJson},
-                (item) => Message.fromJson(item as Map<String, dynamic>),
+                (item) => MessageModel.fromJson(item as Map<String, dynamic>),
           );
         },
       );
@@ -799,13 +804,13 @@ class ApiService {
   }
 
   // Additional chat methods
-  Future<response_models.PaginatedResponse<Message>?> getConversationMessages({
+  Future<response_models.PaginatedResponse<MessageModel>?> getConversationMessages({
     required String conversationId,
     int page = 1,
     int limit = 20,
   }) async {
     return ErrorHandler.safeApiCall(() async {
-      final response = await _httpClient.get<response_models.PaginatedResponse<Message>>(
+      final response = await _httpClient.get<response_models.PaginatedResponse<MessageModel>>(
         '/chat/conversations/$conversationId/messages',
         queryParameters: {
           'page': page,
@@ -813,7 +818,7 @@ class ApiService {
         },
         fromJson: (json) => response_models.PaginatedResponse.fromJson(
           json as Map<String, dynamic>,
-          (item) => Message.fromJson(item as Map<String, dynamic>),
+          (item) => MessageModel.fromJson(item as Map<String, dynamic>),
         ),
       );
       
@@ -825,21 +830,21 @@ class ApiService {
     });
   }
 
-  Future<Message?> sendMessage({
+  Future<MessageModel?> sendMessage({
     required String conversationId,
     required String content,
     required String messageType,
     String? mediaUrl,
   }) async {
     return ErrorHandler.safeApiCall(() async {
-      final response = await _httpClient.post<Message>(
+      final response = await _httpClient.post<MessageModel>(
         '/chat/conversations/$conversationId/messages',
         data: {
           'content': content,
           'message_type': messageType,
           'media_url': mediaUrl,
         },
-        fromJson: (json) => Message.fromJson(json as Map<String, dynamic>),
+        fromJson: (json) => MessageModel.fromJson(json as Map<String, dynamic>),
       );
       
       if (response.success && response.data != null) {
@@ -1509,14 +1514,14 @@ class ApiService {
     return result ?? '';
   }
 
-  Future<Message?> sendChatMessage({
+  Future<MessageModel?> sendChatMessage({
     required String conversationId,
     required String content,
     required String messageType,
     String? mediaUrl,
   }) async {
     return ErrorHandler.safeApiCall(() async {
-      final response = await _httpClient.post<Message>(
+      final response = await _httpClient.post<MessageModel>(
         '/chat/messages',
         data: {
           'conversation_id': conversationId,
@@ -1524,7 +1529,7 @@ class ApiService {
           'message_type': messageType,
           'media_url': mediaUrl,
         },
-        fromJson: (json) => Message.fromJson(json as Map<String, dynamic>),
+        fromJson: (json) => MessageModel.fromJson(json as Map<String, dynamic>),
       );
       
       if (response.success && response.data != null) {
@@ -1535,13 +1540,13 @@ class ApiService {
     });
   }
 
-  Future<response_models.PaginatedResponse<Message>?> getChatMessages({
+  Future<response_models.PaginatedResponse<MessageModel>?> getChatMessages({
     required String conversationId,
     int page = 1,
     int limit = 50,
   }) async {
     return ErrorHandler.safeApiCall(() async {
-      final response = await _httpClient.get<response_models.PaginatedResponse<Message>>(
+      final response = await _httpClient.get<response_models.PaginatedResponse<MessageModel>>(
         '/chat/conversations/$conversationId/messages',
         queryParameters: {
           'page': page,
@@ -1549,7 +1554,7 @@ class ApiService {
         },
         fromJson: (json) => response_models.PaginatedResponse.fromJson(
           json as Map<String, dynamic>,
-          (item) => Message.fromJson(item as Map<String, dynamic>),
+          (item) => MessageModel.fromJson(item as Map<String, dynamic>),
         ),
       );
       

@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../models/api_models.dart';
 import '../../../repositories/api_repository.dart';
+import '../../../services/socket_manager.dart';
 import '../../../services/video_service.dart';
 import '../../../widgets/custom_image_widget.dart';
 
@@ -241,7 +242,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
           profileImageUrl: _avatarImageUrl ?? '',
           bannerImageUrl: _bannerImageUrl ?? '',
         );
-
+        eventBus.fire('updatedVideo');
         print('Profile update completed successfully');
       } else {
         print('Error: userId is null');

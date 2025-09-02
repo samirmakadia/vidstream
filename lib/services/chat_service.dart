@@ -53,7 +53,7 @@ class ChatService {
     }
   }
 
-  Future<List<Message>?> getSyncChatMessages1({required DateTime date}) async {
+  Future<List<MessageModel>?> getSyncChatMessages1({required DateTime date}) async {
     try {
       final paginatedResponse = await _apiRepository.api.getSyncChatMessages(date: date);
       return paginatedResponse?.data;

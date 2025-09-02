@@ -67,6 +67,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         _allVideos = videos;
         _isLoading = false;
       });
+      print('Loaded home ${videos.length} videos');
+
     } catch (e) {
       if(mounted) {
         setState(() => _isLoading = false);

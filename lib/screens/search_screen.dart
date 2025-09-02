@@ -1,4 +1,5 @@
-import 'package:dio/dio.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/services/search_service.dart';
@@ -18,19 +19,27 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   final SearchService _searchService = SearchService();
   final TextEditingController _searchController = TextEditingController();
   late TabController _tabController;
-  
+
   List<ApiVideo> _videos = [];
   List<ApiUser> _users = [];
   bool _isLoading = false;
   bool _hasSearched = false;
   String _currentQuery = '';
   bool _isSearching = false;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadDefaultContent(true);
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      _performSearch(query);
+    });
   }
 
   @override
@@ -73,6 +82,8 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       });
       return;
     }
+
+    _searchService.cancelSearch();
 
     setState(() {
       if(isLoading) {
@@ -131,7 +142,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               )
                   : null,
             ),
-            onChanged: _performSearch,
+            onChanged: _onSearchChanged,
             textInputAction: TextInputAction.search,
           ),
         )
@@ -368,7 +379,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-        
+
         Expanded(
           child: ListView.builder(
             itemCount: _users.length,
@@ -570,9 +581,9 @@ class VideoCard extends StatelessWidget {
                       )
                     : null,
               ),
-              
+
               const SizedBox(width: 12),
-              
+
               // Video Info
               Expanded(
                 child: Column(
@@ -586,9 +597,9 @@ class VideoCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    
+
                     const SizedBox(height: 4),
-                    
+
                     if (video.description.isNotEmpty)
                       Text(
                         video.description,
@@ -598,9 +609,9 @@ class VideoCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Stats
                     Row(
                       children: [
@@ -614,9 +625,9 @@ class VideoCard extends StatelessWidget {
                           _formatCountStatic(video.likesCount),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
-                        
+
                         const SizedBox(width: 16),
-                        
+
                         Icon(
                           Icons.visibility,
                           size: 16,
@@ -627,9 +638,9 @@ class VideoCard extends StatelessWidget {
                           _formatCountStatic(video.viewsCount),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
-                        
+
                         const Spacer(),
-                        
+
                         Text(
                           _formatDate(video.createdAt),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -651,7 +662,7 @@ class VideoCard extends StatelessWidget {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays}d ago';
     } else if (difference.inHours > 0) {
@@ -721,7 +732,7 @@ class UserCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    
+
                     if (user.bio?.isNotEmpty == true) ...[
                       const SizedBox(height: 4),
                       Text(
@@ -733,9 +744,9 @@ class UserCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                    
+
                     const SizedBox(height: 4),
-                    
+
                     // Stats
                     Row(
                       children: [
@@ -749,9 +760,9 @@ class UserCard extends StatelessWidget {
                           '${user.followersCount} followers',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
-                        
+
                         const SizedBox(width: 16),
-                        
+
                         Icon(
                           Icons.video_library,
                           size: 14,
@@ -767,7 +778,7 @@ class UserCard extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Arrow
               Icon(
                 Icons.arrow_forward_ios,

@@ -146,6 +146,7 @@ class HttpClient {
     Map<String, dynamic>? headers,
     T Function(dynamic)? fromJson,
     Duration? timeout,
+    CancelToken? cancelToken, // <-- add here
   }) async {
     try {
       final options = Options(
@@ -160,6 +161,7 @@ class HttpClient {
         data: data,
         queryParameters: queryParameters,
         options: options,
+        cancelToken: cancelToken,
       );
 
       return _handleSuccessResponse<T>(response, fromJson);
@@ -176,13 +178,15 @@ class HttpClient {
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
     T Function(dynamic)? fromJson,
-  }) async {
+        CancelToken? cancelToken,
+      }) async {
     return apiCall<T>(
       method: 'GET',
       endpoint: endpoint,
       queryParameters: queryParameters,
       headers: headers,
       fromJson: fromJson,
+      cancelToken: cancelToken,
     );
   }
 
@@ -415,7 +419,7 @@ class HttpClient {
         return ErrorHandler.createHttpException(statusCode, message, data: responseData);
       
       case DioExceptionType.cancel:
-        return ApiException('Request cancelled');
+        return CancelledRequestException();
       
       case DioExceptionType.badCertificate:
         return NetworkException('Invalid certificate');

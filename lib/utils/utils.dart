@@ -192,6 +192,30 @@ class Utils{
     }
   }
 
+  static Map<String, dynamic> parseNotificationMessage(String raw) {
+    String normalized = raw.replaceAll("'", '"');
+
+    final objectIdRegex = RegExp(r'new ObjectId\("([a-fA-F0-9]+)"\)');
+    normalized = normalized.replaceAllMapped(objectIdRegex, (m) => '"${m[1]}"');
+
+    final keyRegex = RegExp(r'([{,]\s*)([a-zA-Z0-9_]+)\s*:');
+    normalized = normalized.replaceAllMapped(keyRegex, (m) => '${m[1]}"${m[2]}":');
+
+    final isoDateRegex =
+    RegExp(r'(?<!")(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)(?!")');
+    normalized = normalized.replaceAllMapped(isoDateRegex, (m) => '"${m[1]}"');
+
+    normalized = normalized.replaceAll('\n', '');
+
+    try {
+      return jsonDecode(normalized) as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint("❌ Failed to parse normalized JSON: $e");
+      debugPrint("Payload: $normalized");
+      return {};
+    }
+  }
+
 
   static String _generateRandomString(int length) {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

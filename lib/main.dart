@@ -1,7 +1,9 @@
+import 'dart:convert';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vidstream/services/socket_manager.dart';
 import 'package:vidstream/theme.dart';
 import 'package:vidstream/screens/auth_screen.dart';
 import 'package:vidstream/screens/main_app_screen.dart';
@@ -10,7 +12,6 @@ import 'package:vidstream/services/notification_service.dart';
 import 'package:vidstream/services/dialog_manager_service.dart';
 import 'package:vidstream/services/service_locator.dart';
 import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/models/api_models.dart';
 
 
@@ -19,7 +20,7 @@ void main() async {
 
   // Initialize services (non-blocking)
   await _initializeServices();
-  
+
   runApp(const MyApp());
 }
 
@@ -33,7 +34,8 @@ Future<void> _initializeServices() async {
     await ApiRepository.instance.initialize();
     await DialogManagerService().initialize();
     // await ChatService().initialize();
-     print('✅ All services initialized successfully');
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    print('✅ All services initialized successfully');
   } catch (e) {
     print('❌ Service initialization error: $e');
     // Don't block app startup - services can retry later
@@ -54,6 +56,11 @@ class MyApp extends StatelessWidget {
       home: const AuthWrapper(),
     );
   }
+}
+
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  NotificationService.handleNotificationClickPayload(jsonEncode(message.data));
 }
 
 class AuthWrapper extends StatefulWidget {

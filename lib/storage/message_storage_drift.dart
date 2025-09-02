@@ -46,7 +46,7 @@ class MessageDatabase extends _$MessageDatabase {
   int get schemaVersion => 1;
 
   // Insert or update a message
-  Future<void> addOrUpdateMessage(Message message) async {
+  Future<void> addOrUpdateMessage(MessageModel message) async {
     final nowIso = DateTime.now().toIso8601String();
 
     await into(messagesDb).insertOnConflictUpdate(MessagesDbCompanion(
@@ -66,7 +66,7 @@ class MessageDatabase extends _$MessageDatabase {
 
 
   /// Get the last message for a conversation
-  Future<Message?> getLastMessageByConversationId(String conversationId) async {
+  Future<MessageModel?> getLastMessageByConversationId(String conversationId) async {
     final row = await (select(messagesDb)
       ..where((tbl) => tbl.conversationId.equals(conversationId))
       ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)])
@@ -75,7 +75,7 @@ class MessageDatabase extends _$MessageDatabase {
 
     if (row == null) return null;
 
-    return Message(
+    return MessageModel(
       id: row.id,
       messageId: row.messageId,
       conversationId: row.conversationId,
@@ -91,14 +91,14 @@ class MessageDatabase extends _$MessageDatabase {
   }
 
   //Get messages for a conversation
-  Future<List<Message>> getMessagesForConversation(String conversationId, {int limit = 50, int offset = 0}) async {
+  Future<List<MessageModel>> getMessagesForConversation(String conversationId, {int limit = 50, int offset = 0}) async {
     final rows = await (select(messagesDb)
       ..where((tbl) => tbl.conversationId.equals(conversationId))
       ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)])
       ..limit(limit, offset: offset)
     ).get();
 
-    return rows.map((row) => Message(
+    return rows.map((row) => MessageModel(
       id: row.id,
       messageId: row.messageId,
       conversationId: row.conversationId,
@@ -114,14 +114,14 @@ class MessageDatabase extends _$MessageDatabase {
   }
 
   // Watch messages for a conversation as a stream
-  Stream<List<Message>> watchMessagesForConversation(String conversationId, {int limit = 50, int offset = 0}) {
+  Stream<List<MessageModel>> watchMessagesForConversation(String conversationId, {int limit = 50, int offset = 0}) {
     final query = (select(messagesDb)
       ..where((tbl) => tbl.conversationId.equals(conversationId))
       ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)])
       ..limit(limit, offset: offset)
     );
 
-    return query.watch().map((rows) => rows.map((row) => Message(
+    return query.watch().map((rows) => rows.map((row) => MessageModel(
       id: row.id,
       messageId: row.messageId,
       conversationId: row.conversationId,

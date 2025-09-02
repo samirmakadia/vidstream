@@ -198,7 +198,7 @@ class ApiVideo {
   final DateTime updatedAt;
   final bool isPublic;
   late final bool isLiked;
-  final ApiUser? user; // Include user data in video responses
+  final ApiUser? user;
 
   ApiVideo({
     required this.id,
@@ -512,7 +512,7 @@ enum MessageStatus {
   pending,
 }
 
-class Message {
+class MessageModel {
   final String? id;
   final String messageId;
   final String conversationId;
@@ -547,7 +547,7 @@ class Message {
     }
   }
 
-  Message({
+  MessageModel({
     this.id,
     required this.messageId,
     required this.conversationId,
@@ -562,10 +562,10 @@ class Message {
     this.deletedFor = const [],
   });
 
-  factory Message.fromJson(Map<String, dynamic> json) {
+  factory MessageModel.fromJson(Map<String, dynamic> json) {
     final nowIso = DateTime.now().toIso8601String();
 
-    return Message(
+    return MessageModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       messageId: json['messageId']?.toString()
           ?? json['_id']?.toString()
@@ -616,7 +616,7 @@ class Message {
     };
   }
 
-  Message copyWith({
+  MessageModel copyWith({
     String? id,
     String? messageId,
     String? conversationId,
@@ -630,7 +630,7 @@ class Message {
     bool? isDeleted,
     List<String>? deletedFor,
   }) {
-    return Message(
+    return MessageModel(
       id: id ?? this.id,
       messageId: messageId ?? this.messageId,
       conversationId: conversationId ?? this.conversationId,
@@ -706,7 +706,7 @@ class MessageContent {
 class Conversation {
   final String id;
   final String conversationId;
-  final Message? lastMessage;
+  final MessageModel? lastMessage;
   final int unreadCount;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -729,7 +729,7 @@ class Conversation {
       id: json['_id']?.toString() ?? '',
       conversationId: json['conversationId']?.toString() ?? '',
       lastMessage: json['lastMessage'] != null
-          ? Message.fromJson(json['lastMessage'])
+          ? MessageModel.fromJson(json['lastMessage'])
           : null,
       unreadCount: (json['unread_count'] ?? json['unreadCount']) is int
           ? (json['unread_count'] ?? json['unreadCount']) as int
@@ -760,7 +760,7 @@ class Conversation {
   Conversation copyWith({
     String? id,
     List<ApiUser>? participants,
-    Message? lastMessage,
+    MessageModel? lastMessage,
     DateTime? lastMessageTime,
     int? unreadCount,
     List<String>? deletedFor,
@@ -886,5 +886,5 @@ class OnlineUser {
 typedef AppUser = ApiUser;
 typedef Video = ApiVideo; 
 typedef Comment = ApiComment;
-typedef ChatMessage = Message;
+typedef ChatMessage = MessageModel;
 typedef ChatConversation = Conversation;

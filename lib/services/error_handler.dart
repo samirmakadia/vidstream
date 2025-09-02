@@ -20,8 +20,11 @@ class ErrorHandler {
   // Centralized error handling
   static void handleError(dynamic error) {
     debugPrint('ErrorHandler: Handling error: $error');
-    
-    if (error is AuthenticationException) {
+
+    if (error is CancelledRequestException) {
+      debugPrint('Request was cancelled, no toast shown.');
+      return;
+    } else if (error is AuthenticationException) {
       _handleAuthenticationError(error);
     } else if (error is ValidationException) {
       _handleValidationError(error);

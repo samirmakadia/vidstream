@@ -68,7 +68,7 @@ class SocketManager {
 
     final Map<String, dynamic> jsonData = (data as Map).cast<String, dynamic>();
 
-    final message = Message.fromJson(jsonData);
+    final message = MessageModel.fromJson(jsonData);
 
     final currentUserId = _currentUserId ?? "";
     final receiverId = _getReceiverId(
@@ -99,7 +99,7 @@ class SocketManager {
     return parts[0] == senderId ? parts[1] : parts[0];
   }
 
-  Future<void> sendSeenEvent(Message message, String currentUserId) async {
+  Future<void> sendSeenEvent(MessageModel message, String currentUserId) async {
     try {
       final receiverId = _getReceiverId(conversationId: message.conversationId, currentUserId: currentUserId, senderId: message.senderId,);
 
@@ -118,7 +118,7 @@ class SocketManager {
     }
   }
 
-  void sendMessage(Message message) async {
+  void sendMessage(MessageModel message) async {
     try {
       final nowIso = DateTime.now().toIso8601String();
       String jsonString = jsonEncode(message.toSocketJson());
@@ -224,7 +224,7 @@ class SocketManager {
   }
 
   Future<void> _sendDeliveredReceipt(
-      Message message,
+      MessageModel message,
       Map<String, dynamic> messageJson,
       String receiverId,
       ) async {
@@ -242,7 +242,7 @@ class SocketManager {
 
       _socket?.emit("message", deliveredPayload);
 
-      final updatedMessage = Message.fromJson({
+      final updatedMessage = MessageModel.fromJson({
         ...messageJson,
         "messageId": message.messageId,
         "status": "delivered",

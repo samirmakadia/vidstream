@@ -169,6 +169,7 @@ class AgeRange {
   }
 }
 
+class CancelledRequestException implements Exception {}
 
 
 // Custom Exception Classes

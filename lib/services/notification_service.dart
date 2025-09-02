@@ -5,7 +5,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
+import 'package:vidstream/screens/other_user_profile_screen.dart';
 import 'package:vidstream/utils/utils.dart';
 
 import '../main.dart';
@@ -57,35 +59,75 @@ class NotificationService {
   }
 
   Future<void> _setBackgroundMessageHandler() async {
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   }
 
-  Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await Firebase.initializeApp();
-    NotificationService.handleNotificationClickPayload(jsonEncode(message.data));
+    final payload = jsonEncode({
+      ...message.data,
+      "title": message.notification?.title ?? '',
+      "body": message.notification?.body ?? '',
+    });
+    print('Handling notification click with payload: $message');
+    await NotificationService.handleNotificationClickPayload(payload);
   }
 
   static Future<void> handleNotificationClickPayload(String payload) async {
+    print('Handling notification click with payload: $payload');
     if (payload.isEmpty) return;
+
     try {
       final data = jsonDecode(payload);
-      final String? conversationId = data['conversationId'];
-      final String? title = data['title'];
-      if (conversationId != null && navigatorKey.currentState != null) {
-        navigatorKey.currentState!.push(
-          MaterialPageRoute(
-            builder: (_) => ChatScreen(
-              conversationId: conversationId,
-              name: title ?? '',
-              imageUrl: '',
-            ),
-          ),
-        );
+
+      final String? type = data['type'];
+
+      if (type == null) return;
+
+      if (type == 'user' && data['user'] != null) {
+        var rawUser = data['user'];
+
+        if (rawUser is String) {
+          final userJson = Utils.parseNotificationMessage(rawUser);
+          if (userJson.isNotEmpty) {
+            final userModel = ApiUser.fromJson(userJson);
+
+            navigatorKey.currentState?.push(
+              MaterialPageRoute(
+                builder: (_) => OtherUserProfileScreen(
+                  userId: userModel.id,
+                  displayName: userModel.displayName,
+                ),
+              ),
+            );
+          }
+        }
+      } else if (type == 'message' && data['message'] != null) {
+        var rawMessage = data['message'];
+
+        if (rawMessage is String) {
+          final messageJson = Utils.parseNotificationMessage(rawMessage);
+          if (messageJson.isNotEmpty) {
+            final messageModel = MessageModel.fromJson(messageJson);
+
+            navigatorKey.currentState?.push(
+              MaterialPageRoute(
+                builder: (_) => ChatScreen(
+                  conversationId: messageModel.conversationId,
+                  otherUserId: messageModel.senderId,
+                  name: data['title'] ?? 'Chat',
+                ),
+              ),
+            );
+          }
+        }
       }
-    } catch (e) {
+    } catch (e,s) {
+      debugPrint('Error parsing notification payload: $s');
       debugPrint("❌ Error parsing notification payload: $e");
     }
   }
+
 
 
   Future<void> _showNotification(RemoteMessage message) async {
@@ -112,7 +154,7 @@ class NotificationService {
     print('payload $payload');
 
     await _localNotifications.show(
-      0,
+      message.hashCode, // use unique id
       message.notification?.title ?? 'No Title',
       message.notification?.body ?? 'No Body',
       platformDetails,
@@ -123,6 +165,7 @@ class NotificationService {
 
   Future<void> listenToNotifications() async {
     FirebaseMessaging.instance.getInitialMessage().then((message) {
+      print('App opened from terminated state via notification$message');
       if (message != null) {
         final payload = jsonEncode({
           ...message.data,
@@ -130,10 +173,11 @@ class NotificationService {
           "body": message.notification?.body ?? '',
         });
         NotificationService.handleNotificationClickPayload(payload);
-      }
+      } 
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('App opened from terminated state via notification$message');
       final payload = jsonEncode({
         ...message.data,
         "title": message.notification?.title ?? '',
@@ -167,8 +211,7 @@ class NotificationService {
     // --- iOS Permission ---
     if (Platform.isIOS) {
       final iosPlugin = _localNotifications
-          .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
 
       final granted = await iosPlugin?.requestPermissions(
         alert: true,
@@ -180,14 +223,17 @@ class NotificationService {
         debugPrint("❌ iOS notification permission not granted");
       } else {
         debugPrint("✅ iOS notification permission granted");
+
+        // --- Add this to get APNs token ---
+        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        debugPrint("✅ APNs token: $apnsToken");
       }
     }
 
     // --- Android 13+ Permission ---
     if (Platform.isAndroid) {
       final androidPlugin = _localNotifications
-          .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
       final granted = await androidPlugin?.requestNotificationsPermission();
 
@@ -200,8 +246,11 @@ class NotificationService {
   }
 
 
+
   void _onDidReceiveNotificationResponse(NotificationResponse response) async {
     final String? payload = response.payload;
+    print('App opened from terminated state via notification$payload');
+
     if (payload != null && payload.isNotEmpty) {
       await NotificationService.handleNotificationClickPayload(payload);
     }
