@@ -350,11 +350,20 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
     });
 
     try {
+      final isCurrentlyFollowing = await _followService.isFollowing(
+        followerId: _currentUserId!,
+        followedId: targetUserId,
+      );
       await _followService.toggleFollow(
         followerId: _currentUserId!,
         followedId: targetUserId,
       );
       eventBus.fire('updatedUser');
+      final newIsFollow = !isCurrentlyFollowing;
+      eventBus.fire({
+        "userId": targetUserId,
+        "isFollow": newIsFollow,
+      });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

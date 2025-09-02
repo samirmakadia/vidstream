@@ -205,6 +205,10 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
         ),
       );
       eventBus.fire('updatedUser');
+      eventBus.fire({
+        "userId": widget.userId,
+        "isFollow": _isFollowing,
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

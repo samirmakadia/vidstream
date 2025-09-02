@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -39,12 +40,35 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
   bool _isFollowLoading = false;
   int _localLikeCount = 0;
   final _videoKey = GlobalKey<VideoPlayerWidgetState>();
+  late StreamSubscription _followSubscription;
 
   @override
   void initState() {
     super.initState();
     _localLikeCount = widget.video.likesCount;
     _isLiked = widget.video.isLiked;
+    _followSubscription = eventBus.on().listen((event) {
+      if (event is Map<String, dynamic>) {
+        if (event.containsKey("userId") && event.containsKey("isFollow")) {
+          final userId = event["userId"];
+          final isFollow = event["isFollow"];
+
+          debugPrint("🔄 User $userId follow status updated: $isFollow");
+
+          if (widget.video.user != null && widget.video.user!.id == userId) {
+            final updatedUser = widget.video.user!.copyWith(
+              isFollow: isFollow,
+              followersCount: isFollow
+                  ? widget.video.user!.followersCount + 1
+                  : (widget.video.user!.followersCount > 0
+                  ? widget.video.user!.followersCount - 1
+                  : 0),
+            );
+            widget.onFollowUpdated?.call(updatedUser);
+          }
+        }
+      }
+    });
   }
 
   @override
