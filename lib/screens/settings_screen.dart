@@ -207,7 +207,7 @@ Q: How do I delete my account?
 A: Go to Settings → Delete Account. Note: This action cannot be undone.
 
 Contact Support:
-Email: support@vidstream.com
+Email: support@vidmeet.com
 Response time: 24-48 hours
 
 Follow us:
@@ -413,7 +413,7 @@ Instagram: @VidMeetOfficial''',
                     child: Column(
                       children: [
                         Text(
-                          'VidStream',
+                          'VidMeet',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: Colors.white.withValues(alpha: 0.6),
                             fontWeight: FontWeight.bold,

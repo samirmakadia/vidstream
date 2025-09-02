@@ -458,13 +458,16 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                   children: [
                     Row(
                       children: [
-                        GestureDetector(
-                          onTap: () => _navigateToUserProfile(comment.user!),
-                          child: Text(
-                            comment.user!.displayName ?? 'Unknown User',
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              fontSize: isReply ? 12 : null,
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: () => _navigateToUserProfile(comment.user!),
+                            child: Text(
+                              comment.user!.displayName ?? 'Unknown User',
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: isReply ? 12 : null,
+                              ),
+                              overflow: TextOverflow.ellipsis
                             ),
                           ),
                         ),
@@ -475,6 +478,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                             color: Colors.grey[600],
                             fontSize: isReply ? 10 : null,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -547,6 +551,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                 ),
               ),
               PopupMenuButton<String>(
+                padding: EdgeInsets.zero,
                 icon: Icon(Icons.more_vert, size: 18, color: Colors.grey[600]),
                 onSelected: (value) {
                   switch (value) {

@@ -152,8 +152,8 @@ class _RateUsDialogState extends State<RateUsDialog> with TickerProviderStateMix
   Future<void> _openFeedbackEmail() async {
     final Uri emailUrl = Uri(
       scheme: 'mailto',
-      path: 'feedback@vidstream.com',
-      query: 'subject=VidStream App Feedback&body=Please share your feedback here...',
+      path: 'feedback@vidmeet.com',
+      query: 'subject=VidMeet App Feedback&body=Please share your feedback here...',
     );
 
     try {
