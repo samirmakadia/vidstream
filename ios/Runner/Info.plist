@@ -50,6 +50,8 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+    <true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs location permission to show nearby users in Meet.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

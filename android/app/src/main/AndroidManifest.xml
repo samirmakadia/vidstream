@@ -50,6 +50,10 @@
             android:name="com.google.android.gms.auth.api.credentials"
             android:value="true" />
 
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="Default"/>
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
