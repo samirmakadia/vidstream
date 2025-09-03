@@ -182,7 +182,7 @@ class VideoService {
     }
   }
 
-  // Upload a file to /common/upload
+  // Upload a file to /helper/upload
   Future<ApiCommonFile?> uploadCommonFile({
     required String filePath,
     String type = "post",

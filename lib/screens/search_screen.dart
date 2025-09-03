@@ -5,8 +5,10 @@ import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/services/search_service.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
+import '../helper/navigation_helper.dart';
 import '../utils/utils.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/professional_bottom_ad.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -118,12 +120,16 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
         leading: _isSearching ? _buildBackButton() : null,
         bottom: !_isSearching ? _buildSearchTabBar(context) : null,
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildVideosTab(),
-          _buildUsersTab(),
-        ],
+      body: SafeArea(
+        child: ProfessionalBottomAd(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildVideosTab(),
+              _buildUsersTab(),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -378,20 +384,19 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               return UserCard(
                 user: user,
                 onTap: () async {
-                 final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => OtherUserProfileScreen(userId: user.id),
-                    ),
+                  NavigationHelper.navigateWithAd(
+                    context: context,
+                    destination: OtherUserProfileScreen(userId: user.id),
+                    onReturn: (result) {
+                      if (result != null) {
+                        if (_currentQuery.isNotEmpty) {
+                          _performSearch(_currentQuery, isLoading: false);
+                        } else {
+                          _loadDefaultContent(false);
+                        }
+                      }
+                    },
                   );
-                 if(result != null) {
-                    if(_currentQuery.isNotEmpty) {
-                      _performSearch(_currentQuery, isLoading: false);
-                    }
-                    else {
-                      _loadDefaultContent(false);
-                    }
-                 }
                 },
               );
             },
@@ -406,24 +411,23 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
-        final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => VideoPlayerScreen(
-                video: video,
-                allVideos: _videos,
-                user: null,
-              ),
+          NavigationHelper.navigateWithAd<String?>(
+            context: context,
+            destination: VideoPlayerScreen(
+              video: video,
+              allVideos: _videos,
+              user: null,
             ),
+            onReturn: (result) {
+              if (result != null) {
+                if (_currentQuery.isNotEmpty) {
+                  _performSearch(_currentQuery, isLoading: false);
+                } else {
+                  _loadDefaultContent(false);
+                }
+              }
+            },
           );
-        if(result != null) {
-          if(_currentQuery.isNotEmpty) {
-            _performSearch(_currentQuery, isLoading: false);
-          }
-          else {
-            _loadDefaultContent(false);
-          }
-         }
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(

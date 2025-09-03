@@ -3,6 +3,7 @@ import 'package:vidstream/services/report_service.dart';
 import 'package:vidstream/models/api_models.dart';
 
 import '../widgets/common_snackbar.dart';
+import '../widgets/professional_bottom_ad.dart';
 
 class MyReportsScreen extends StatefulWidget {
   final String currentUserId;
@@ -114,53 +115,55 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
         ),
         title: const Text('My Reports'),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : _reports.isEmpty
-          ? SafeArea( 
-            child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.report_off, color: Colors.grey[400], size: 64),
-                                    const SizedBox(height: 16),
-                                    const Text(
-                                      'No Reports Yet',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: ProfessionalBottomAd(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator(color: Colors.white))
+              : _reports.isEmpty
+              ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.report_off, color: Colors.grey[400], size: 64),
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'No Reports Yet',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'You haven\'t reported any content yet.\nHelp keep our community safe by reporting inappropriate content.',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'You haven\'t reported any content yet.\nHelp keep our community safe by reporting inappropriate content.',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 14,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
+                                    ],
+                        ),
                       ),
-                    ),
-                  ),
-          )
-          : SafeArea(
-            child: RefreshIndicator(
-                    onRefresh: _fetchReports,
-                    child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _reports.length,
-            itemBuilder: (context, index) {
-              final report = _reports[index];
-              return _buildReportItem(report);
-            },
-                    ),
-                  ),
-          ),
+                    )
+              : SafeArea(
+                child: RefreshIndicator(
+                        onRefresh: _fetchReports,
+                        child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _reports.length,
+                itemBuilder: (context, index) {
+                  final report = _reports[index];
+                  return _buildReportItem(report);
+                },
+                        ),
+                      ),
+              ),
+        ),
+      ),
     );
   }
 

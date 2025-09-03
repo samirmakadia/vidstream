@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:vidstream/screens/home/bottomsheet/report_dialog.dart';
+import '../../../helper/navigation_helper.dart';
 import '../../../models/api_models.dart';
 import '../../../repositories/api_repository.dart';
 import '../../../services/comment_service.dart';
@@ -183,12 +184,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   }
 
   void _navigateToUserProfile(ApiUser user) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => OtherUserProfileScreen(
-          userId: user.id,
-          displayName: user.displayName,
-        ),
+    NavigationHelper.navigateWithAd(
+      context: context,
+      destination: OtherUserProfileScreen(
+        userId: user.id,
+        displayName: user.displayName,
       ),
     );
   }

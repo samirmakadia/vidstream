@@ -10,6 +10,8 @@ import 'package:vidstream/screens/create_post_screen.dart';
 import 'package:vidstream/screens/meet_screen.dart';
 import 'package:vidstream/screens/chat_list_screen.dart';
 
+import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
 import '../manager/firebase_manager.dart';
 import '../manager/session_manager.dart';
 import '../services/meet_service.dart';
@@ -71,14 +73,13 @@ class _MainAppScreenState extends State<MainAppScreen> {
   void _onTabTapped(int index) {
     if (index == 2) {
       _homeScreenKey.currentState?.setScreenVisible(false);
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => const CreatePostScreen(),
-          fullscreenDialog: true,
-        ),
-      ).then((_) {
-        _homeScreenKey.currentState?.setScreenVisible(true);
-      });
+      NavigationHelper.navigateWithAd(
+        context: context,
+        destination: const CreatePostScreen(),
+        onReturn: (_) {
+          _homeScreenKey.currentState?.setScreenVisible(true);
+        },
+      );
     } else {
       final newIndex = index > 2 ? index - 1 : index;
       if (_currentIndex == 0 && newIndex != 0) {
@@ -120,95 +121,96 @@ class _MainAppScreenState extends State<MainAppScreen> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.black,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-          border: Border(
-            top: BorderSide(
-              color: Colors.white.withValues(alpha: 0.2),
-              width: 0.5,
-            ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
+    );
+  }
+
+
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+        border: Border(
+          top: BorderSide(
+            color: Colors.white.withValues(alpha: 0.2),
+            width: 0.5,
           ),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                // Home
-                _buildNavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home,
-                  label: 'Home',
-                  index: 0,
-                  isActive: _currentIndex == 0,
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home,
+                label: 'Home',
+                index: 0,
+                isActive: _currentIndex == 0,
+              ),
+              _buildNavItem(
+                icon: Icons.videocam_outlined,
+                activeIcon: Icons.videocam,
+                label: 'Meet',
+                index: 1,
+                isActive: _currentIndex == 1,
+              ),
+              Container(
+                height: 42,
+                width: 42,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                
-                // Meet
-                _buildNavItem(
-                  icon: Icons.videocam_outlined,
-                  activeIcon: Icons.videocam,
-                  label: 'Meet',
-                  index: 1,
-                  isActive: _currentIndex == 1,
-                ),
-
-                Container(
-                  height: 42,
-                  width: 42,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(28),
+                  child: InkWell(
                     borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(28),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(28),
-                      onTap: () => _onTabTapped(2),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.black,
-                        size: 26,
-                      ),
+                    onTap: () => _onTabTapped(2),
+                    child: const Icon(
+                      Icons.add,
+                      color: Colors.black,
+                      size: 26,
                     ),
                   ),
                 ),
-
-                _buildNavItem(
-                  icon: Icons.chat_bubble_outline,
-                  activeIcon: Icons.chat_bubble,
-                  label: 'Chat',
-                  iconSize: 22,
-                  index: 3,
-                  isActive: _currentIndex == 2,
-                ),
-                
-                // Profile
-                _buildNavItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person,
-                  label: 'Profile',
-                  index: 4,
-                  isActive: _currentIndex == 3,
-                ),
-              ],
-            ),
+              ),
+              _buildNavItem(
+                icon: Icons.chat_bubble_outline,
+                activeIcon: Icons.chat_bubble,
+                label: 'Chat',
+                iconSize: 22,
+                index: 3,
+                isActive: _currentIndex == 2,
+              ),
+              _buildNavItem(
+                icon: Icons.person_outline,
+                activeIcon: Icons.person,
+                label: 'Profile',
+                index: 4,
+                isActive: _currentIndex == 3,
+              ),
+            ],
           ),
         ),
       ),

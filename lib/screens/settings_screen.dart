@@ -14,8 +14,11 @@ import 'package:vidstream/storage/message_storage_drift.dart';
 import 'package:vidstream/widgets/rate_us_dialog.dart';
 import 'package:vidstream/widgets/app_update_dialog.dart';
 import 'package:vidstream/services/dialog_manager_service.dart';
+import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
 import '../widgets/common_app_dialog.dart';
 import '../widgets/common_snackbar.dart';
+import '../widgets/professional_bottom_ad.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ApiUser? currentUser;
@@ -171,7 +174,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-
   void _showHelpAndSupport() {
     showDialog(
       context: context,
@@ -289,146 +291,148 @@ Instagram: @VidMeetOfficial''',
             ? const Center(
                 child: CircularProgressIndicator(color: Colors.white),
               )
-            : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // Profile Section
-                  _buildSectionHeader('Profile'),
-                  _buildSettingsItem(
-                    icon: Icons.edit,
-                    title: 'Edit Profile',
-                    subtitle: 'Update your name, bio, and photos',
-                    onTap: _showEditProfileBottomSheet,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Privacy Section
-                  _buildSectionHeader('Privacy & Safety'),
-                  _buildSettingsItem(
-                    icon: Icons.block,
-                    title: 'Blocked Users',
-                    subtitle: 'Manage blocked accounts',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const BlockedUsersScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.report,
-                    title: 'My Reports (Spam)',
-                    subtitle: 'View your submitted reports',
-                    onTap: () {
-                      if (_currentUser?.id != null) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => MyReportsScreen(
-                              currentUserId: _currentUser!.id,
+            : SafeArea(
+              child: ProfessionalBottomAd(
+                child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      // Profile Section
+                      _buildSectionHeader('Profile'),
+                      _buildSettingsItem(
+                        icon: Icons.edit,
+                        title: 'Edit Profile',
+                        subtitle: 'Update your name, bio, and photos',
+                        onTap: _showEditProfileBottomSheet,
+                      ),
+                      const SizedBox(height: 20),
+                
+                      // Privacy Section
+                      _buildSectionHeader('Privacy & Safety'),
+                      _buildSettingsItem(
+                        icon: Icons.block,
+                        title: 'Blocked Users',
+                        subtitle: 'Manage blocked accounts',
+                        onTap: () {
+                          NavigationHelper.navigateWithAd(
+                            context: context,
+                            destination: const BlockedUsersScreen(),
+                          );
+                        },
+                      ),
+                      _buildSettingsItem(
+                        icon: Icons.report,
+                        title: 'My Reports (Spam)',
+                        subtitle: 'View your submitted reports',
+                        onTap: () {
+                          if (_currentUser?.id != null) {
+                            NavigationHelper.navigateWithAd(
+                              context: context,
+                              destination: MyReportsScreen(
+                                currentUserId: _currentUser!.id,
+                              ),
+                            );
+                          } else {
+                            AppSnackBar.showError(context, 'User not found');
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                
+                
+                      // Support Section
+                      _buildSectionHeader('Support'),
+                      _buildSettingsItem(
+                        icon: Icons.help,
+                        title: 'Help & Support',
+                        subtitle: 'Get help and contact us',
+                        onTap: _showHelpAndSupport,
+                      ),
+                      _buildSettingsItem(
+                        icon: Icons.star,
+                        title: 'Rate VidMeet',
+                        subtitle: 'Share your experience with us',
+                        onTap: _showRateUsDialog,
+                      ),
+                      _buildSettingsItem(
+                        icon: Icons.system_update,
+                        title: 'Check for Updates',
+                        subtitle: 'See if a new version is available',
+                        onTap: _checkForUpdates,
+                      ),
+                      const SizedBox(height: 20),
+                
+                
+                      // Legal Section
+                      _buildSectionHeader('Legal'),
+                      _buildSettingsItem(
+                        icon: Icons.privacy_tip,
+                        title: 'Privacy Policy',
+                        subtitle: 'How we handle your data',
+                        onTap: _showPrivacyPolicy,
+                      ),
+                      _buildSettingsItem(
+                        icon: Icons.description,
+                        title: 'Terms & Conditions',
+                        subtitle: 'Our terms of service',
+                        onTap: _showTermsAndConditions,
+                      ),
+                      _buildSettingsItem(
+                        icon: Icons.group,
+                        title: 'Community Guidelines',
+                        subtitle: 'Rules for our community',
+                        onTap: _showCommunityGuidelines,
+                      ),
+                      _buildSettingsItem(
+                        icon: Icons.gavel,
+                        title: 'Legal Compliance Guide',
+                        subtitle: 'Legal requirements and compliance',
+                        onTap: _showLegalComplianceGuide,
+                      ),
+                      const SizedBox(height: 20),
+                
+                      // Account Section
+                      _buildSectionHeader('Account'),
+                      _buildSettingsItem(
+                        icon: Icons.logout,
+                        title: 'Logout',
+                        subtitle: 'Sign out of your account',
+                        onTap: _signOut,
+                        textColor: Colors.orange,
+                      ),
+                      _buildSettingsItem(
+                        icon: Icons.delete_forever,
+                        title: 'Delete Account',
+                        subtitle: 'Permanently delete your account',
+                        onTap: _deleteAccount,
+                        textColor: Colors.red,
+                      ),
+                      const SizedBox(height: 40),
+                
+                      // App Info
+                      Center(
+                        child: Column(
+                          children: [
+                            Text(
+                              'VidMeet',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        );
-                      } else {
-                        AppSnackBar.showError(context, 'User not found');
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-
-                  // Support Section
-                  _buildSectionHeader('Support'),
-                  _buildSettingsItem(
-                    icon: Icons.help,
-                    title: 'Help & Support',
-                    subtitle: 'Get help and contact us',
-                    onTap: _showHelpAndSupport,
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.star,
-                    title: 'Rate VidMeet',
-                    subtitle: 'Share your experience with us',
-                    onTap: _showRateUsDialog,
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.system_update,
-                    title: 'Check for Updates',
-                    subtitle: 'See if a new version is available',
-                    onTap: _checkForUpdates,
-                  ),
-                  const SizedBox(height: 20),
-
-
-                  // Legal Section
-                  _buildSectionHeader('Legal'),
-                  _buildSettingsItem(
-                    icon: Icons.privacy_tip,
-                    title: 'Privacy Policy',
-                    subtitle: 'How we handle your data',
-                    onTap: _showPrivacyPolicy,
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.description,
-                    title: 'Terms & Conditions',
-                    subtitle: 'Our terms of service',
-                    onTap: _showTermsAndConditions,
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.group,
-                    title: 'Community Guidelines',
-                    subtitle: 'Rules for our community',
-                    onTap: _showCommunityGuidelines,
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.gavel,
-                    title: 'Legal Compliance Guide',
-                    subtitle: 'Legal requirements and compliance',
-                    onTap: _showLegalComplianceGuide,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Account Section
-                  _buildSectionHeader('Account'),
-                  _buildSettingsItem(
-                    icon: Icons.logout,
-                    title: 'Logout',
-                    subtitle: 'Sign out of your account',
-                    onTap: _signOut,
-                    textColor: Colors.orange,
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.delete_forever,
-                    title: 'Delete Account',
-                    subtitle: 'Permanently delete your account',
-                    onTap: _deleteAccount,
-                    textColor: Colors.red,
-                  ),
-                  const SizedBox(height: 40),
-
-                  // App Info
-                  Center(
-                    child: Column(
-                      children: [
-                        Text(
-                          'VidMeet',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontWeight: FontWeight.bold,
-                          ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Version 1.0.0',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Version 1.0.0',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
               ),
+            ),
       ),
     );
   }

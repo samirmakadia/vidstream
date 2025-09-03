@@ -4,8 +4,10 @@ import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
 
+import '../helper/navigation_helper.dart';
 import '../services/socket_manager.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/professional_bottom_ad.dart';
 
 class FollowerFollowingListScreen extends StatefulWidget {
   final String userId;
@@ -70,12 +72,16 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildFollowersList(),
-          _buildFollowingList(),
-        ],
+      body: SafeArea(
+        child: ProfessionalBottomAd(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildFollowersList(),
+              _buildFollowingList(),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -162,12 +168,11 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
   }
 
   void _navigateToUserProfile(ApiUser user) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => OtherUserProfileScreen(
-          userId: user.id,
-          displayName: user.displayName,
-        ),
+    NavigationHelper.navigateWithAd(
+      context: context,
+      destination: OtherUserProfileScreen(
+        userId: user.id,
+        displayName: user.displayName,
       ),
     );
   }

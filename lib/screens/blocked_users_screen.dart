@@ -4,6 +4,9 @@ import 'package:vidstream/services/block_service.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
 
+import '../helper/navigation_helper.dart';
+import '../widgets/professional_bottom_ad.dart';
+
 class BlockedUsersScreen extends StatefulWidget {
   const BlockedUsersScreen({super.key});
 
@@ -137,12 +140,11 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   }
 
   void _navigateToUserProfile(ApiUser user) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => OtherUserProfileScreen(
-          userId: user.id,
-          displayName: user.displayName,
-        ),
+    NavigationHelper.navigateWithAd(
+      context: context,
+      destination: OtherUserProfileScreen(
+        userId: user.id,
+        displayName: user.displayName,
       ),
     );
   }
@@ -157,23 +159,27 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         title: const Text('Blocked Users'),
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            )
-          : _blockedUsers.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadBlockedUsers,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _blockedUsers.length,
-                    itemBuilder: (context, index) {
-                      final user = _blockedUsers[index];
-                      return _buildBlockedUserCard(user);
-                    },
-                  ),
-                ),
+      body: SafeArea(
+        child: ProfessionalBottomAd(
+          child: _isLoading 
+              ? const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                )
+              : _blockedUsers.isEmpty
+                  ? _buildEmptyState()
+                  : RefreshIndicator(
+                      onRefresh: _loadBlockedUsers,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _blockedUsers.length,
+                        itemBuilder: (context, index) {
+                          final user = _blockedUsers[index];
+                          return _buildBlockedUserCard(user);
+                        },
+                      ),
+                    ),
+        ),
+      ),
     );
   }
 

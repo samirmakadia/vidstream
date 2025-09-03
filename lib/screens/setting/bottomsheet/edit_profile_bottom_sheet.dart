@@ -5,7 +5,9 @@ import '../../../models/api_models.dart';
 import '../../../repositories/api_repository.dart';
 import '../../../services/socket_manager.dart';
 import '../../../services/video_service.dart';
+import '../../../widgets/banner_ad_with_loader.dart';
 import '../../../widgets/custom_image_widget.dart';
+import '../../../widgets/professional_bottom_ad.dart';
 
 class EditProfileBottomSheet extends StatefulWidget {
   final ApiUser? currentUser;
@@ -302,7 +304,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-
+            
                 // Header
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -323,145 +325,80 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
                     ],
                   ),
                 ),
-
+            
                 // Content (scrollable with controller from DraggableScrollableSheet)
                 Expanded(
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Banner Section
-                        Text(
-                          'Banner Image',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            GestureDetector(
-                              onTap: () => _showImagePickerOptions('banner'),
-                              child: Container(
-                                width: double.infinity,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[900],
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.grey[700]!,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: _bannerImageUrl != null && _bannerImageUrl!.isNotEmpty
-                                    ? CustomImageWidget(
-                                  imageUrl: _bannerImageUrl ?? '',
-                                  height: 120,
-                                  width: double.infinity,
-                                  cornerRadius: 12,
-                                  fit: BoxFit.cover,
-                                )
-                                    : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.add_photo_alternate,
-                                      color: Colors.grey[400],
-                                      size: 32,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Add Banner Image',
-                                      style: TextStyle(
-                                        color: Colors.grey[400],
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                  child: ProfessionalBottomAd(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Banner Section
+                          Text(
+                            'Banner Image',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
-                            Positioned(
-                              bottom: -10,
-                              right: -10,
-                              child: GestureDetector(
-                                onTap: () => _showImagePickerOptions('banner'),
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2),
-                                  ),
-                                  child: const Icon(
-                                    Icons.camera_alt,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Avatar Section
-                        Text(
-                          'Profile Picture',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Center(
-                          child: Stack(
+                          const SizedBox(height: 8),
+                          Stack(
                             clipBehavior: Clip.none,
                             children: [
                               GestureDetector(
-                                onTap: () => _showImagePickerOptions('avatar'),
+                                onTap: () => _showImagePickerOptions('banner'),
                                 child: Container(
-                                  width: 100,
-                                  height: 100,
+                                  width: double.infinity,
+                                  height: 120,
                                   decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
                                     color: Colors.grey[900],
+                                    borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: Colors.grey[700]!,
-                                      width: 2,
+                                      width: 1,
                                     ),
                                   ),
-                                  child: _avatarImageUrl != null && _avatarImageUrl!.isNotEmpty
+                                  child: _bannerImageUrl != null && _bannerImageUrl!.isNotEmpty
                                       ? CustomImageWidget(
-                                    imageUrl: _avatarImageUrl ?? '',
-                                    height: 100,
-                                    width: 100,
-                                    cornerRadius: 50,
+                                    imageUrl: _bannerImageUrl ?? '',
+                                    height: 120,
+                                    width: double.infinity,
+                                    cornerRadius: 12,
                                     fit: BoxFit.cover,
                                   )
-                                      : Icon(
-                                    Icons.add_a_photo,
-                                    color: Colors.grey[400],
-                                    size: 32,
+                                      : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.add_photo_alternate,
+                                        color: Colors.grey[400],
+                                        size: 32,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Add Banner Image',
+                                        style: TextStyle(
+                                          color: Colors.grey[400],
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                               Positioned(
-                                bottom: 0,
-                                right: 0,
+                                bottom: -10,
+                                right: -10,
                                 child: GestureDetector(
-                                  onTap: () => _showImagePickerOptions('avatar'),
+                                  onTap: () => _showImagePickerOptions('banner'),
                                   child: Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
                                       color: Theme.of(context).colorScheme.primary,
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 1),
+                                      border: Border.all(color: Colors.white, width: 2),
                                     ),
                                     child: const Icon(
                                       Icons.camera_alt,
@@ -473,180 +410,247 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
                               ),
                             ],
                           ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Display Name Field
-                        Text(
-                          'Display Name',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _nameController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            hintText: 'Enter your display name',
-                            hintStyle: TextStyle(color: Colors.grey[400]),
-                            filled: true,
-                            fillColor: Colors.grey[900],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                                
+                          const SizedBox(height: 20),
+                                
+                          // Avatar Section
+                          Text(
+                            'Profile Picture',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Bio Field
-                        Text(
-                          'Bio',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _bioController,
-                          style: const TextStyle(color: Colors.white),
-                          maxLines: 4,
-                          decoration: InputDecoration(
-                            hintText: 'Tell us about yourself...',
-                            hintStyle: TextStyle(color: Colors.grey[400]),
-                            filled: true,
-                            fillColor: Colors.grey[900],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
+                          const SizedBox(height: 8),
+                          Center(
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                GestureDetector(
+                                  onTap: () => _showImagePickerOptions('avatar'),
+                                  child: Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.grey[900],
+                                      border: Border.all(
+                                        color: Colors.grey[700]!,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: _avatarImageUrl != null && _avatarImageUrl!.isNotEmpty
+                                        ? CustomImageWidget(
+                                      imageUrl: _avatarImageUrl ?? '',
+                                      height: 100,
+                                      width: 100,
+                                      cornerRadius: 50,
+                                      fit: BoxFit.cover,
+                                    )
+                                        : Icon(
+                                      Icons.add_a_photo,
+                                      color: Colors.grey[400],
+                                      size: 32,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () => _showImagePickerOptions('avatar'),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white, width: 1),
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                          ),
+                                
+                          const SizedBox(height: 24),
+                                
+                          // Display Name Field
+                          Text(
+                            'Display Name',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Date of Birth
-                        Text(
-                          'Date of Birth',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _nameController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              hintText: 'Enter your display name',
+                              hintStyle: TextStyle(color: Colors.grey[400]),
+                              filled: true,
+                              fillColor: Colors.grey[900],
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        GestureDetector(
-                          onTap: _selectDateOfBirth,
-                          child: Container(
+                                
+                          const SizedBox(height: 16),
+                                
+                          // Bio Field
+                          Text(
+                            'Bio',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _bioController,
+                            style: const TextStyle(color: Colors.white),
+                            maxLines: 4,
+                            decoration: InputDecoration(
+                              hintText: 'Tell us about yourself...',
+                              hintStyle: TextStyle(color: Colors.grey[400]),
+                              filled: true,
+                              fillColor: Colors.grey[900],
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                              ),
+                            ),
+                          ),
+                                
+                          const SizedBox(height: 16),
+                                
+                          // Date of Birth
+                          Text(
+                            'Date of Birth',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: _selectDateOfBirth,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[900],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.calendar_today, color: Colors.grey[400], size: 20),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    _selectedDateOfBirth != null
+                                        ? '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year}'
+                                        : 'Select your date of birth',
+                                    style: TextStyle(
+                                      color: _selectedDateOfBirth != null ? Colors.white : Colors.grey[400],
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                                
+                          const SizedBox(height: 16),
+                                
+                          // Gender
+                          Text(
+                            'Gender',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                             decoration: BoxDecoration(
                               color: Colors.grey[900],
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.calendar_today, color: Colors.grey[400], size: 20),
-                                const SizedBox(width: 12),
-                                Text(
-                                  _selectedDateOfBirth != null
-                                      ? '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year}'
-                                      : 'Select your date of birth',
-                                  style: TextStyle(
-                                    color: _selectedDateOfBirth != null ? Colors.white : Colors.grey[400],
-                                    fontSize: 16,
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedGender,
+                                hint: Text('Select gender', style: TextStyle(color: Colors.grey[400])),
+                                isExpanded: true,
+                                dropdownColor: Colors.grey[800],
+                                style: const TextStyle(color: Colors.white, fontSize: 16),
+                                icon: Icon(Icons.arrow_drop_down, color: Colors.grey[400]),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'male',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.male, color: Colors.blue, size: 20),
+                                        SizedBox(width: 8),
+                                        Text('Male'),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  DropdownMenuItem(
+                                    value: 'female',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.female, color: Colors.pink, size: 20),
+                                        SizedBox(width: 8),
+                                        Text('Female'),
+                                      ],
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'other',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.person, color: Colors.purple, size: 20),
+                                        SizedBox(width: 8),
+                                        Text('Other'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _selectedGender = newValue;
+                                  });
+                                },
+                              ),
                             ),
                           ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Gender
-                        Text(
-                          'Gender',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _selectedGender,
-                              hint: Text('Select gender', style: TextStyle(color: Colors.grey[400])),
-                              isExpanded: true,
-                              dropdownColor: Colors.grey[800],
-                              style: const TextStyle(color: Colors.white, fontSize: 16),
-                              icon: Icon(Icons.arrow_drop_down, color: Colors.grey[400]),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'male',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.male, color: Colors.blue, size: 20),
-                                      SizedBox(width: 8),
-                                      Text('Male'),
-                                    ],
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'female',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.female, color: Colors.pink, size: 20),
-                                      SizedBox(width: 8),
-                                      Text('Female'),
-                                    ],
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'other',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.person, color: Colors.purple, size: 20),
-                                      SizedBox(width: 8),
-                                      Text('Other'),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _selectedGender = newValue;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 32),
-                      ],
+                                
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-
+            
                 // Save Button
                 Container(
                   padding: const EdgeInsets.all(16),

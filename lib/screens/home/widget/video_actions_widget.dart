@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:flutter/services.dart';
 import 'package:vidstream/repositories/api_repository.dart';
+import '../../../helper/navigation_helper.dart';
 import '../../../services/socket_manager.dart';
 import '../bottomsheet/comments_bottom_sheet.dart';
 import '../bottomsheet/report_dialog.dart';
@@ -261,12 +262,10 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
           children: [
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => OtherUserProfileScreen(
-                      userId: widget.user.id,
-                    ),
+                NavigationHelper.navigateWithAd(
+                  context: context,
+                  destination: OtherUserProfileScreen(
+                    userId: widget.user.id,
                   ),
                 );
               },

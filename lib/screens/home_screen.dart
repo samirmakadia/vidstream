@@ -3,6 +3,8 @@ import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/search_screen.dart';
 import 'dart:async';
+import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
 import 'home/bottomsheet/filter_bottom_sheet.dart';
 import 'home/widget/video_feed_item_widget.dart';
@@ -89,10 +91,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   void _openSearchScreen() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const SearchScreen(),
-      ),
+    NavigationHelper.navigateWithAd(
+      context: context,
+      destination: const SearchScreen(),
     );
   }
 

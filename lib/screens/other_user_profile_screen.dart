@@ -8,10 +8,12 @@ import 'package:vidstream/services/block_service.dart';
 import 'package:vidstream/screens/follower_following_list_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 
+import '../helper/navigation_helper.dart';
 import '../services/socket_manager.dart';
 import '../utils/utils.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
+import '../widgets/professional_bottom_ad.dart';
 
 class OtherUserProfileScreen extends StatefulWidget {
   final String userId;
@@ -311,15 +313,16 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
 
   void _navigateToFollowersList(int initialTabIndex) {
     if (_user == null) return;
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => FollowerFollowingListScreen(
-          userId: _user!.id,
-          initialTabIndex: initialTabIndex,
-          displayName: _user!.displayName,
-        ),
+    NavigationHelper.navigateWithAd(
+      context: context,
+      destination: FollowerFollowingListScreen(
+        userId: _user!.id,
+        initialTabIndex: initialTabIndex,
+        displayName: _user!.displayName,
       ),
+      onReturn: (_) {
+        print("Returned from follower/following screen");
+      },
     );
   }
 
@@ -376,20 +379,22 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: RefreshIndicator(
-                    onRefresh: _loadUserProfile,
-                    child: CustomScrollView(
-                      slivers: [
-                        _buildSliverAppBar(isOwnProfile),
-                        _buildProfileInfo(isOwnProfile),
-                        _buildStatsSection(),
-                        _buildTabBar(),
-                        _buildTabContent(),
-                      ],
+              ProfessionalBottomAd(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: RefreshIndicator(
+                      onRefresh: _loadUserProfile,
+                      child: CustomScrollView(
+                        slivers: [
+                          _buildSliverAppBar(isOwnProfile),
+                          _buildProfileInfo(isOwnProfile),
+                          _buildStatsSection(),
+                          _buildTabBar(),
+                          _buildTabContent(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -988,17 +993,18 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
   }
 
   Future<void> _openVideoPlayer(ApiVideo video) async {
-   final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => VideoPlayerScreen(
-          video: video,
-          allVideos: _userVideos,
-          user: _user,
-        ),
+    NavigationHelper.navigateWithAd(
+      context: context,
+      destination: VideoPlayerScreen(
+        video: video,
+        allVideos: _userVideos,
+        user: _user,
       ),
+      onReturn: (result) {
+        if (result != null) {
+          _loadUserProfile(isLoadingShow: false);
+        }
+      },
     );
-   if(result != null) {
-     _loadUserProfile(isLoadingShow: false);
-   }
   }
 }

@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:applovin_max/applovin_max.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -14,19 +16,21 @@ import 'package:vidstream/services/service_locator.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
 
+import 'manager/app_open_ad_manager.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize services (non-blocking)
   await _initializeServices();
+  AppLovinAdManager.initialize();
+  AppLovinAdManager.loadAppOpenAd();
 
   runApp(const MyApp());
 }
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-// Initialize services in the background
 Future<void> _initializeServices() async {
   try {
     await Firebase.initializeApp();
@@ -112,7 +116,7 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     if (state == AppLifecycleState.resumed && mounted) {
       // Handle app resume - check for updates and rating
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -139,18 +143,40 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
       return const OnboardingScreen();
     }
 
-    // Show auth/main app flow
+    // Show auth/main app flow with App Open Ad
     return StreamBuilder<ApiUser?>(
       stream: ApiRepository.instance.auth.authStateChanges,
       builder: (context, snapshot) {
-
-        if (snapshot.hasData) {
-          return const MainAppScreen();
-        }
-
-        return const AuthScreen();
+        // Wrap with a FutureBuilder to show App Open Ad only once
+        return FutureBuilder<void>(
+          future: _showAppOpenAdOnce(),
+          builder: (context, adSnapshot) {
+            if (snapshot.hasData) {
+              return const MainAppScreen();
+            }
+            return const AuthScreen();
+          },
+        );
       },
     );
   }
+
+// Ensure the App Open Ad shows only once
+  bool _appOpenAdShown = false;
+  Future<void> _showAppOpenAdOnce() async {
+    if (_appOpenAdShown) return;
+    _appOpenAdShown = true;
+
+    final completer = Completer<void>();
+
+    AppLovinAdManager.showAppOpenAd(
+      onDismissed: () {
+        completer.complete();
+      },
+    );
+
+    return completer.future;
+  }
+
 }
 

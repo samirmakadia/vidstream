@@ -7,11 +7,14 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import 'package:vidstream/storage/message_storage_drift.dart';
 import 'package:vidstream/utils/utils.dart';
+import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
 import '../repositories/api_repository.dart';
 import '../services/chat_service.dart';
 import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../utils/app_toaster.dart';
+import '../widgets/banner_ad_with_loader.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
 import 'home/bottomsheet/report_dialog.dart';
@@ -153,42 +156,6 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         );
         await _sendMessageWithModel(updatedMessage);
-      }
-    } catch (e) {
-      debugPrint("❌ Error sending image: $e");
-      if (mounted) {
-        _showErrorSnackBar('Failed to send image: $e');
-      }
-    }
-  }
-
-  Future<void> _pickAndSendImage() async {
-    final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-    if (image == null) return;
-
-    final File selectedImage = File(image.path);
-    MessageModel? _message = _getMessage(mediaUrl: selectedImage.path, messageType: 'image');
-    if (_message == null) {
-      return;
-    }
-    await MessageDatabase.instance.addOrUpdateMessage(_message);
-    try {
-      final uploadedUrl = await _uploadCommonFile(selectedImage.path);
-      if (uploadedUrl != null) {
-        print("✅ Image uploaded: $uploadedUrl");
-        _message = _message.copyWith(
-          content: _message.content.copyWith(
-            text: _message.content.text,
-            mediaUrl: uploadedUrl.url,
-            mediaSize: uploadedUrl.size,
-            mediaDuration: uploadedUrl.duration,
-            thumbnailUrl: uploadedUrl.thumbnailUrl,
-
-          ),
-        );
-        await _sendMessageWithModel(_message);
       }
     } catch (e) {
       debugPrint("❌ Error sending image: $e");
@@ -389,12 +356,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _navigateToUserProfile(ApiUser user) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => OtherUserProfileScreen(
-          userId: user.id,
-          displayName: user.displayName,
-        ),
+    NavigationHelper.navigateWithAd(
+      context: context,
+      destination: OtherUserProfileScreen(
+        userId: user.id,
+        displayName: user.displayName,
       ),
     );
   }
@@ -405,7 +371,6 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         title: GestureDetector(
           onTap: () {
-            // Optionally, navigate to the user's profile
             if (_otherUser != null){
               _navigateToUserProfile(_otherUser!);
             }
@@ -453,7 +418,12 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: _isLoading ? _buildLoadingState() : _buildChatBody(),
+      body: Column(
+        children: [
+          BannerAdWithLoader(),
+          Expanded(child: _isLoading ? _buildLoadingState() : _buildChatBody()),
+        ],
+      ),
     );
   }
 
@@ -583,13 +553,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       GestureDetector(
                         onTap: () async {
                           final isNetwork = message.content.mediaUrl!.startsWith('http');
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ImagePreviewScreen(
-                                imageFile: isNetwork ? null : File(message.content.mediaUrl!),
-                                imageUrl: isNetwork ? message.content.mediaUrl! : null,
-                                showUploadButton: false,
-                              ),
+                          NavigationHelper.navigateWithAd(
+                            context: context,
+                            destination: ImagePreviewScreen(
+                              imageFile: isNetwork ? null : File(message.content.mediaUrl!),
+                              imageUrl: isNetwork ? message.content.mediaUrl! : null,
+                              showUploadButton: false,
                             ),
                           );
                         },

@@ -9,6 +9,7 @@ import '../models/api_models.dart';
 import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/professional_bottom_ad.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -243,9 +244,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
             ),
         ],
       ),
-      body: ScaleTransition(
-        scale: _scaleAnimation,
-        child: _selectedVideo == null ? _buildVideoSelectionView() : _buildVideoEditView(),
+      body: ProfessionalBottomAd( 
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: _selectedVideo == null ? _buildVideoSelectionView() : _buildVideoEditView(),
+        ),
       ),
     );
   }

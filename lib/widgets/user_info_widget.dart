@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
 
+import '../helper/navigation_helper.dart';
+
 class UserInfoWidget extends StatelessWidget {
   final ApiUser user;
   final bool isClickable;
@@ -14,13 +16,11 @@ class UserInfoWidget extends StatelessWidget {
 
   void _navigateToUserProfile(BuildContext context) {
     if (!isClickable) return;
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => OtherUserProfileScreen(
-          userId: user.id,
-          displayName: user.displayName,
-        ),
+    NavigationHelper.navigateWithAd(
+      context: context,
+      destination: OtherUserProfileScreen(
+        userId: user.id,
+        displayName: user.displayName,
       ),
     );
   }

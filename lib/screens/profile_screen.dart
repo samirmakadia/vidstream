@@ -6,8 +6,11 @@ import 'package:vidstream/screens/follower_following_list_screen.dart';
 import 'package:vidstream/screens/settings_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 import 'package:vidstream/services/socket_manager.dart';
+import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
+import '../widgets/professional_bottom_ad.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -132,17 +135,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Future<void> _navigateToSettings() async {
-   final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => SettingsScreen(currentUser: _currentUser),
-      ),
+    NavigationHelper.navigateWithAd<bool>(
+      context: context,
+      destination: SettingsScreen(currentUser: _currentUser),
+      onReturn: (result) {
+        if (result != null && result) {
+          setState(() {
+            _loadUserProfile();
+          });
+        }
+      },
     );
-
-   if(result != null) {
-     setState(() {
-       _loadUserProfile();
-     });
-   }
   }
 
   Future<void> _refreshLikedVideos() async {
@@ -164,15 +167,16 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   void _navigateToFollowersList(int initialTabIndex) {
     if (_currentUser == null) return;
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => FollowerFollowingListScreen(
-          userId: _currentUser!.id,
-          initialTabIndex: initialTabIndex,
-          displayName: _currentUser!.displayName ?? 'User',
-        ),
+    NavigationHelper.navigateWithAd<void>(
+      context: context,
+      destination: FollowerFollowingListScreen(
+        userId: _currentUser!.id,
+        initialTabIndex: initialTabIndex,
+        displayName: _currentUser!.displayName ?? 'User',
       ),
+      onReturn: (_) {
+        print("Returned from follower/following screen");
+      },
     );
   }
 
@@ -189,39 +193,41 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: NotificationListener<ScrollNotification>(
-        onNotification: (scrollInfo) {
-          setState(() {
-            offsetY = scrollInfo.metrics.pixels;
-          });
-          return true;
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            RefreshIndicator(
-              onRefresh: () async {
-                await _loadUserProfile();
-                await _refreshFollowCounts();
-              },
-              child: CustomScrollView(
-                clipBehavior: Clip.none,
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  _buildSliverAppBar(),
-                  _buildProfileInfoWithoutAvatar(),
-                  _buildStatsSection(),
-                  _buildTabBar(),
-                  _buildTabContent(),
-                ],
+      body: ProfessionalBottomAd(
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (scrollInfo) {
+            setState(() {
+              offsetY = scrollInfo.metrics.pixels;
+            });
+            return true;
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              RefreshIndicator(
+                onRefresh: () async {
+                  await _loadUserProfile();
+                  await _refreshFollowCounts();
+                },
+                child: CustomScrollView(
+                  clipBehavior: Clip.none,
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    _buildSliverAppBar(),
+                    _buildProfileInfoWithoutAvatar(),
+                    _buildStatsSection(),
+                    _buildTabBar(),
+                    _buildTabContent(),
+                  ],
+                ),
               ),
-            ),
-            Positioned(
-              top: 300 - offsetY - 60 ,
-              left: MediaQuery.of(context).size.width / 2 - 100 / 2,
-              child: _buildFloatingAvatar(),
-            ),
-          ],
+              Positioned(
+                top: 300 - offsetY - 60 ,
+                left: MediaQuery.of(context).size.width / 2 - 100 / 2,
+                child: _buildFloatingAvatar(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -759,26 +765,27 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Future<void> _openVideoPlayer(ApiVideo video) async {
     final videos = _selectedTabIndex == 0 ? _userVideos : _likedVideos;
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => VideoPlayerScreen(
-          video: video,
-          allVideos: videos,
-          user: _currentUser,
-        ),
+
+    NavigationHelper.navigateWithAd<String?>(
+      context: context,
+      destination: VideoPlayerScreen(
+        video: video,
+        allVideos: videos,
+        user: _currentUser,
       ),
+      onReturn: (result) {
+        if (result != null) {
+          setState(() {
+            if (_selectedTabIndex == 0) {
+              _userVideos.removeWhere((v) => v.id == result);
+            } else {
+              _likedVideos.removeWhere((v) => v.id == result);
+            }
+          });
+        }
+        _loadUserProfile();
+      },
     );
-    if(result != null) {
-      if (result is String) {
-        setState(() {
-          if (_selectedTabIndex == 0) {
-            _userVideos.removeWhere((v) => v.id == result);
-          } else {
-            _likedVideos.removeWhere((v) => v.id == result);
-          }
-        });
-      }
-      _loadUserProfile();
-    }
   }
+
 }

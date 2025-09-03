@@ -1,10 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/chat_screen.dart';
 import 'package:vidstream/services/chat_service.dart';
 import 'package:vidstream/storage/conversation_storage_drift.dart';
+
+import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
+import '../services/socket_manager.dart';
 import '../storage/message_storage_drift.dart';
+import '../widgets/professional_bottom_ad.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -69,7 +76,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
       ),
-      body: _buildChatList(),
+      body: ProfessionalBottomAd(
+          child: _buildChatList()),
     );
   }
 
@@ -168,19 +176,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
         return GestureDetector(
           onTap: () {
-            Navigator.of(context)
-                .push(
-              MaterialPageRoute(
-                builder: (context) => ChatScreen(
-                  otherUserId: otherUser?.id ?? '',
-                  conversationId: conversation.conversationId,
-                  name: displayName,
-                  imageUrl: profileImage,
-                  conversation: conversation,
-                ),
+            NavigationHelper.navigateWithAd(
+              context: context,
+              destination: ChatScreen(
+                otherUserId: otherUser?.id ?? '',
+                conversationId: conversation.conversationId,
+                name: displayName,
+                imageUrl: profileImage,
+                conversation: conversation,
               ),
-            )
-                .then((_) => _loadConversations());
+              onReturn: (_) {
+                _loadConversations();
+              },
+            );
           },
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:vidstream/services/meet_service.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/chat_screen.dart';
+import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/professional_bottom_ad.dart';
 
 class MeetScreen extends StatefulWidget {
   const MeetScreen({super.key});
@@ -119,9 +122,12 @@ class _MeetScreenState extends State<MeetScreen> {
   }
 
   void _startChat(ApiUser user) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ChatScreen(otherUserId: user.userId, name: user.displayName,imageUrl: user.profileImageUrl ,),
+    NavigationHelper.navigateWithAd(
+      context: context,
+      destination: ChatScreen(
+        otherUserId: user.userId,
+        name: user.displayName,
+        imageUrl: user.profileImageUrl,
       ),
     );
   }
@@ -233,7 +239,8 @@ class _MeetScreenState extends State<MeetScreen> {
         ]
             : [],
       ),
-      body: _hasJoinedMeet ? _buildMeetContent() : _buildJoinPrompt(),
+      body: ProfessionalBottomAd(
+          child: _hasJoinedMeet ? _buildMeetContent() : _buildJoinPrompt()),
     );
   }
 
