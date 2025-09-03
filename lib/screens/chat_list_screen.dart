@@ -1,13 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/chat_screen.dart';
 import 'package:vidstream/services/chat_service.dart';
 import 'package:vidstream/storage/conversation_storage_drift.dart';
-
-import '../services/socket_manager.dart';
+import '../storage/message_storage_drift.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -41,10 +38,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return otherUser;
   }
 
-  int _getUnreadCount(Conversation conversation) {
-    return 0;
-  }
-
+ 
   String _formatTime(DateTime? dateTime) {
     if (dateTime == null) return '';
 
@@ -159,153 +153,167 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Widget _buildChatTile(Conversation conversation) {
     final otherUser = _getOtherParticipant(conversation);
-    final unreadCount = _getUnreadCount(conversation);
-    final isUnread = unreadCount > 0;
-
     final displayName = otherUser?.displayName ?? 'Unknown User';
     final profileImage = otherUser?.profileImageUrl;
-    print(conversation.lastMessage?.content.text);
+    final currentUserId = _authService.currentUser?.id ?? '';
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context)
-            .push(
+    return StreamBuilder<int>(
+      stream: MessageDatabase.instance.watchUnreadCount(
+        conversation.conversationId,
+        currentUserId,
+      ),
+      builder: (context, snapshot) {
+        final unreadCount = snapshot.data ?? 0;
+        final isUnread = unreadCount > 0;
+
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context)
+                .push(
               MaterialPageRoute(
                 builder: (context) => ChatScreen(
-                    otherUserId: otherUser?.id ?? '',
-                    conversationId: conversation.conversationId,
-                    name: displayName,
-                    imageUrl: profileImage,
-                    conversation: conversation),
+                  otherUserId: otherUser?.id ?? '',
+                  conversationId: conversation.conversationId,
+                  name: displayName,
+                  imageUrl: profileImage,
+                  conversation: conversation,
+                ),
               ),
             )
-            .then((_) => _loadConversations());
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.07),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  backgroundImage: profileImage != null ? NetworkImage(profileImage) : null,
-                  child: profileImage == null
-                      ? Icon(
-                          Icons.person,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 26,
-                        )
-                      : null,
+                .then((_) => _loadConversations());
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.07),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
                 ),
-                // Online indicator
-                if (otherUser?.isOnline == true)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: Colors.greenAccent.shade400,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Theme.of(context).cardColor,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-                // Unread badge
               ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    displayName,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
-                        ),
-                  ),
-                  getLastMsgBaseOnType(conversation),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: Row(
               children: [
-                Text(
-                  _formatTime(conversation.lastMessage != null ? DateTime.parse(conversation.lastMessage!.createdAt) : conversation.updatedAt),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                        fontSize: 11,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Row(
+                // Avatar + online indicator
+                Stack(
                   children: [
-                    if (isUnread)
+                    CircleAvatar(
+                      radius: 26,
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.1),
+                      backgroundImage:
+                      profileImage != null ? NetworkImage(profileImage) : null,
+                      child: profileImage == null
+                          ? Icon(Icons.person,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 26)
+                          : null,
+                    ),
+                    if (otherUser?.isOnline == true)
                       Positioned(
-                        top: 0,
+                        bottom: 0,
                         right: 0,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          width: 12,
+                          height: 12,
                           decoration: BoxDecoration(
-                            color: Colors.redAccent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                          child: Text(
-                            unreadCount.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                            color: Colors.greenAccent.shade400,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).cardColor,
+                              width: 2,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.chevron_right,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                // Conversation text
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight:
+                          isUnread ? FontWeight.bold : FontWeight.w600,
+                        ),
+                      ),
+                      getLastMsgBaseOnType(conversation,isUnread),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Time + unread badge
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _formatTime(conversation.lastMessage != null
+                          ? DateTime.parse(conversation.lastMessage!.createdAt)
+                          : conversation.updatedAt),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.5),
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (isUnread)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            constraints: const BoxConstraints(
+                                minWidth: 18, minHeight: 18),
+                            child: Text(
+                              unreadCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.chevron_right,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.4)),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget getLastMsgBaseOnType(Conversation conversation) {
-    final unreadCount = _getUnreadCount(conversation);
-    final isUnread = unreadCount > 0;
-
+  Widget getLastMsgBaseOnType(Conversation conversation, bool isUnread) {
     final lastMessage = conversation.lastMessage;
 
     if (lastMessage == null) {
@@ -323,7 +331,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       return Text(
         lastMessage.content.text ?? "",
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: isUnread ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
             ),
         maxLines: 1,

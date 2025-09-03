@@ -163,6 +163,16 @@ class MessageDatabase extends _$MessageDatabase {
     print("🧹 Cleared all messages from the table");
   }
 
+  Stream<int> watchUnreadCount(String conversationId, String currentUserId) {
+    final query = select(messagesDb)
+      ..where((tbl) =>
+      tbl.conversationId.equals(conversationId) &
+      tbl.senderId.isNotValue(currentUserId) &
+      tbl.status.isNotValue("read"));
+
+    return query.watch().map((rows) => rows.length);
+  }
+
   Future<void> updateMessageStatus(String messageId, String status) async {
     await (update(messagesDb)
       ..where((tbl) => tbl.messageId.equals(messageId)))
