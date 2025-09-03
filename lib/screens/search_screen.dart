@@ -114,125 +114,10 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: _isSearching
-            ? Container(
-          height: 38,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade900,
-            borderRadius: BorderRadius.circular(50),
-          ),
-          child: TextField(
-            controller: _searchController,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: 'Search videos, users...',
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                icon: Icon(
-                  Icons.clear,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                onPressed: () {
-                  _searchController.clear();
-                  _performSearch('');
-                  setState(() {});
-                },
-              )
-                  : null,
-            ),
-            onChanged: _onSearchChanged,
-            textInputAction: TextInputAction.search,
-          ),
-        )
-            : const Text('Search'),
-        leading: _isSearching
-            ? IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            setState(() {
-              _isSearching = false;
-              _searchController.clear();
-            });
-            _performSearch('');
-          },
-        )
-            : null,
-        // leadingWidth: _isSearching ? 28 : 56,
-        bottom: !_isSearching
-            ? PreferredSize(
-          preferredSize: const Size.fromHeight(120),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _isSearching = true;
-                    });
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Icon(Icons.search,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Search videos, users...',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // Tabs
-              TabBar(
-                controller: _tabController,
-                dividerColor: Colors.grey.withOpacity(0.5),
-                tabs: [
-                  Tab(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.play_arrow),
-                        const SizedBox(width: 8),
-                        Text('Videos'),
-                      ],
-                    ),
-                  ),
-                  Tab(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.people),
-                        const SizedBox(width: 8),
-                        Text('Users'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        )
-            : null,
+        title: _isSearching ? _buildSearchField(context) : const Text('Search'),
+        leading: _isSearching ? _buildBackButton() : null,
+        bottom: !_isSearching ? _buildSearchTabBar(context) : null,
       ),
-
       body: TabBarView(
         controller: _tabController,
         children: [
@@ -242,6 +127,111 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       ),
     );
   }
+
+  Widget _buildSearchField(BuildContext context) {
+    return Container(
+      height: 38,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade900,
+        borderRadius: BorderRadius.circular(50),
+      ),
+      child: TextField(
+        controller: _searchController,
+        autofocus: true,
+        decoration: InputDecoration(
+          hintText: 'Search videos, users...',
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+            icon: Icon(Icons.clear, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            onPressed: () {
+              _searchController.clear();
+              _performSearch('');
+              setState(() {});
+            },
+          )
+              : null,
+        ),
+        onChanged: _onSearchChanged,
+        textInputAction: TextInputAction.search,
+      ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        setState(() {
+          _isSearching = false;
+          _searchController.clear();
+        });
+        _performSearch('');
+      },
+    );
+  }
+
+  PreferredSize _buildSearchTabBar(BuildContext context) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(120),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: GestureDetector(
+              onTap: () => setState(() => _isSearching = true),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Search videos, users...',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          TabBar(
+            controller: _tabController,
+            dividerColor: Colors.grey.withOpacity(0.5),
+            tabs: [
+              _buildTab(Icons.play_arrow, 'Videos'),
+              _buildTab(Icons.people, 'Users'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTab(IconData icon, String label) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildVideosTab() {
     if (_isLoading) {
@@ -537,152 +527,6 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   }
 }
 
-class VideoCard extends StatelessWidget {
-  final ApiVideo video;
-  final VoidCallback onTap;
-
-  const VideoCard({
-    super.key,
-    required this.video,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Thumbnail
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  image: video.thumbnailUrl.isNotEmpty
-                      ? DecorationImage(
-                          image: NetworkImage(video.thumbnailUrl),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: video.thumbnailUrl.isEmpty
-                    ? Icon(
-                        Icons.play_circle_fill,
-                        size: 32,
-                        color: Theme.of(context).colorScheme.primary,
-                      )
-                    : null,
-              ),
-
-              const SizedBox(width: 12),
-
-              // Video Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      video.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    if (video.description.isNotEmpty)
-                      Text(
-                        video.description,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                    const SizedBox(height: 8),
-
-                    // Stats
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.favorite,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatCountStatic(video.likesCount),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-
-                        const SizedBox(width: 16),
-
-                        Icon(
-                          Icons.visibility,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatCountStatic(video.viewsCount),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-
-                        const Spacer(),
-
-                        Text(
-                          _formatDate(video.createdAt),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
-  }
-
-  static String _formatCountStatic(int count) {
-    if (count >= 1000000) {
-      return '${(count / 1000000).toStringAsFixed(1)}M';
-    } else if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}K';
-    }
-    return count.toString();
-  }
-}
 
 class UserCard extends StatelessWidget {
   final ApiUser user;

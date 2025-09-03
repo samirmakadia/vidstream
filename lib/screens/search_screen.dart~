@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/services/search_service.dart';
@@ -17,18 +19,27 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   final SearchService _searchService = SearchService();
   final TextEditingController _searchController = TextEditingController();
   late TabController _tabController;
-  
+
   List<ApiVideo> _videos = [];
   List<ApiUser> _users = [];
   bool _isLoading = false;
   bool _hasSearched = false;
   String _currentQuery = '';
+  bool _isSearching = false;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadDefaultContent();
+    _loadDefaultContent(true);
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      _performSearch(query);
+    });
   }
 
   @override
@@ -38,10 +49,12 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  void _loadDefaultContent() async {
-    setState(() {
-      _isLoading = true;
-    });
+  void _loadDefaultContent(bool isLoading) async {
+    if(isLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final trendingVideos = await _searchService.getTrendingVideos(limit: 20);
@@ -60,9 +73,9 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     }
   }
 
-  void _performSearch(String query) async {
+  void _performSearch(String query, {bool isLoading = true}) async {
     if (query.trim().isEmpty) {
-      _loadDefaultContent();
+      _loadDefaultContent(true);
       setState(() {
         _hasSearched = false;
         _currentQuery = '';
@@ -70,8 +83,12 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       return;
     }
 
+    _searchService.cancelSearch();
+
     setState(() {
-      _isLoading = true;
+      if(isLoading) {
+        _isLoading = true;
+      }
       _hasSearched = true;
       _currentQuery = query.trim();
     });
@@ -97,81 +114,9 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Search'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(120),
-          child: Column(
-            children: [
-              // Search Bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search videos, users...',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                              onPressed: () {
-                                _searchController.clear();
-                                _performSearch('');
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                    onChanged: _performSearch,
-                    textInputAction: TextInputAction.search,
-                  ),
-                ),
-              ),
-              
-              // Tabs
-              TabBar(
-                controller: _tabController,
-                dividerColor: Colors.grey.shade300,
-                tabs: [
-                  Tab(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.play_arrow),
-                        const SizedBox(width: 8),
-                        Text('Videos'),
-                      ],
-                    ),
-                  ),
-                  Tab(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.people),
-                        const SizedBox(width: 8),
-                        Text('Users'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+        title: _isSearching ? _buildSearchField(context) : const Text('Search'),
+        leading: _isSearching ? _buildBackButton() : null,
+        bottom: !_isSearching ? _buildSearchTabBar(context) : null,
       ),
       body: TabBarView(
         controller: _tabController,
@@ -182,6 +127,116 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       ),
     );
   }
+
+// Search TextField
+  Widget _buildSearchField(BuildContext context) {
+    return Container(
+      height: 38,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade900,
+        borderRadius: BorderRadius.circular(50),
+      ),
+      child: TextField(
+        controller: _searchController,
+        autofocus: true,
+        decoration: InputDecoration(
+          hintText: 'Search videos, users...',
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+            icon: Icon(Icons.clear, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            onPressed: () {
+              _searchController.clear();
+              _performSearch('');
+              setState(() {});
+            },
+          )
+              : null,
+        ),
+        onChanged: _onSearchChanged,
+        textInputAction: TextInputAction.search,
+      ),
+    );
+  }
+
+// Back button
+  Widget _buildBackButton() {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        setState(() {
+          _isSearching = false;
+          _searchController.clear();
+        });
+        _performSearch('');
+      },
+    );
+  } 
+
+// Search container + TabBar
+  PreferredSize _buildSearchTabBar(BuildContext context) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(120),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: GestureDetector(
+              onTap: () => setState(() => _isSearching = true),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Search videos, users...',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          TabBar(
+            controller: _tabController,
+            dividerColor: Colors.grey.withOpacity(0.5),
+            tabs: [
+              _buildTab(Icons.play_arrow, 'Videos'),
+              _buildTab(Icons.people, 'Users'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+
+// Single Tab widget
+  Widget _buildTab(IconData icon, String label) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildVideosTab() {
     if (_isLoading) {
@@ -265,7 +320,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
 
       ],
     );
-  } 
+  }
 
   Widget _buildUsersTab() {
     if (_isLoading) {
@@ -319,7 +374,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-        
+
         Expanded(
           child: ListView.builder(
             itemCount: _users.length,
@@ -327,13 +382,21 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               final user = _users[index];
               return UserCard(
                 user: user,
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                 final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => OtherUserProfileScreen(userId: user.id),
                     ),
                   );
+                 if(result != null) {
+                    if(_currentQuery.isNotEmpty) {
+                      _performSearch(_currentQuery, isLoading: false);
+                    }
+                    else {
+                      _loadDefaultContent(false);
+                    }
+                 }
                 },
               );
             },
@@ -347,16 +410,25 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+        final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => VideoPlayerScreen(
                 video: video,
                 allVideos: _videos,
+                user: null,
               ),
             ),
           );
+        if(result != null) {
+          if(_currentQuery.isNotEmpty) {
+            _performSearch(_currentQuery, isLoading: false);
+          }
+          else {
+            _loadDefaultContent(false);
+          }
+         }
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
@@ -460,152 +532,6 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   }
 }
 
-class VideoCard extends StatelessWidget {
-  final ApiVideo video;
-  final VoidCallback onTap;
-
-  const VideoCard({
-    super.key,
-    required this.video,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Thumbnail
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  image: video.thumbnailUrl.isNotEmpty
-                      ? DecorationImage(
-                          image: NetworkImage(video.thumbnailUrl),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: video.thumbnailUrl.isEmpty
-                    ? Icon(
-                        Icons.play_circle_fill,
-                        size: 32,
-                        color: Theme.of(context).colorScheme.primary,
-                      )
-                    : null,
-              ),
-              
-              const SizedBox(width: 12),
-              
-              // Video Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      video.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    
-                    const SizedBox(height: 4),
-                    
-                    if (video.description.isNotEmpty)
-                      Text(
-                        video.description,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // Stats
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.favorite,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatCountStatic(video.likesCount),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        
-                        const SizedBox(width: 16),
-                        
-                        Icon(
-                          Icons.visibility,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatCountStatic(video.viewsCount),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        
-                        const Spacer(),
-                        
-                        Text(
-                          _formatDate(video.createdAt),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-    
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
-  }
-
-  static String _formatCountStatic(int count) {
-    if (count >= 1000000) {
-      return '${(count / 1000000).toStringAsFixed(1)}M';
-    } else if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}K';
-    }
-    return count.toString();
-  }
-}
 
 class UserCard extends StatelessWidget {
   final ApiUser user;
@@ -631,17 +557,17 @@ class UserCard extends StatelessWidget {
             children: [
               CustomImageWidget(
                 imageUrl: user.profileImageUrl ?? '',
-                height: 50,
-                width: 50,
+                height: 42,
+                width: 42,
                 cornerRadius: 25,
                 isUserInitial: true,
                 initials: Utils.getInitials(user.displayName),
-                initialsBgColor: Colors.red.shade50,
+                initialsBgColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 initialsTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 10),
               // User Info
               Expanded(
                 child: Column(
@@ -649,13 +575,13 @@ class UserCard extends StatelessWidget {
                   children: [
                     Text(
                       user.displayName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    
+
                     if (user.bio?.isNotEmpty == true) ...[
                       const SizedBox(height: 4),
                       Text(
@@ -667,28 +593,28 @@ class UserCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                    
-                    const SizedBox(height: 8),
-                    
+
+                    const SizedBox(height: 4),
+
                     // Stats
                     Row(
                       children: [
                         Icon(
                           Icons.people,
-                          size: 16,
+                          size: 14,
                           color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${user.followers.length} followers',
+                          '${user.followersCount} followers',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
-                        
+
                         const SizedBox(width: 16),
-                        
+
                         Icon(
                           Icons.video_library,
-                          size: 16,
+                          size: 14,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
@@ -701,7 +627,7 @@ class UserCard extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Arrow
               Icon(
                 Icons.arrow_forward_ios,

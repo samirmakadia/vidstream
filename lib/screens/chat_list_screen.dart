@@ -42,7 +42,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   int _getUnreadCount(Conversation conversation) {
-    // For now, return 0 as unread count logic needs to be implemented in API
     return 0;
   }
 

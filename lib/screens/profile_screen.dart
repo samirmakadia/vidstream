@@ -83,30 +83,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     try {
       final currentUserId = ApiRepository.instance.auth.currentUser?.id;
       if (currentUserId != null) {
-        print('Loading profile for user: $currentUserId');
-
-        // Load user profile first
         final user = await ApiRepository.instance.auth.getUserProfile(currentUserId);
 
-        // Try to load videos with error handling
         List<ApiVideo> videos = [];
         List<ApiVideo> likedVideos = [];
 
         try {
           videos = await ApiRepository.instance.videos.getUserPostedVideos(currentUserId);
-          print('Loaded ${videos.length} user videos');
         } catch (videoError) {
-          print('Failed to load user videos: $videoError');
           if (videoError.toString().contains('permission-denied')) {
-            print('Permission denied for user videos - this is likely a Firestore rules issue');
+            print('Permission denied for videos - this is likely a Firestore rules issue');
           }
         }
 
         try {
           likedVideos = await ApiRepository.instance.videos.getUserLikedVideos(currentUserId);
-          print('Loaded ${likedVideos.length} liked videos');
         } catch (likedError) {
-          print('Failed to load liked videos: $likedError');
           if (likedError.toString().contains('permission-denied')) {
             print('Permission denied for liked videos - this is likely a Firestore rules issue');
           }
@@ -125,7 +117,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        print('Profile loading error: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to load profile: ${e.toString()}'),
@@ -198,8 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body:
-      NotificationListener<ScrollNotification>(
+      body: NotificationListener<ScrollNotification>(
         onNotification: (scrollInfo) {
           setState(() {
             offsetY = scrollInfo.metrics.pixels;
@@ -209,7 +199,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Main scroll view
             RefreshIndicator(
               onRefresh: () async {
                 await _loadUserProfile();
