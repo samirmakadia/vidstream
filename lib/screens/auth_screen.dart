@@ -26,7 +26,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   late Animation<Offset> _slideAnimation;
 
   bool _isLoading = false;
-  bool _isAppleSignInAvailable = Platform.isIOS;
+  bool _isAppleSignInAvailable = false;
   late final GoogleSignIn _googleSignIn;
 
   @override
@@ -57,8 +57,24 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     ));
 
     _animationController.forward();
-    // _checkAppleSignInAvailability();
+    _checkAppleAvailability();
   }
+  Future<void> _checkAppleAvailability() async {
+    if (!Platform.isIOS) {
+      return;
+    }
+    try {
+      final isAvailable = await SignInWithApple.isAvailable();
+      if (mounted) {
+        setState(() => _isAppleSignInAvailable = isAvailable);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isAppleSignInAvailable = false);
+      }
+    }
+  }
+
 
   @override
   void dispose() {
@@ -192,6 +208,10 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
   Future<void> _signInWithApple() async {
     try {
+      if (!_isAppleSignInAvailable) {
+        Graphics.showTopDialog(context, 'Error!', 'Apple Sign-In is not available on this device.', type: ToastType.error);
+        return;
+      }
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.fullName,
