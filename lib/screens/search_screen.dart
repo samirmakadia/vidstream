@@ -34,6 +34,11 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (_isSearching) {
+        setState(() {});
+      }
+    });
     _loadDefaultContent(true);
   }
 
@@ -134,6 +139,14 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     );
   }
 
+  String _getSearchHint() {
+    if (_tabController.index == 0) {
+      return 'Search videos';
+    } else {
+      return 'Search users';
+    }
+  }
+
   Widget _buildSearchField(BuildContext context) {
     return Container(
       height: 38,
@@ -145,7 +158,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
         controller: _searchController,
         autofocus: true,
         decoration: InputDecoration(
-          hintText: 'Search videos, users...',
+          hintText: _getSearchHint(),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           suffixIcon: _searchController.text.isNotEmpty
