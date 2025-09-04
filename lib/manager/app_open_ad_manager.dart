@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:applovin_max/applovin_max.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,29 +18,27 @@ class AppLovinAdManager {
 
   static bool isBannerLoaded = false;
 
-  // --- New variables for screen open tracking ---
   static int _screenOpenCount = 0;
   static const int _showAdEvery = 3;
   static bool isNativeAdLoaded = false;
 
   static bool get isAppOpenAvailable => _isAppOpenAvailable;
+  static VoidCallback? _appOpenOnDismissed;
 
   static Future<void> initialize() async {
-    await AppLovinMAX.initialize(
-      "1RJL6Ot743MAvgfG8BeGvetoyp6DS_TTQsqXFgeJk_Tdf8upJX3DAx_7l6KB5tfWkT2z8gHtgmULuN8CvCP48P",
-    );
+    await AppLovinMAX.initialize("1RJL6Ot743MAvgfG8BeGvetoyp6DS_TTQsqXFgeJk_Tdf8upJX3DAx_7l6KB5tfWkT2z8gHtgmULuN8CvCP48P",);
 
     _setupAppOpenListener();
     _setupInterstitialListener();
     _setupRewardedListener();
 
-    // Initial loads
     loadAppOpenAd();
     loadInterstitialAd();
     loadRewardedAd();
   }
 
   // -------------------- Interstitial Listener --------------------
+
   static void _setupInterstitialListener() {
     AppLovinMAX.setInterstitialListener(
       InterstitialListener(
@@ -112,6 +108,7 @@ class AppLovinAdManager {
   }
 
   // -------------------- Banner --------------------
+
   static Widget bannerAdWidget({AdFormat format = AdFormat.banner}) {
     return MaxAdView(
       adUnitId: _bannerAdUnitId,
@@ -136,6 +133,7 @@ class AppLovinAdManager {
   }
 
   // -------------------- Other existing code remains untouched --------------------
+
   static void _setupRewardedListener() {
     AppLovinMAX.setRewardedAdListener(
       RewardedAdListener(
@@ -185,7 +183,6 @@ class AppLovinAdManager {
         onAdLoadFailedCallback: (adUnitId, error) {
           _isAppOpenAvailable = false;
           debugPrint("❌ AppOpen load failed: ${error.message}");
-          // 🔁 retry after short delay
           Future.delayed(const Duration(seconds: 5), loadAppOpenAd);
         },
         onAdDisplayedCallback: (ad) {
@@ -196,12 +193,15 @@ class AppLovinAdManager {
           _isAppOpenAvailable = false;
           debugPrint("❌ AppOpen show failed: ${error.message}");
           loadAppOpenAd();
+          _appOpenOnDismissed?.call(); // complete callback even on failure
+          _appOpenOnDismissed = null;
         },
         onAdHiddenCallback: (ad) {
           _isShowingAppOpen = false;
           _isAppOpenAvailable = false;
           debugPrint("ℹ️ AppOpen dismissed");
-         // loadAppOpenAd();
+          _appOpenOnDismissed?.call(); // ✅ trigger the dismiss callback
+          _appOpenOnDismissed = null;
         },
         onAdClickedCallback: (ad) {
           debugPrint("👆 AppOpen Ad clicked: ${ad.adUnitId}");
@@ -210,12 +210,9 @@ class AppLovinAdManager {
     );
   }
 
-
   static void loadAppOpenAd() => AppLovinMAX.loadAppOpenAd(_appOpenAdUnitId);
-  static void loadInterstitialAd() =>
-      AppLovinMAX.loadInterstitial(_interstitialAdUnitId);
-  static void loadRewardedAd() =>
-      AppLovinMAX.loadRewardedAd(_rewardedAdUnitId);
+  static void loadInterstitialAd() => AppLovinMAX.loadInterstitial(_interstitialAdUnitId);
+  static void loadRewardedAd() => AppLovinMAX.loadRewardedAd(_rewardedAdUnitId);
 
   static void showAppOpenAd({VoidCallback? onDismissed}) {
     if (!_isAppOpenAvailable || _isShowingAppOpen) {
@@ -223,6 +220,7 @@ class AppLovinAdManager {
       onDismissed?.call();
       return;
     }
+    _appOpenOnDismissed = onDismissed;
     AppLovinMAX.showAppOpenAd(_appOpenAdUnitId);
   }
 
@@ -241,7 +239,6 @@ class AppLovinAdManager {
     }
     AppLovinMAX.showRewardedAd(_rewardedAdUnitId);
   }
-
 
   static Widget nativeAdLarge({double height = 300}) {
     final controller = MaxNativeAdViewController();
@@ -266,7 +263,7 @@ class AppLovinAdManager {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E), // dark background
+            color: const Color(0xFF1E1E1E),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -282,7 +279,7 @@ class AppLovinAdManager {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
-                        color: Colors.white, // dark theme text
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -296,8 +293,8 @@ class AppLovinAdManager {
                 width: double.infinity,
                 child: MaxNativeAdCallToActionView(
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.white, // button bg
-                    foregroundColor: Colors.black,  // button text
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
                   ),
                 ),
               ),
@@ -307,7 +304,6 @@ class AppLovinAdManager {
       ),
     );
   }
-
 
   static Widget nativeAdSmall({double height = 110, double width = double.infinity}) {
     final controller = MaxNativeAdViewController();

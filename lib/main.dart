@@ -15,7 +15,6 @@ import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'manager/app_open_ad_manager.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -57,11 +56,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  NotificationService.handleNotificationClickPayload(jsonEncode(message.data));
-}
-
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
@@ -80,44 +74,30 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
     _initializeApp();
   }
 
-  Future<void> _initializeApp() async {
-    await ApiRepository.instance.initialize();
-    await _checkOnboardingStatus();
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    ApiRepository.instance.dispose();
-    super.dispose();
-  }
-
   Future<void> _checkOnboardingStatus() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final completed = prefs.getBool('onboarding_completed') ?? false;
-      _onboardingCompleted = completed;
+      _onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
     } catch (e) {
       print('Error checking onboarding status: $e');
       _onboardingCompleted = false;
     }
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
+  Future<void> _initializeApp() async {
+    await ApiRepository.instance.initialize();
 
-    if (state == AppLifecycleState.resumed && mounted) {
-      // Handle app resume - check for updates and rating
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          DialogManagerService().handleAppResume(context);
-        }
+    await ApiRepository.instance.initialize();
+    await _checkOnboardingStatus();
+
+    if (mounted) setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    await _showAppOpenAdOnce();
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
       });
     }
   }
@@ -138,38 +118,37 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
       return const OnboardingScreen();
     }
 
-    // Show auth/main app flow with App Open Ad
+    // Show main auth flow after ad
     return StreamBuilder<ApiUser?>(
       stream: ApiRepository.instance.auth.authStateChanges,
       builder: (context, snapshot) {
-        // Wrap with a FutureBuilder to show App Open Ad only once
-        return FutureBuilder<void>(
-          future: _showAppOpenAdOnce(),
-          builder: (context, adSnapshot) {
-            if (snapshot.hasData) {
-              return const MainAppScreen();
-            }
-            return const AuthScreen();
-          },
+        // decide which screen to show after ad
+        if (snapshot.connectionState == ConnectionState.active) {
+          if (snapshot.hasData) return const MainAppScreen();
+          return const AuthScreen();
+        }
+        // Still waiting for auth stream
+        return const Scaffold(
+          backgroundColor: Colors.black,
+          body: Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
         );
       },
     );
   }
 
-// Ensure the App Open Ad shows only once
   bool _appOpenAdShown = false;
   Future<void> _showAppOpenAdOnce() async {
     if (_appOpenAdShown) return;
     _appOpenAdShown = true;
 
-    // give SDK a chance to preload
     await Future.delayed(const Duration(seconds: 1));
 
     final completer = Completer<void>();
-
     if (AppLovinAdManager.isAppOpenAvailable) {
       AppLovinAdManager.showAppOpenAd(onDismissed: () {
-        debugPrint("ℹ️ AppOpen dismissed");
+        debugPrint("ℹ️ AppOpen dismissed after show");
         completer.complete();
       });
     } else {
@@ -181,3 +160,8 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
   }
 }
 
+
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  NotificationService.handleNotificationClickPayload(jsonEncode(message.data));
+}
