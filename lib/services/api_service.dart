@@ -388,7 +388,7 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.uploadFile<ApiCommonFile>(
-        endpoint: '/helper/upload',
+        endpoint: '/common/upload',
         filePath: videoPath,
         fieldName: 'file',
         fromJson: (json) => ApiCommonFile.fromJson(json as Map<String, dynamic>),
@@ -1628,7 +1628,7 @@ class ApiService {
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.uploadFile<ApiCommonFile>(
-        endpoint: '/helper/upload',
+        endpoint: '/common/upload',
         filePath: imagePath,
         fieldName: 'file',
         additionalData: {
