@@ -277,9 +277,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                       colors: [
                         Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.secondary,
+                        Color(0xFFA3E635),
+                        Color(0xFF2E7D32),
                       ],
                     ),
                   ),

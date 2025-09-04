@@ -165,10 +165,20 @@ class _MainAppScreenState extends State<MainAppScreen> {
                 isActive: _currentIndex == 1,
               ),
               Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
                 height: 42,
                 width: 42,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFFD1F244),
+                        Color(0xFFA3E635),
+                        Color(0xFF2E7D32),
+                      ],
+                    ),
+                  // color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(

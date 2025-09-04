@@ -533,7 +533,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                     end: Alignment.bottomCenter,
                     colors: [
                       Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.tertiary,
+                      Color(0xFFA3E635),
+                      Color(0xFF2E7D32),
                     ],
                   ),
                 ),
