@@ -1,11 +1,7 @@
-import 'dart:io';
-
 import 'package:applovin_max/applovin_max.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../helper/ad_helper.dart';
-
 
 class AppLovinAdManager {
   static final String _appOpenAdUnitId = AdUnitIds.appOpen;
@@ -186,6 +182,8 @@ class AppLovinAdManager {
         onAdLoadFailedCallback: (adUnitId, error) {
           _isAppOpenAvailable = false;
           debugPrint("❌ AppOpen load failed: ${error.message}");
+          // 🔁 retry after short delay
+          Future.delayed(const Duration(seconds: 5), loadAppOpenAd);
         },
         onAdDisplayedCallback: (ad) {
           _isShowingAppOpen = true;
@@ -209,6 +207,7 @@ class AppLovinAdManager {
     );
   }
 
+
   static void loadAppOpenAd() => AppLovinMAX.loadAppOpenAd(_appOpenAdUnitId);
   static void loadInterstitialAd() =>
       AppLovinMAX.loadInterstitial(_interstitialAdUnitId);
@@ -217,6 +216,7 @@ class AppLovinAdManager {
 
   static void showAppOpenAd({VoidCallback? onDismissed}) {
     if (!_isAppOpenAvailable || _isShowingAppOpen) {
+      debugPrint("⚠️ AppOpen not ready, skipping");
       onDismissed?.call();
       return;
     }
@@ -238,4 +238,128 @@ class AppLovinAdManager {
     }
     AppLovinMAX.showRewardedAd(_rewardedAdUnitId);
   }
+
+
+  static Widget nativeAdLarge() {
+    final controller = MaxNativeAdViewController();
+
+    return MaxNativeAdView(
+      adUnitId: _nativeAdUnitId,
+      controller: controller,
+      listener: NativeAdListener(
+        onAdLoadedCallback: (ad) =>
+            debugPrint("✅ Native loaded from ${ad.networkName}"),
+        onAdLoadFailedCallback: (adUnitId, error) =>
+            debugPrint("❌ Native load failed: ${error.message}"),
+        onAdClickedCallback: (ad) =>
+            debugPrint("👆 Native clicked: ${ad.adUnitId}"),
+        onAdRevenuePaidCallback: (ad) =>
+            debugPrint("💰 Native revenue: ${ad.revenue}"),
+      ),
+      // Compose your native layout:
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                MaxNativeAdIconView(width: 48, height: 48),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MaxNativeAdTitleView(
+                        maxLines: 1,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      MaxNativeAdAdvertiserView(
+                        maxLines: 1,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                MaxNativeAdOptionsView(width: 20, height: 20),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Expanded(child: MaxNativeAdMediaView()),
+            const SizedBox(height: 8),
+            const SizedBox(
+              width: double.infinity,
+              child: MaxNativeAdCallToActionView(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget nativeAdSmall({double height = 110}) {
+    final controller = MaxNativeAdViewController();
+
+    return SizedBox(
+      height: height,
+      child: MaxNativeAdView(
+        adUnitId: _nativeAdUnitId,
+        controller: controller,
+        listener: NativeAdListener(
+          onAdLoadedCallback: (ad) =>
+              debugPrint("✅ vSmall Native loaded from ${ad.networkName}"),
+          onAdLoadFailedCallback: (adUnitId, error) =>
+              debugPrint("❌ vSmall Native load failed: ${error.message}"),
+          onAdClickedCallback: (ad) =>
+              debugPrint("👆 vSmall Native clicked: ${ad.adUnitId}"),
+          onAdRevenuePaidCallback: (ad) =>
+              debugPrint("💰 vSmall Native revenue: ${ad.revenue}"),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              MaxNativeAdIconView(width: 40, height: 40),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    MaxNativeAdTitleView(
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    MaxNativeAdBodyView(
+                      maxLines: 1,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              MaxNativeAdCallToActionView(),
+              const SizedBox(width: 6),
+              MaxNativeAdOptionsView(width: 16, height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
 }

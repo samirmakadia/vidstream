@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
-import 'package:applovin_max/applovin_max.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +13,6 @@ import 'package:vidstream/services/dialog_manager_service.dart';
 import 'package:vidstream/services/service_locator.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
-
 import 'manager/app_open_ad_manager.dart';
 
 
@@ -23,9 +20,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await _initializeServices();
-  AppLovinAdManager.initialize();
-  AppLovinAdManager.loadAppOpenAd();
-
   runApp(const MyApp());
 }
 
@@ -33,6 +27,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> _initializeServices() async {
   try {
+    await AppLovinAdManager.initialize();
     await Firebase.initializeApp();
     await ServiceLocator.initialize();
     await ApiRepository.instance.initialize();
@@ -167,16 +162,22 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
     if (_appOpenAdShown) return;
     _appOpenAdShown = true;
 
+    // give SDK a chance to preload
+    await Future.delayed(const Duration(seconds: 2));
+
     final completer = Completer<void>();
 
-    AppLovinAdManager.showAppOpenAd(
-      onDismissed: () {
+    if (AppLovinAdManager.isAppOpenAvailable) {
+      AppLovinAdManager.showAppOpenAd(onDismissed: () {
+        debugPrint("ℹ️ AppOpen dismissed");
         completer.complete();
-      },
-    );
+      });
+    } else {
+      debugPrint("⚠️ No AppOpen ad available yet");
+      completer.complete();
+    }
 
     return completer.future;
   }
-
 }
 
