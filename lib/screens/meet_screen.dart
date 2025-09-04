@@ -230,7 +230,7 @@ class _MeetScreenState extends State<MeetScreen> {
         elevation: 0,
         actions: _hasJoinedMeet
             ? [
-          _buildFilterIconButton(context),
+          // _buildFilterIconButton(context),
           IconButton(
             onPressed: _leaveMeet,
             icon: const Icon(Icons.exit_to_app),

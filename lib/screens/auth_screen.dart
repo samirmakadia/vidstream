@@ -266,16 +266,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                       child: Column(
                         children: [
                           SvgPicture.asset(
-                            "assets/icon/logo_black.svg",
+                            "assets/icon/logo_green_with_text.svg",
                             width: 180,
                             height: 180,
-                          ),
-                          Text(
-                            'VidMeet',
-                            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
