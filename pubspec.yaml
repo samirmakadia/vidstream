@@ -44,6 +44,7 @@ dependencies:
   firebase_auth: ^5.7.0
   sign_in_with_apple: ^7.0.1
   applovin_max: ^4.5.1
+  flutter_svg: ^2.2.0
 
 
 dev_dependencies:
@@ -63,5 +64,5 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/app_icon.png"
+  image_path: "assets/icon/vidmeet_icon.png"
   min_sdk_android: 21

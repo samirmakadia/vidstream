@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vidstream/screens/auth_screen.dart';
@@ -21,10 +22,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
-      icon: Icons.video_library,
+      svgAsset: 'assets/icon/logo_white.svg',
       title: '📱 Create & Share Videos',
       description: 'Record amazing videos, add descriptions, and share your creativity with the world',
-      gradient: const [Color(0xFF5BEF01), Color(0xFF66BB6A)],
+      gradient: const [Color(0xFFD1F244), Color(0xFFA3E635)],
       features: ['Record HD videos', 'Add descriptions & tags', 'Share instantly'],
     ),
     OnboardingPage(
@@ -340,11 +341,18 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
                       ),
                     ],
                   ),
-                  child: Icon(
+                  child: widget.page.svgAsset != null
+                      ? SvgPicture.asset(
+                    widget.page.svgAsset!,
+                    width: 60,
+                    height: 60,
+                  )
+                      : Icon(
                     widget.page.icon,
                     size: 60,
                     color: Colors.white,
                   ),
+
                 ),
               );
             },
@@ -423,14 +431,16 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
 }
 
 class OnboardingPage {
-  final IconData icon;
+  final IconData? icon;
+  final String? svgAsset;
   final String title;
   final String description;
   final List<Color> gradient;
   final List<String> features;
 
   OnboardingPage({
-    required this.icon,
+    this.icon,
+    this.svgAsset,
     required this.title,
     required this.description,
     required this.gradient,
