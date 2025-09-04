@@ -204,7 +204,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       child: Padding(
         padding: MediaQuery.of(context).viewInsets,
         child: Container(
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: MediaQuery.of(context).size.height * 0.9,
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.only(
