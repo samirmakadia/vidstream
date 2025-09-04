@@ -320,6 +320,16 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             key: ValueKey(video.id),
             video: video,
             isActive: index == _currentIndex && _isScreenVisible,
+            onVideoCompleted: () {
+              if (_pageController.hasClients) {
+                final nextPage = (_currentIndex + 1) % _videos.length;
+                _pageController.animateToPage(
+                  nextPage,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+              }
+            },
             onVideoDeleted: (deletedVideo) {
               _modifyVideo(video.id, (_) => null);
             },

@@ -137,6 +137,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
           video: video,
           isActive: index == _currentIndex && _isScreenVisible,
           user: widget.user,
+          onVideoCompleted: () {
+            if (_pageController.hasClients) {
+              final nextPage = (_currentIndex + 1) % _videos.length;
+              _pageController.animateToPage(
+                nextPage,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+              );
+            }
+          },
           onVideoDeleted: (deletedVideo) {
             setState(() {
               _videos.removeWhere((v) => v.id == deletedVideo.id);

@@ -5,11 +5,12 @@ import 'package:flutter/services.dart';
 class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
   final bool isActive;
+  final VoidCallback? onVideoCompleted;
 
   const VideoPlayerWidget({
     super.key,
     required this.videoUrl,
-    required this.isActive,
+    required this.isActive, this.onVideoCompleted,
   });
 
   @override
@@ -48,7 +49,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     controller = BetterPlayerController(
       BetterPlayerConfiguration(
         autoPlay: false,
-        looping: true,
+        looping: false,
         handleLifecycle: true,
         expandToFill: true,
         fit: BoxFit.cover,
@@ -61,16 +62,21 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
     controller!.setupDataSource(controller!.betterPlayerDataSource!).then((_) {
       final aspect = controller!.videoPlayerController!.value.aspectRatio;
-      debugPrint("Video aspect ratio: $aspect");
       controller!.setOverriddenAspectRatio(aspect);
 
       if (widget.isActive) {
         controller!.play();
       }
+
+      controller!.addEventsListener((event) {
+        if (event.betterPlayerEventType == BetterPlayerEventType.finished) {
+          widget.onVideoCompleted?.call();
+        }
+      });
+
       setState(() {});
     });
   }
-
 
 
   BetterPlayerDataSource _ds(String url) {
@@ -79,9 +85,9 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       url,
       cacheConfiguration: BetterPlayerCacheConfiguration(
         useCache: true,
-        preCacheSize: 5 * 1024 * 1024,
+        preCacheSize: 2 * 1024 * 1024,
         maxCacheSize: 500 * 1024 * 1024,
-        maxCacheFileSize: 60 * 1024 * 1024,
+        maxCacheFileSize: 20 * 1024 * 1024,
       ),
     );
   }
