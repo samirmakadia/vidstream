@@ -95,14 +95,10 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
         final followers = snapshot.data ?? [];
 
         if (snapshot.connectionState == ConnectionState.waiting && _isFirstLoadFollowers) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          );
+          return const Center(child: CircularProgressIndicator(color: Colors.white));
         }
 
-        if (snapshot.connectionState != ConnectionState.waiting) {
-          _isFirstLoadFollowers = false;
-        }
+        _isFirstLoadFollowers = false;
 
         if (snapshot.hasError) {
           return _buildErrorWidget('Failed to load followers: ${snapshot.error}');
@@ -117,24 +113,22 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
         }
 
         final adInterval = 4;
-        final userCount = followers.length;
-        final totalItems = Utils.getTotalItems(userCount, adInterval);
+        final List<Widget> items = [];
 
-        return ListView.builder(
+        for (int i = 0; i < followers.length; i++) {
+          items.add(_buildUserListItem(followers[i]));
+
+          if ((i + 1) % adInterval == 0 && AppLovinAdManager.isNativeAdLoaded) {
+            items.add(Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: AppLovinAdManager.nativeAdSmall(height: 70),
+            ));
+          }
+        }
+
+        return ListView(
           padding: const EdgeInsets.all(16),
-          itemCount: totalItems,
-          itemBuilder: (context, index) {
-            if (Utils.isAdIndex(index, userCount, adInterval, totalItems)) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: AppLovinAdManager.nativeAdSmall(height: 70),
-              );
-            }
-
-            final userIndex = Utils.getUserIndex(index, userCount, adInterval);
-            final user = followers[userIndex];
-            return _buildUserListItem(user);
-          },
+          children: items,
         );
       },
     );
@@ -152,10 +146,7 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           );
         }
 
-        if (snapshot.connectionState != ConnectionState.waiting) {
-          _isFirstLoadFollowing = false;
-        }
-
+        _isFirstLoadFollowing = false;
 
         if (snapshot.hasError) {
           return _buildErrorWidget('Failed to load following: ${snapshot.error}');
@@ -170,24 +161,22 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
         }
 
         final adInterval = 4;
-        final userCount = following.length;
-        final totalItems = Utils.getTotalItems(userCount, adInterval);
+        final List<Widget> items = [];
 
-        return ListView.builder(
+        for (int i = 0; i < following.length; i++) {
+          items.add(_buildUserListItem(following[i]));
+
+          if ((i + 1) % adInterval == 0 && AppLovinAdManager.isNativeAdLoaded) {
+            items.add(Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: AppLovinAdManager.nativeAdSmall(height: 70),
+            ));
+          }
+        }
+
+        return ListView(
           padding: const EdgeInsets.all(16),
-          itemCount: totalItems,
-          itemBuilder: (context, index) {
-            if (Utils.isAdIndex(index, userCount, adInterval, totalItems)) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: AppLovinAdManager.nativeAdSmall(height: 70),
-              );
-            }
-
-            final userIndex = Utils.getUserIndex(index, userCount, adInterval);
-            final user = following[userIndex];
-            return _buildUserListItem(user);
-          },
+          children: items,
         );
       },
     );

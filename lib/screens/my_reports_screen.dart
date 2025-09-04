@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:vidstream/services/report_service.dart';
 import 'package:vidstream/models/api_models.dart';
 
+import '../manager/app_open_ad_manager.dart';
+import '../utils/utils.dart';
 import '../widgets/common_snackbar.dart';
 import '../widgets/professional_bottom_ad.dart';
 
@@ -22,6 +24,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   List<Report> _reports = [];
   bool _isLoading = true;
   final Set<String> _deletingReports = {};
+  final int _adInterval = 4;
 
   @override
   void initState() {
@@ -151,17 +154,34 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                     )
               : SafeArea(
                 child: RefreshIndicator(
-                        onRefresh: _fetchReports,
-                        child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _reports.length,
-                itemBuilder: (context, index) {
-                  final report = _reports[index];
-                  return _buildReportItem(report);
-                },
-                        ),
-                      ),
-              ),
+            onRefresh: _fetchReports,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: Utils.getTotalItems(_reports.length, _adInterval),
+              itemBuilder: (context, index) {
+                if (Utils.isAdIndex(
+                    index,
+                    _reports.length,
+                    _adInterval,
+                    Utils.getTotalItems(_reports.length, _adInterval))) {
+                  if (AppLovinAdManager.isNativeAdLoaded) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: AppLovinAdManager.nativeAdSmall(height: 90),
+                    );
+                  } else {
+                    return const SizedBox.shrink();
+                  }
+                }
+
+                final reportIndex = Utils.getUserIndex(index, _reports.length, _adInterval);
+                final report = _reports[reportIndex];
+
+                return _buildReportItem(report);
+              },
+            ),
+          ),
+        ),
         ),
       ),
     );

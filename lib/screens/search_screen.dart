@@ -6,6 +6,7 @@ import 'package:vidstream/services/search_service.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
 import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
 import '../utils/utils.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
@@ -253,41 +254,43 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
 
 
   Widget _buildVideosTab() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_videos.isEmpty) return _buildEmptyVideosState();
 
-    if (_videos.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              _hasSearched ? Icons.search_off : Icons.trending_up,
-              size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _hasSearched
-                  ? 'No videos found for "$_currentQuery"'
-                  : 'No trending videos available',
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            if (_hasSearched) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Try different keywords or check your spelling',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ],
+    const int videosPerRow = 3;
+    const int rowsBeforeAd = 2;
+    final int videosPerChunk = videosPerRow * rowsBeforeAd;
+
+    final List<Widget> children = [];
+
+    for (int i = 0; i < _videos.length; i += videosPerChunk) {
+      final end = (i + videosPerChunk < _videos.length) ? i + videosPerChunk : _videos.length;
+      final videosChunk = _videos.sublist(i, end);
+
+      // Add Grid for this chunk
+      children.add(
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: videosChunk.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: videosPerRow,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 0.7,
+          ),
+          itemBuilder: (context, index) {
+            final video = videosChunk[index];
+            return _buildVideoGridItem(video, double.infinity, double.infinity);
+          },
         ),
       );
+
+      children.add(const SizedBox(height: 8));
+      if (AppLovinAdManager.isNativeAdLoaded) {
+        children.add(AppLovinAdManager.nativeAdSmall(height: 110));
+        children.add(const SizedBox(height: 8));
+      }
     }
 
     return Column(
@@ -304,34 +307,14 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final spacing = 8 * (3 - 1); // total horizontal spacing between items
-                final itemWidth = (constraints.maxWidth - spacing - 32) / 3; // subtract padding & spacing
-                final itemHeight = itemWidth / 0.7; // because childAspectRatio = 0.7
-
-                return GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 0.7,
-                  ),
-                  itemCount: _videos.length,
-                  itemBuilder: (context, index) {
-                    final video = _videos[index];
-                    return _buildVideoGridItem(video, itemWidth, itemHeight);
-                  },
-                );
-              },
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ListView(
+              children: children,
             ),
           ),
-        )
-
+        ),
       ],
     );
   }
@@ -342,37 +325,11 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     }
 
     if (_users.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              _hasSearched ? Icons.person_search : Icons.star,
-              size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _hasSearched
-                  ? 'No users found for "$_currentQuery"'
-                  : 'No popular users available',
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            if (_hasSearched) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Try different keywords or check your spelling',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ],
-        ),
-      );
+      return _buildEmptyUsersState();
     }
+
+    final adInterval = 4;
+    final totalItems = Utils.getTotalItems(_users.length, adInterval);
 
     return Column(
       children: [
@@ -388,25 +345,36 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-
         Expanded(
           child: ListView.builder(
-            itemCount: _users.length,
+            itemCount: totalItems,
             itemBuilder: (context, index) {
-              final user = _users[index];
+              if (Utils.isAdIndex(index, _users.length, adInterval, totalItems)) {
+                if (AppLovinAdManager.isNativeAdLoaded) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: AppLovinAdManager.nativeAdSmall(height: 90),
+                  );
+                } else {
+                  // Skip ad, don't reserve space
+                  return const SizedBox.shrink();
+                }
+              }
+
+              final userIndex = Utils.getUserIndex(index, _users.length, adInterval);
+              final user = _users[userIndex];
+
               return UserCard(
                 user: user,
-                onTap: () async {
+                onTap: () {
                   NavigationHelper.navigateWithAd(
                     context: context,
                     destination: OtherUserProfileScreen(userId: user.id),
-                    onReturn: (result) {
-                      if (result != null) {
-                        if (_currentQuery.isNotEmpty) {
-                          _performSearch(_currentQuery, isLoading: false);
-                        } else {
-                          _loadDefaultContent(false);
-                        }
+                    onReturn: (_) {
+                      if (_currentQuery.isNotEmpty) {
+                        _performSearch(_currentQuery, isLoading: false);
+                      } else {
+                        _loadDefaultContent(false);
                       }
                     },
                   );
@@ -416,6 +384,72 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildEmptyUsersState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            _hasSearched ? Icons.person_search : Icons.star,
+            size: 64,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _hasSearched
+                ? 'No users found for "$_currentQuery"'
+                : 'No popular users available',
+            style: Theme.of(context).textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+          if (_hasSearched) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Try different keywords or check your spelling',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyVideosState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            _hasSearched ? Icons.search_off : Icons.trending_up,
+            size: 64,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _hasSearched
+                ? 'No videos found for "$_currentQuery"'
+                : 'No trending videos available',
+            style: Theme.of(context).textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+          if (_hasSearched) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Try different keywords or check your spelling',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
     );
   }
 

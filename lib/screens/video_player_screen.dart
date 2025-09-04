@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
+import '../manager/app_open_ad_manager.dart';
+import '../utils/utils.dart';
 import 'home/widget/video_feed_item_widget.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -97,26 +99,47 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
   }
 
   Widget _buildVideo() {
+    const int videosPerAd = 4;
+    final loadedVideos = _videos;
+    final showAds = AppLovinAdManager.isNativeAdLoaded;
+
+    final totalAds = showAds ? (loadedVideos.length / videosPerAd).floor() : 0;
+    final totalItems = loadedVideos.length + totalAds;
+
     return PageView.builder(
       controller: _pageController,
       scrollDirection: Axis.vertical,
-      itemCount: _videos.length,
+      itemCount: totalItems,
       onPageChanged: (index) {
         setState(() {
           _currentIndex = index;
         });
       },
       itemBuilder: (context, index) {
-        final video = _videos[index];
+        final isAdIndex = showAds && (index + 1) % (videosPerAd + 1) == 0;
+
+        if (isAdIndex) {
+          return SizedBox.expand(
+            child: AppLovinAdManager.nativeAdLarge(
+              height: Utils(context).screenHeight,
+            ),
+          );
+        }
+
+        // Calculate videoIndex accounting for ads that are actually displayed
+        final videoIndex = index - (index ~/ (videosPerAd + 1));
+        if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
+
+        final video = loadedVideos[videoIndex];
+
         return VideoFeedItemWidget(
+          key: ValueKey(video.id),
           video: video,
           isActive: index == _currentIndex && _isScreenVisible,
           user: widget.user,
           onVideoDeleted: (deletedVideo) {
             setState(() {
-              print('Video deleted: ${deletedVideo.id}');
               _videos.removeWhere((v) => v.id == deletedVideo.id);
-
               if (_videos.isEmpty) {
                 Navigator.of(context).pop(deletedVideo.id);
               } else if (_currentIndex >= _videos.length) {
@@ -124,16 +147,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
               }
             });
           },
-          onLikeUpdated: (newCount, isLiked) => _modifyVideo(video.id, (v) {
-            return v.copyWith(likesCount: newCount, isLiked: isLiked,);
-          }),
-          onCommentUpdated: (newCount) => _modifyVideo(video.id, (v) {
-            return v.copyWith(commentsCount: newCount,);
-          }),
+          onLikeUpdated: (newCount, isLiked) =>
+              _modifyVideo(video.id, (v) => v.copyWith(likesCount: newCount, isLiked: isLiked)),
+          onCommentUpdated: (newCount) =>
+              _modifyVideo(video.id, (v) => v.copyWith(commentsCount: newCount)),
           onReported: (reportedVideo) => _modifyVideo(reportedVideo.id, (_) => null),
-          onFollowUpdated: (updatedUser) => _modifyVideo(video.id, (v) {
-            return v.copyWith(user: updatedUser);
-          }),
+          onFollowUpdated: (updatedUser) =>
+              _modifyVideo(video.id, (v) => v.copyWith(user: updatedUser)),
           onPauseRequested: () => setScreenVisible(false),
           onResumeRequested: () => setScreenVisible(true),
         );

@@ -5,6 +5,8 @@ import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
 
 import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
+import '../utils/utils.dart';
 import '../widgets/professional_bottom_ad.dart';
 
 class BlockedUsersScreen extends StatefulWidget {
@@ -18,7 +20,8 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   final BlockService _blockService = BlockService();
   List<ApiUser> _blockedUsers = [];
   bool _isLoading = true;
-  
+  final int _adInterval = 4;
+
   @override
   void initState() {
     super.initState();
@@ -161,27 +164,40 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
       ),
       body: SafeArea(
         child: ProfessionalBottomAd(
-          child: _isLoading 
-              ? const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
-                )
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator(color: Colors.white))
               : _blockedUsers.isEmpty
-                  ? _buildEmptyState()
-                  : RefreshIndicator(
-                      onRefresh: _loadBlockedUsers,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _blockedUsers.length,
-                        itemBuilder: (context, index) {
-                          final user = _blockedUsers[index];
-                          return _buildBlockedUserCard(user);
-                        },
-                      ),
-                    ),
+              ? _buildEmptyState()
+              : RefreshIndicator(
+            onRefresh: _loadBlockedUsers,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: Utils.getTotalItems(_blockedUsers.length, _adInterval),
+              itemBuilder: (context, index) {
+                // Insert ad
+                if (Utils.isAdIndex(index, _blockedUsers.length, _adInterval,
+                    Utils.getTotalItems(_blockedUsers.length, _adInterval))) {
+                  if (AppLovinAdManager.isNativeAdLoaded) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: AppLovinAdManager.nativeAdSmall(height: 90),
+                    );
+                  } else {
+                    return const SizedBox.shrink();
+                  }
+                }
+
+                final userIndex = Utils.getUserIndex(index, _blockedUsers.length, _adInterval);
+                final user = _blockedUsers[userIndex];
+                return _buildBlockedUserCard(user);
+              },
+            ),
+          ),
         ),
       ),
     );
   }
+
 
   Widget _buildEmptyState() {
     return Center(

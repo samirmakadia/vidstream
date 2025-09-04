@@ -7,6 +7,7 @@ import 'package:vidstream/screens/chat_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
+import '../utils/utils.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
 
@@ -334,107 +335,75 @@ class _MeetScreenState extends State<MeetScreen> {
   }
 
   Widget _buildMeetContent() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
 
     if (_onlineUsers.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.people_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
+            Icon(Icons.people_outline,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
             const SizedBox(height: 16),
-            Text(
-              'No users online',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
+            Text('No users online',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
             const SizedBox(height: 8),
-            Text(
-              'Check back later to see online users',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
+            Text('Check back later to see online users',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
           ],
         ),
       );
     }
 
-    // Users are already sorted by the API
+    const int crossAxisCount = 2;
+    const int rowsBeforeAd = 2;
+    final int usersPerChunk = crossAxisCount * rowsBeforeAd;
+
+    final List<Widget> children = [];
+
+    for (int i = 0; i < _onlineUsers.length; i += usersPerChunk) {
+      final end = (i + usersPerChunk < _onlineUsers.length)
+          ? i + usersPerChunk
+          : _onlineUsers.length;
+      final usersChunk = _onlineUsers.sublist(i, end);
+
+      children.add(
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: usersChunk.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.8,
+          ),
+          itemBuilder: (context, index) {
+            final user = usersChunk[index];
+            final itemWidth =
+                (MediaQuery.of(context).size.width - 16 * 2 - 12) / crossAxisCount;
+            final itemHeight = itemWidth / 0.8;
+            return _buildUserCard(user, itemWidth, itemHeight);
+          },
+        ),
+      );
+
+      children.add(const SizedBox(height: 16));
+      if (AppLovinAdManager.isNativeAdLoaded) {
+        children.add(AppLovinAdManager.nativeAdSmall(height: 120));
+        children.add(const SizedBox(height: 16));
+      }
+    }
 
     return RefreshIndicator(
       onRefresh: _loadOnlineUsers,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (_selectedGenderFilter != 'all')
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.filter_list,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _getGenderDisplayName(_selectedGenderFilter),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final spacing = 8 * (2 - 1);
-                  final itemWidth = (constraints.maxWidth - spacing - 32) / 2;
-                  final itemHeight = itemWidth / 0.8;
-
-                  return GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: itemWidth / itemHeight,
-                    ),
-                    itemCount: _onlineUsers.length,
-                    itemBuilder: (context, index) {
-                      final user = _onlineUsers[index];
-                      return _buildUserCard(user, itemWidth, itemHeight);
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: ListView(
+          children: children,
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:vidstream/screens/home/bottomsheet/report_dialog.dart';
 import '../../../helper/navigation_helper.dart';
+import '../../../manager/app_open_ad_manager.dart';
 import '../../../models/api_models.dart';
 import '../../../repositories/api_repository.dart';
 import '../../../services/comment_service.dart';
@@ -246,7 +247,6 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
               Divider(height: 1, color: Colors.grey.withOpacity(0.5)),
 
-              // Comments List
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
@@ -255,39 +255,50 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.comment_outlined,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
+                      Icon(Icons.comment_outlined, size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
-                      Text(
-                        'No comments yet',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
+                      Text('No comments yet',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600])),
                       const SizedBox(height: 8),
-                      Text(
-                        'Be the first to comment!',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[500],
-                        ),
-                      ),
+                      Text('Be the first to comment!',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[500])),
                     ],
                   ),
                 )
                     : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _comments.length,
+                  itemCount: _comments.length + (_comments.length / 4).ceil(),
                   itemBuilder: (context, index) {
-                    final comment = _comments[index];
+                    if ((index + 1) % 5 == 0) {
+                      // Only show ad if it is loaded
+                      if (AppLovinAdManager.isNativeAdLoaded) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: AppLovinAdManager.nativeAdSmall(height: 80),
+                        );
+                      } else {
+                        return const SizedBox.shrink();
+                      }
+                    }
+
+                    final commentIndex = index - (index ~/ 5);
+                    if (commentIndex >= _comments.length) {
+                      if (AppLovinAdManager.isNativeAdLoaded) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: AppLovinAdManager.nativeAdSmall(height: 80),
+                        );
+                      } else {
+                        return const SizedBox.shrink();
+                      }
+                    }
+
+                    final comment = _comments[commentIndex];
                     return _buildCommentItem(comment);
                   },
                 ),
               ),
 
-              // Comment Input
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(

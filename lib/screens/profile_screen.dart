@@ -601,10 +601,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         : 'Like some videos to see them here!';
     final emptyIcon = _selectedTabIndex == 0 ? Icons.video_library_outlined : Icons.favorite_outline;
 
-    return SliverPadding(
-      padding: const EdgeInsets.all(16),
-      sliver: videos.isEmpty
-          ? SliverToBoxAdapter(
+    if (videos.isEmpty) {
+      return SliverToBoxAdapter(
         child: SizedBox(
           height: 250,
           child: Column(
@@ -646,29 +644,48 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ],
           ),
         ),
-      )
-          : SliverLayoutBuilder(
-        builder: (context, constraints) {
-          final spacing = 8 * (3 - 1);
-          final itemWidth = (constraints.crossAxisExtent - spacing) / 3;
-          final itemHeight = itemWidth / 0.7;
+      );
+    }
 
-          return SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 0.7,
-            ),
-            delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                final video = videos[index];
-                return _buildVideoGridItem(video, itemWidth, itemHeight);
-              },
-              childCount: videos.length,
-            ),
-          );
-        },
+    const int videosPerRow = 3;
+    const int rowsBeforeAd = 2;
+    final int videosPerChunk = videosPerRow * rowsBeforeAd;
+
+    final List<Widget> children = [];
+
+    for (int i = 0; i < videos.length; i += videosPerChunk) {
+      final end = (i + videosPerChunk < videos.length) ? i + videosPerChunk : videos.length;
+      final videosChunk = videos.sublist(i, end);
+
+      children.add(
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: videosChunk.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: videosPerRow,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 0.7,
+          ),
+          itemBuilder: (context, index) {
+            final video = videosChunk[index];
+            return _buildVideoGridItem(video, double.infinity, double.infinity);
+          },
+        ),
+      );
+
+      children.add(const SizedBox(height: 8));
+      if (AppLovinAdManager.isNativeAdLoaded) {
+        children.add(AppLovinAdManager.nativeAdSmall(height: 110));
+        children.add(const SizedBox(height: 8));
+      }
+    }
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(children: children),
       ),
     );
   }

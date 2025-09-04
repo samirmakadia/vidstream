@@ -114,12 +114,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: totalItems,
             itemBuilder: (context, index) {
-              // Show ad at intervals or at the end if less than adInterval
               if (Utils.isAdIndex(index, conversations.length, adInterval, totalItems)) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: AppLovinAdManager.nativeAdSmall(height: 90),
-                );
+                if (AppLovinAdManager.isNativeAdLoaded) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: AppLovinAdManager.nativeAdSmall(height: 90),
+                  );
+                } else {
+                  return const SizedBox.shrink();
+                }
               }
 
               final conversationIndex = Utils.getUserIndex(index, conversations.length, adInterval);
@@ -131,7 +134,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
       },
     );
   }
-
 
   Widget _buildEmptyState() {
     return Center(

@@ -284,23 +284,37 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   Widget _buildFeedView() {
+    const int videosPerAd = 4;
+    final showAds = AppLovinAdManager.isNativeAdLoaded;
+    final loadedVideos = _videos;
+
+    // Only add ad slots if ads are loaded
+    final totalAds = showAds ? (loadedVideos.length / videosPerAd).floor() : 0;
+    final totalItems = loadedVideos.length + totalAds;
+
     return RefreshIndicator(
       onRefresh: _refreshVideos,
       child: PageView.builder(
         controller: _pageController,
         scrollDirection: Axis.vertical,
-        itemCount: _videos.length + (_videos.length ~/ 4),
+        itemCount: totalItems,
         onPageChanged: (index) => setState(() => _currentIndex = index),
         itemBuilder: (context, index) {
-          // Every 5th item = Ad
-          if ((index + 1) % 5 == 0) {
+          final isAdIndex = showAds && (index + 1) % (videosPerAd + 1) == 0;
+
+          if (isAdIndex) {
             return SizedBox.expand(
-              child: AppLovinAdManager.nativeAdLarge(height: Utils(context).screenHeight),
+              child: AppLovinAdManager.nativeAdLarge(
+                height: Utils(context).screenHeight,
+              ),
             );
           }
 
-          final videoIndex = index - (index ~/ 5);
-          final video = _videos[videoIndex];
+          // Calculate correct video index after accounting for ads
+          final videoIndex = index - (index ~/ (videosPerAd + 1));
+          if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
+
+          final video = loadedVideos[videoIndex];
 
           return VideoFeedItemWidget(
             key: ValueKey(video.id),

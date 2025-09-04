@@ -9,6 +9,7 @@ import 'package:vidstream/screens/follower_following_list_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
 
 import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/utils.dart';
 import '../widgets/custom_image_widget.dart';
@@ -794,58 +795,80 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
   }
 
   Widget _buildTabContent() {
-    return SliverSafeArea(
-      top: false,
-      left: false,
-      right: false,
-      sliver: SliverPadding(
-        padding: const EdgeInsets.all(16),
-        sliver: _userVideos.isEmpty
-            ? SliverToBoxAdapter(
-          child: SizedBox(
-            height: 250,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.video_library_outlined,
-                  size: 64,
+    final videos = _userVideos;
+
+    if (videos.isEmpty) {
+      return SliverToBoxAdapter(
+        child: SizedBox(
+          height: 250,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.video_library_outlined,
+                size: 64,
+                color: Colors.white.withValues(alpha: 0.6),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No videos yet',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${_user?.displayName ?? 'This user'} hasn\'t posted any videos yet.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.6),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'No videos yet',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_user?.displayName ?? 'This user'} hasn\'t posted any videos yet.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.6),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        )
-            : SliverGrid(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 0.7,
-          ),
-          delegate: SliverChildBuilderDelegate(
-                (context, index) {
-              final video = _userVideos[index];
-              return _buildVideoGridItem(video);
-            },
-            childCount: _userVideos.length,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
+      );
+    }
+
+    const int videosPerRow = 3;
+    const int rowsBeforeAd = 2;
+    final int videosPerChunk = videosPerRow * rowsBeforeAd;
+
+    final List<Widget> children = [];
+
+    for (int i = 0; i < videos.length; i += videosPerChunk) {
+      final end = (i + videosPerChunk < videos.length) ? i + videosPerChunk : videos.length;
+      final videosChunk = videos.sublist(i, end);
+
+      children.add(
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: videosChunk.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: videosPerRow,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 0.7,
+          ),
+          itemBuilder: (context, index) {
+            final video = videosChunk[index];
+            return _buildVideoGridItem(video);
+          },
+        ),
+      );
+
+      children.add(const SizedBox(height: 8));
+      if (AppLovinAdManager.isNativeAdLoaded) {
+        children.add(AppLovinAdManager.nativeAdSmall(height: 110));
+        children.add(const SizedBox(height: 8));
+      }
+    }
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(children: children),
       ),
     );
   }

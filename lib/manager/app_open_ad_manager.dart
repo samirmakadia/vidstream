@@ -23,6 +23,7 @@ class AppLovinAdManager {
   // --- New variables for screen open tracking ---
   static int _screenOpenCount = 0;
   static const int _showAdEvery = 3;
+  static bool isNativeAdLoaded = false;
 
   static bool get isAppOpenAvailable => _isAppOpenAvailable;
 
@@ -251,26 +252,28 @@ class AppLovinAdManager {
         adUnitId: _nativeAdUnitId,
         controller: controller,
         listener: NativeAdListener(
-          onAdLoadedCallback: (ad) =>
-              debugPrint("✅ Native loaded from ${ad.networkName}"),
-          onAdLoadFailedCallback: (adUnitId, error) =>
-              debugPrint("❌ Native load failed: ${error.message}"),
-          onAdClickedCallback: (ad) =>
-              debugPrint("👆 Native clicked: ${ad.adUnitId}"),
-          onAdRevenuePaidCallback: (ad) =>
-              debugPrint("💰 Native revenue: ${ad.revenue}"),
+          onAdLoadedCallback: (ad) {
+            debugPrint("✅ Native large loaded");
+            isNativeAdLoaded = true;
+          },
+          onAdLoadFailedCallback: (adUnitId, error) {
+            debugPrint("❌ Native large load failed: ${error.message}");
+            isNativeAdLoaded = false;
+          },
+          onAdClickedCallback: (ad) => debugPrint("👆 Native clicked: ${ad.adUnitId}"),
+          onAdRevenuePaidCallback: (ad) => debugPrint("💰 Native revenue: ${ad.revenue}"),
         ),
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
+            color: const Color(0xFF1E1E1E), // dark background
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Row(
-                children: [
+                children: const [
                   MaxNativeAdIconView(width: 48, height: 48),
                   SizedBox(width: 8),
                   Expanded(
@@ -279,18 +282,24 @@ class AppLovinAdManager {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
+                        color: Colors.white, // dark theme text
                       ),
                     ),
                   ),
                   MaxNativeAdOptionsView(width: 20, height: 20),
                 ],
               ),
-              SizedBox(height: 8),
-              Expanded(child: MaxNativeAdMediaView()),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
+              const Expanded(child: MaxNativeAdMediaView()),
+              const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
-                child: MaxNativeAdCallToActionView(),
+                child: MaxNativeAdCallToActionView(
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white, // button bg
+                    foregroundColor: Colors.black,  // button text
+                  ),
+                ),
               ),
             ],
           ),
@@ -300,8 +309,11 @@ class AppLovinAdManager {
   }
 
 
-  static Widget nativeAdSmall({double height = 110, double width =double.infinity}) {
+  static Widget nativeAdSmall({double height = 110, double width = double.infinity}) {
     final controller = MaxNativeAdViewController();
+
+    const backgroundColor = Color(0xFF1E1E1E);
+    const borderColor = Color(0xFF333333);
 
     return SizedBox(
       height: height,
@@ -310,20 +322,23 @@ class AppLovinAdManager {
         adUnitId: _nativeAdUnitId,
         controller: controller,
         listener: NativeAdListener(
-          onAdLoadedCallback: (ad) =>
-              debugPrint("✅ vSmall Native loaded from ${ad.networkName}"),
-          onAdLoadFailedCallback: (adUnitId, error) =>
-              debugPrint("❌ vSmall Native load failed: ${error.message}"),
-          onAdClickedCallback: (ad) =>
-              debugPrint("👆 vSmall Native clicked: ${ad.adUnitId}"),
-          onAdRevenuePaidCallback: (ad) =>
-              debugPrint("💰 vSmall Native revenue: ${ad.revenue}"),
+          onAdLoadedCallback: (ad) {
+            debugPrint("✅ Native small loaded");
+            isNativeAdLoaded = true;
+          },
+          onAdLoadFailedCallback: (adUnitId, error) {
+            debugPrint("❌ Native small load failed: ${error.message}");
+            isNativeAdLoaded = false;
+          },
+          onAdClickedCallback: (ad) {},
+          onAdRevenuePaidCallback: (ad) {},
         ),
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -334,17 +349,18 @@ class AppLovinAdManager {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children: const [
                     MaxNativeAdTitleView(
                       maxLines: 1,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
+                        color: Colors.white,
                       ),
                     ),
                     MaxNativeAdBodyView(
                       maxLines: 1,
-                      style: const TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: 12, color: Colors.white70),
                     ),
                   ],
                 ),
@@ -359,5 +375,4 @@ class AppLovinAdManager {
       ),
     );
   }
-
 }
