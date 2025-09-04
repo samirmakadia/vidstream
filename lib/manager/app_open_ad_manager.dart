@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:applovin_max/applovin_max.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -198,7 +200,7 @@ class AppLovinAdManager {
           _isShowingAppOpen = false;
           _isAppOpenAvailable = false;
           debugPrint("ℹ️ AppOpen dismissed");
-          loadAppOpenAd();
+         // loadAppOpenAd();
         },
         onAdClickedCallback: (ad) {
           debugPrint("👆 AppOpen Ad clicked: ${ad.adUnitId}");
@@ -240,74 +242,70 @@ class AppLovinAdManager {
   }
 
 
-  static Widget nativeAdLarge() {
+  static Widget nativeAdLarge({double height = 300}) {
     final controller = MaxNativeAdViewController();
 
-    return MaxNativeAdView(
-      adUnitId: _nativeAdUnitId,
-      controller: controller,
-      listener: NativeAdListener(
-        onAdLoadedCallback: (ad) =>
-            debugPrint("✅ Native loaded from ${ad.networkName}"),
-        onAdLoadFailedCallback: (adUnitId, error) =>
-            debugPrint("❌ Native load failed: ${error.message}"),
-        onAdClickedCallback: (ad) =>
-            debugPrint("👆 Native clicked: ${ad.adUnitId}"),
-        onAdRevenuePaidCallback: (ad) =>
-            debugPrint("💰 Native revenue: ${ad.revenue}"),
-      ),
-      // Compose your native layout:
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(12),
+    return SizedBox(
+      height: height,
+      child: MaxNativeAdView(
+        adUnitId: _nativeAdUnitId,
+        controller: controller,
+        listener: NativeAdListener(
+          onAdLoadedCallback: (ad) =>
+              debugPrint("✅ Native loaded from ${ad.networkName}"),
+          onAdLoadFailedCallback: (adUnitId, error) =>
+              debugPrint("❌ Native load failed: ${error.message}"),
+          onAdClickedCallback: (ad) =>
+              debugPrint("👆 Native clicked: ${ad.adUnitId}"),
+          onAdRevenuePaidCallback: (ad) =>
+              debugPrint("💰 Native revenue: ${ad.revenue}"),
         ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                MaxNativeAdIconView(width: 48, height: 48),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      MaxNativeAdTitleView(
-                        maxLines: 1,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Row(
+                children: [
+                  MaxNativeAdIconView(width: 48, height: 48),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: MaxNativeAdTitleView(
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
                       ),
-                      MaxNativeAdAdvertiserView(
-                        maxLines: 1,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-                MaxNativeAdOptionsView(width: 20, height: 20),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Expanded(child: MaxNativeAdMediaView()),
-            const SizedBox(height: 8),
-            const SizedBox(
-              width: double.infinity,
-              child: MaxNativeAdCallToActionView(),
-            ),
-          ],
+                  MaxNativeAdOptionsView(width: 20, height: 20),
+                ],
+              ),
+              SizedBox(height: 8),
+              Expanded(child: MaxNativeAdMediaView()),
+              SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: MaxNativeAdCallToActionView(),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  static Widget nativeAdSmall({double height = 110}) {
+
+  static Widget nativeAdSmall({double height = 110, double width =double.infinity}) {
     final controller = MaxNativeAdViewController();
 
     return SizedBox(
       height: height,
+      width: width,
       child: MaxNativeAdView(
         adUnitId: _nativeAdUnitId,
         controller: controller,

@@ -240,6 +240,33 @@ class Utils{
     return null;
   }
 
+  static int getTotalItems(int userCount, int adInterval) {
+    if (userCount >= adInterval) {
+      return userCount + (userCount ~/ adInterval);
+    } else if (userCount > 0) {
+      return userCount + 1; // single ad at end
+    }
+    return 0;
+  }
+
+  /// Returns the user index for a given ListView index
+  static int getUserIndex(int index, int userCount, int adInterval) {
+    if (userCount >= adInterval) {
+      return index - (index ~/ (adInterval + 1));
+    }
+    return index;
+  }
+
+  /// Checks whether the current index should show an ad
+  static bool isAdIndex(int index, int userCount, int adInterval, int totalItems) {
+    if (userCount >= adInterval && (index + 1) % (adInterval + 1) == 0) {
+      return true; // regular ad interval
+    } else if (userCount < adInterval && index == totalItems - 1) {
+      return true; // single ad at end
+    }
+    return false;
+  }
+
   static Future<void> saveLastSyncDate() async {
     final String date = DateTime.now().toUtc().toIso8601String(); // 2025-08-26T18:30:37.830Z
 

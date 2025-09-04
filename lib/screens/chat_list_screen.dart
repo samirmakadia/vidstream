@@ -1,16 +1,13 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:vidstream/services/auth_service.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/chat_screen.dart';
 import 'package:vidstream/services/chat_service.dart';
 import 'package:vidstream/storage/conversation_storage_drift.dart';
-
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
-import '../services/socket_manager.dart';
 import '../storage/message_storage_drift.dart';
+import '../utils/utils.dart';
 import '../widgets/professional_bottom_ad.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -87,11 +84,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Widget _buildChatList() {
     final currentUserId = _authService.currentUser?.id ?? '';
+    final adInterval = 4;
+
     return StreamBuilder<List<Conversation>>(
       stream: db.watchAllConversations(currentUserId),
       builder: (context, snapshot) {
-        print(' StreamBuilder: ${snapshot.error}');
-        print(snapshot.stackTrace);
         if (snapshot.connectionState == ConnectionState.waiting) {
           return _buildLoadingState();
         }
@@ -101,33 +98,40 @@ class _ChatListScreenState extends State<ChatListScreen> {
         }
 
         final conversations = snapshot.data ?? [];
+        final totalItems = Utils.getTotalItems(conversations.length, adInterval);
 
         return RefreshIndicator(
-          onRefresh: () async {
-            _loadConversations();
-          },
-          child: conversations.isEmpty
-              // Wrap empty state with scrollable
+          onRefresh: () async => _loadConversations(),
+          child: totalItems == 0
               ? SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.8,
-                    child: _buildEmptyState(),
-                  ),
-                )
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: _buildEmptyState(),
+            ),
+          )
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: conversations.length,
-                  itemBuilder: (context, index) {
-                    final conversation = conversations[index];
-                    print('Building chat tile → id: ${conversation.conversationId}, name: ${conversation.participants?.map((u) => u.displayName).join(', ')}');
-                    return _buildChatTile(conversation);
-                  },
-                ),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: totalItems,
+            itemBuilder: (context, index) {
+              // Show ad at intervals or at the end if less than adInterval
+              if (Utils.isAdIndex(index, conversations.length, adInterval, totalItems)) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: AppLovinAdManager.nativeAdSmall(height: 90),
+                );
+              }
+
+              final conversationIndex = Utils.getUserIndex(index, conversations.length, adInterval);
+              final conversation = conversations[conversationIndex];
+              return _buildChatTile(conversation);
+            },
+          ),
         );
       },
     );
   }
+
 
   Widget _buildEmptyState() {
     return Center(

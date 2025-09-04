@@ -3,8 +3,10 @@ import 'package:vidstream/services/follow_service.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
+import 'package:vidstream/utils/utils.dart';
 
 import '../helper/navigation_helper.dart';
+import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
@@ -114,11 +116,23 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           );
         }
 
+        final adInterval = 4;
+        final userCount = followers.length;
+        final totalItems = Utils.getTotalItems(userCount, adInterval);
+
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: followers.length,
+          itemCount: totalItems,
           itemBuilder: (context, index) {
-            final user = followers[index];
+            if (Utils.isAdIndex(index, userCount, adInterval, totalItems)) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: AppLovinAdManager.nativeAdSmall(height: 70),
+              );
+            }
+
+            final userIndex = Utils.getUserIndex(index, userCount, adInterval);
+            final user = followers[userIndex];
             return _buildUserListItem(user);
           },
         );
@@ -155,11 +169,23 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           );
         }
 
+        final adInterval = 4;
+        final userCount = following.length;
+        final totalItems = Utils.getTotalItems(userCount, adInterval);
+
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: following.length,
+          itemCount: totalItems,
           itemBuilder: (context, index) {
-            final user = following[index];
+            if (Utils.isAdIndex(index, userCount, adInterval, totalItems)) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: AppLovinAdManager.nativeAdSmall(height: 70),
+              );
+            }
+
+            final userIndex = Utils.getUserIndex(index, userCount, adInterval);
+            final user = following[userIndex];
             return _buildUserListItem(user);
           },
         );

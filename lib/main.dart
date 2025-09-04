@@ -163,7 +163,7 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
     _appOpenAdShown = true;
 
     // give SDK a chance to preload
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 1));
 
     final completer = Completer<void>();
 

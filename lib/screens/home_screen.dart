@@ -1,7 +1,10 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/screens/search_screen.dart';
+import 'package:vidstream/utils/utils.dart';
 import 'dart:async';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
@@ -286,10 +289,19 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       child: PageView.builder(
         controller: _pageController,
         scrollDirection: Axis.vertical,
-        itemCount: _videos.length,
+        itemCount: _videos.length + (_videos.length ~/ 4),
         onPageChanged: (index) => setState(() => _currentIndex = index),
         itemBuilder: (context, index) {
-          final video = _videos[index];
+          // Every 5th item = Ad
+          if ((index + 1) % 5 == 0) {
+            return SizedBox.expand(
+              child: AppLovinAdManager.nativeAdLarge(height: Utils(context).screenHeight),
+            );
+          }
+
+          final videoIndex = index - (index ~/ 5);
+          final video = _videos[videoIndex];
+
           return VideoFeedItemWidget(
             key: ValueKey(video.id),
             video: video,
@@ -297,16 +309,17 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             onVideoDeleted: (deletedVideo) {
               _modifyVideo(video.id, (_) => null);
             },
-            onLikeUpdated: (newCount, isLiked) => _modifyVideo(video.id, (v) {
-              return v.copyWith(likesCount: newCount, isLiked: isLiked,);
-            }),
-            onCommentUpdated: (newCount) => _modifyVideo(video.id, (v) {
-              return v.copyWith(commentsCount: newCount,);
-            }),
-            onReported: (reportedVideo) => _modifyVideo(reportedVideo.id, (_) => null),
-            onFollowUpdated: (updatedUser) => _modifyVideo(video.id, (v) {
-              return v.copyWith(user: updatedUser);
-            }),
+            onLikeUpdated: (newCount, isLiked) =>
+                _modifyVideo(video.id, (v) => v.copyWith(
+                  likesCount: newCount,
+                  isLiked: isLiked,
+                )),
+            onCommentUpdated: (newCount) =>
+                _modifyVideo(video.id, (v) => v.copyWith(commentsCount: newCount)),
+            onReported: (reportedVideo) =>
+                _modifyVideo(reportedVideo.id, (_) => null),
+            onFollowUpdated: (updatedUser) =>
+                _modifyVideo(video.id, (v) => v.copyWith(user: updatedUser)),
             onPauseRequested: () => setScreenVisible(false),
             onResumeRequested: () => setScreenVisible(true),
           );
@@ -314,7 +327,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       ),
     );
   }
-
 
   Widget _buildEmptyState() {
     return Center(
