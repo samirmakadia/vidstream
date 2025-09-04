@@ -225,35 +225,37 @@ class _MainAppScreenState extends State<MainAppScreen> {
     required int index,
     required bool isActive,
   }) {
-    return GestureDetector(
-      onTap: () => _onTabTapped(index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                isActive ? activeIcon : icon,
-                key: ValueKey(isActive),
-                color: isActive 
-                    ? Theme.of(context).colorScheme.primary
-                    : Color(0xFFE0E0E0).withValues(alpha: 0.6),
-                size: iconSize?.toDouble(),
+    return Expanded(
+      child: InkWell(
+        onTap: () => _onTabTapped(index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  isActive ? activeIcon : icon,
+                  key: ValueKey(isActive),
+                  color: isActive 
+                      ? Theme.of(context).colorScheme.primary
+                      : Color(0xFFE0E0E0).withValues(alpha: 0.6),
+                  size: iconSize?.toDouble(),
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: isActive 
-                    ? Theme.of(context).colorScheme.primary
-                    : Color(0xFFE0E0E0).withValues(alpha: 0.6),
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: isActive 
+                      ? Theme.of(context).colorScheme.primary
+                      : Color(0xFFE0E0E0).withValues(alpha: 0.6),
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

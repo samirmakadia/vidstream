@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:vidstream/screens/setting/bottomsheet/legal_document_viewer.dart';
@@ -237,8 +238,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.tertiary,
+              Color(0xFFD1F244),
+              Color(0xFFA3E635),
+              Color(0xFF2E7D32),
             ],
           ),
         ),
@@ -263,16 +265,15 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                       ),
                       child: Column(
                         children: [
-                          Image.asset(
-                            "assets/icon/white_logo.png",
+                          SvgPicture.asset(
+                            "assets/icon/logo_black.svg",
                             width: 180,
                             height: 180,
-                            fit: BoxFit.contain,
                           ),
                           Text(
                             'VidMeet',
                             style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -280,7 +281,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                           Text(
                             'Share your moments, connect with the world',
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.9),
+                              color: Colors.black.withValues(alpha: 0.9),
                             ),
                             textAlign: TextAlign.center,
                           ),

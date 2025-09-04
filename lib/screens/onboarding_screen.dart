@@ -22,10 +22,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
-      svgAsset: 'assets/icon/logo_white.svg',
+      svgAsset: 'assets/icon/logo_black.svg',
       title: '📱 Create & Share Videos',
       description: 'Record amazing videos, add descriptions, and share your creativity with the world',
-      gradient: const [Color(0xFFD1F244), Color(0xFFA3E635)],
+      gradient: const [Color(0xFFD1F244), Color(0xFFA3E635), Color(0xFF2E7D32)],
       features: ['Record HD videos', 'Add descriptions & tags', 'Share instantly'],
     ),
     OnboardingPage(
@@ -249,6 +249,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                     ? Icons.rocket_launch
                                     : Icons.arrow_forward,
                                 size: 20,
+                                color: Colors.black,
                               ),
                             ],
                           ),
