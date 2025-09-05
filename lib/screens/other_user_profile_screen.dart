@@ -12,6 +12,7 @@ import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/utils.dart';
+import '../widgets/banner_ad_with_loader.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
 import '../widgets/professional_bottom_ad.dart';
@@ -380,26 +381,32 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              ProfessionalBottomAd(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: RefreshIndicator(
-                      onRefresh: _loadUserProfile,
-                      child: CustomScrollView(
-                        slivers: [
-                          _buildSliverAppBar(isOwnProfile),
-                          _buildProfileInfo(isOwnProfile),
-                          _buildStatsSection(),
-                          _buildTabBar(),
-                          _buildTabContent(),
-                        ],
-                      ),
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: RefreshIndicator(
+                    onRefresh: _loadUserProfile,
+                    child: CustomScrollView(
+                      slivers: [
+                        _buildSliverAppBar(isOwnProfile),
+                        _buildProfileInfo(isOwnProfile),
+                        _buildStatsSection(),
+                        _buildTabBar(),
+                        _buildTabContent(),
+                        SliverToBoxAdapter(
+                          child: SizedBox(height: 100),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
+              Positioned(
+                bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(child: BannerAdWithLoader(key: UniqueKey(),))),
               Positioned(
                 top: 300 - offsetY - 70,
                 left: MediaQuery.of(context).size.width / 2 - 100 / 2,

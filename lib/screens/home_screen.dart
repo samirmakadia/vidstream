@@ -288,7 +288,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     final showAds = AppLovinAdManager.isNativeAdLoaded;
     final loadedVideos = _videos;
 
-    // Only add ad slots if ads are loaded
     final totalAds = showAds ? (loadedVideos.length / videosPerAd).floor() : 0;
     final totalItems = loadedVideos.length + totalAds;
 
@@ -310,8 +309,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             );
           }
 
-          // Calculate correct video index after accounting for ads
-          final videoIndex = index - (index ~/ (videosPerAd + 1));
+          final videoIndex = showAds
+              ? index - (index ~/ (videosPerAd + 1))
+              : index;
+
           if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
 
           final video = loadedVideos[videoIndex];

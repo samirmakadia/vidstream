@@ -182,7 +182,7 @@ class AppLovinAdManager {
         },
         onAdLoadFailedCallback: (adUnitId, error) {
           _isAppOpenAvailable = false;
-          debugPrint("❌ AppOpen load failed: ${error.message}");
+          debugPrint("❌ AppOpen show failed:${error.message}");
           Future.delayed(const Duration(seconds: 5), loadAppOpenAd);
         },
         onAdDisplayedCallback: (ad) {

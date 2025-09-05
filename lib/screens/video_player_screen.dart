@@ -77,8 +77,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        Navigator.of(context).pop(true);
-        return true;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop(true);
+          return true;
+        }
+        return false;
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -126,8 +129,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
           );
         }
 
-        // Calculate videoIndex accounting for ads that are actually displayed
-        final videoIndex = index - (index ~/ (videosPerAd + 1));
+        final videoIndex = showAds
+            ? index - (index ~/ (videosPerAd + 1))
+            : index;
         if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
 
         final video = loadedVideos[videoIndex];
@@ -178,7 +182,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
         shape: BoxShape.circle,
       ),
       child: IconButton(
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () {
+          if (Navigator.of(context).canPop()) {
+            Future.microtask(() => Navigator.of(context).pop(true));
+          }
+        },
         icon: const Icon(
           Icons.arrow_back,
           color: Colors.white,

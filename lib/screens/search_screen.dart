@@ -458,14 +458,15 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
-          NavigationHelper.navigateWithAd<String?>(
-            context: context,
-            destination: VideoPlayerScreen(
-              video: video,
-              allVideos: _videos,
-              user: null,
-            ),
-            onReturn: (result) {
+          AppLovinAdManager.handleScreenOpen(() {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final  result = await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) =>  VideoPlayerScreen(
+                  video: video,
+                  allVideos: _videos,
+                  user: null,
+                )),
+              );
               if (result != null) {
                 if (_currentQuery.isNotEmpty) {
                   _performSearch(_currentQuery, isLoading: false);
@@ -473,8 +474,8 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                   _loadDefaultContent(false);
                 }
               }
-            },
-          );
+            });
+          });
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
