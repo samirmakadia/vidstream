@@ -420,9 +420,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
-          BannerAdWithLoader(
-            key: UniqueKey(),
-          ),
+          BannerAdWithLoader(),
           Expanded(child: _isLoading ? _buildLoadingState() : _buildChatBody()),
         ],
       ),

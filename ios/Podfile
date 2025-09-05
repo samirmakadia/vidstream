@@ -32,6 +32,13 @@ target 'Runner' do
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  pod 'AppLovinSDK'
+  pod 'Google-Mobile-Ads-SDK'
+  pod 'FBAudienceNetwork'
+  pod 'UnityAds'
+  pod 'VungleSDK-iOS'
+
   target 'RunnerTests' do
     inherit! :search_paths
   end

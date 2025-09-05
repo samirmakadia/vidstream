@@ -20,7 +20,7 @@ class _ProfessionalBottomAdState extends State<ProfessionalBottomAd> {
     return Column(
       children: [
         Expanded(child: widget.child),
-        SafeArea(child: BannerAdWithLoader(key: UniqueKey(),)),
+        SafeArea(child: BannerAdWithLoader()),
       ],
     );
   }
