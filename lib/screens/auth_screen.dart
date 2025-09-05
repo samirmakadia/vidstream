@@ -264,13 +264,13 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           SvgPicture.asset(
-                            "assets/icon/logo_green_with_text.svg",
+                            "assets/icon/logo_black_with_text.svg",
                             width: 180,
                             height: 180,
                           ),
-                          const SizedBox(height: 8),
                           Text(
                             'Share your moments, connect with the world',
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
