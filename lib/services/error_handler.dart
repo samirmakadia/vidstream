@@ -8,6 +8,10 @@ class ErrorHandler {
   static AuthService? _authService;
   static GlobalKey<NavigatorState>? _navigatorKey;
 
+  // Add a flag and timestamp
+  static bool _isShowingNetworkError = false;
+  static DateTime? _lastErrorTime;
+
   /// Initialize ErrorHandler with required services
   static void initialize({
     AuthService? authService,
@@ -82,7 +86,8 @@ class ErrorHandler {
         message = 'Network error: ${e.message}';
     }
     
-    _showErrorMessage(message);
+    // _showErrorMessage(message);
+    _showErrorMessageOnce(message);
   }
 
   static void _handleApiError(ApiException e) {
@@ -117,8 +122,12 @@ class ErrorHandler {
       default:
         message = e.message;
     }
-    
-    _showErrorMessage(message);
+
+    if ([500, 502, 503, 504].contains(e.statusCode)) {
+      _showErrorMessageOnce(message);
+    } else {
+      _showErrorMessage(message);
+    }
   }
 
   static void _handleUnexpectedError(dynamic e) {
@@ -146,6 +155,28 @@ class ErrorHandler {
       debugPrint('Error navigating to login: $e');
     }
   }
+
+  static void _showErrorMessageOnce(String message) {
+    final now = DateTime.now();
+
+    // Allow new error if no error before or last one was > 3 sec ago
+    if (!_isShowingNetworkError ||
+        _lastErrorTime == null ||
+        now.difference(_lastErrorTime!) > const Duration(seconds: 3)) {
+      _isShowingNetworkError = true;
+      _lastErrorTime = now;
+
+      _showErrorMessage(message);
+
+      // Reset flag after delay (prevents spam)
+      Future.delayed(const Duration(seconds: 3), () {
+        _isShowingNetworkError = false;
+      });
+    } else {
+      debugPrint("Suppressed duplicate error: $message");
+    }
+  }
+
 
   static void _showErrorMessage(String message) {
     try {
