@@ -785,15 +785,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Future<void> _openVideoPlayer(ApiVideo video) async {
     final videos = _selectedTabIndex == 0 ? _userVideos : _likedVideos;
-
-    NavigationHelper.navigateWithAd<String?>(
-      context: context,
-      destination: VideoPlayerScreen(
-        video: video,
-        allVideos: videos,
-        user: _currentUser,
-      ),
-      onReturn: (result) {
+    AppLovinAdManager.handleScreenOpen(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final  result = await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) =>  VideoPlayerScreen(
+            video: video,
+            allVideos: videos,
+            user: _currentUser,
+          )),
+        );
         if (result != null) {
           setState(() {
             if (_selectedTabIndex == 0) {
@@ -802,10 +802,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               _likedVideos.removeWhere((v) => v.id == result);
             }
           });
+          _loadUserProfile();
         }
-        _loadUserProfile();
-      },
-    );
+      });
+    });
   }
 
 }

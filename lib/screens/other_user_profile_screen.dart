@@ -406,7 +406,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                 bottom: 0,
                   left: 0,
                   right: 0,
-                  child: SafeArea(child: BannerAdWithLoader(key: UniqueKey(),))),
+                  child: SafeArea(child: BannerAdWithLoader())),
               Positioned(
                 top: 300 - offsetY - 70,
                 left: MediaQuery.of(context).size.width / 2 - 100 / 2,
@@ -1024,18 +1024,19 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
   }
 
   Future<void> _openVideoPlayer(ApiVideo video) async {
-    NavigationHelper.navigateWithAd(
-      context: context,
-      destination: VideoPlayerScreen(
-        video: video,
-        allVideos: _userVideos,
-        user: _user,
-      ),
-      onReturn: (result) {
+    AppLovinAdManager.handleScreenOpen(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final  result = await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) =>  VideoPlayerScreen(
+            video: video,
+            allVideos: _userVideos,
+            user: _user,
+          )),
+        );
         if (result != null) {
           _loadUserProfile(isLoadingShow: false);
         }
-      },
-    );
+      });
+    });
   }
 }
