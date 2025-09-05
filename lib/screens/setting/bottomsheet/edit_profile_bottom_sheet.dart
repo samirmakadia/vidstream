@@ -389,8 +389,8 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
                                 ),
                               ),
                               Positioned(
-                                bottom: -10,
-                                right: -10,
+                                top: 0,
+                                right: 0,
                                 child: GestureDetector(
                                   onTap: () => _showImagePickerOptions('banner'),
                                   child: Container(

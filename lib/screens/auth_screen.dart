@@ -259,10 +259,6 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                     // App Logo and Title
                     Container(
                       padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
