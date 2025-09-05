@@ -230,11 +230,12 @@ class ApiService {
   Future<response_models.PaginatedResponse<ApiUser>?> searchUsers({
     required String query,
     int page = 1,
-    int limit = 20,
+    int limit = 20, CancelToken? cancelToken,
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<response_models.PaginatedResponse<ApiUser>>(
         '/users/search',
+        cancelToken: cancelToken,
         queryParameters: {
           'query': query,
           'page': page,
@@ -412,41 +413,62 @@ class ApiService {
     });
   }
 
-  Future<response_models.PaginatedResponse<ApiVideo>?> searchVideos({
+  Future<response_models.PaginatedResponse<ApiVideo>> searchVideos({
     required String query,
     int page = 1,
     int limit = 20,
     String? category,
     CancelToken? cancelToken,
   }) async {
-    return ErrorHandler.safeApiCall(() async {
+    try {
       final queryParams = <String, dynamic>{
         'query': query,
         'page': page,
         'limit': limit,
       };
-      
       if (category != null) queryParams['category'] = category;
-      
-      final response = await _httpClient.get<response_models.PaginatedResponse<ApiVideo>>(
+
+      final response = await _httpClient.get<
+          response_models.PaginatedResponse<ApiVideo>>(
         '/videos/search',
         queryParameters: queryParams,
         cancelToken: cancelToken,
         fromJson: (json) {
-          final videoJson = (json as Map<String, dynamic>)['videos'] as List<dynamic>? ?? [];
+          final videoJson =
+              (json as Map<String, dynamic>)['videos'] as List<dynamic>? ?? [];
           return response_models.PaginatedResponse.fromJson(
-            {'data': videoJson}, // wrap in 'data' to match your PaginatedResponse
+            {'data': videoJson},
                 (item) => ApiVideo.fromJson(item as Map<String, dynamic>),
           );
         },
       );
-      
+
       if (response.success && response.data != null) {
         return response.data!;
       }
-      
+
       throw response_models.ApiException(response.message);
-    });
+    } on DioException catch (e) {
+      if (CancelToken.isCancel(e)) {
+        debugPrint('⚠️ Inner search request cancelled: ${e.message}');
+        throw e; // ✅ propagate the cancellation
+      }
+      rethrow;
+    }
+  }
+
+
+  void checkCancelToken(CancelToken? cancelToken) {
+    if (cancelToken == null) {
+      print("❌ CancelToken is null");
+      return;
+    }
+
+    if (cancelToken.isCancelled) {
+      print("⚠️ CancelToken is already canceled. Reason:");
+    } else {
+      print("✅ CancelToken is active (not canceled)");
+    }
   }
 
   Future<response_models.PaginatedResponse<ApiVideo>?> getUserLikedVideos({

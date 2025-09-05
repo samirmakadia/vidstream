@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:applovin_max/applovin_max.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +28,13 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> _initializeServices() async {
   try {
+    AppLovinMAX.setTestDeviceAdvertisingIds(["dd1c479f-a0c8-4d54-985c-7568bc3d6ba1"]);
+    AppLovinMAX.setVerboseLogging(true);
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (Platform.isAndroid) {
+    //     AppLovinMAX.showMediationDebugger();
+    //   }
+    // });
     await AppLovinAdManager.initialize();
     await Firebase.initializeApp();
     await ServiceLocator.initialize();

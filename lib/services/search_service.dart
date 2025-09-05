@@ -1,45 +1,38 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 
 class SearchService {
   ApiRepository get _apiRepository => ApiRepository.instance;
-  CancelToken? _cancelToken;
 
   // Search videos by query
-  Future<List<ApiVideo>> searchVideos(String query, {int limit = 20}) async {
+  Future<List<ApiVideo>> searchVideos(String query, CancelToken? cancelToken, {int limit = 20}) async {
     try {
-      // Cancel any ongoing request
-      _cancelToken?.cancel('Cancelled previous request');
-      _cancelToken = CancelToken();
-
       final response = await _apiRepository.api.searchVideos(
         query: query,
         limit: limit,
-        cancelToken: _cancelToken,
+        cancelToken: cancelToken,
       );
       return response?.data ?? [];
-    } catch (e) {
-      if (e is DioException && CancelToken.isCancel(e)) {
-        print('Search request cancelled');
+    } on DioException catch (e) {
+      if (CancelToken.isCancel(e)) {
+        debugPrint('⚠️ Search request cancelled: ${e.message}');
         return [];
       }
-      print('Error searching videos: $e');
+      debugPrint('❌ Error searching videos: $e');
       return [];
     }
   }
 
-  void cancelSearch() {
-    _cancelToken?.cancel('User cancelled search');
-    _cancelToken = null;
-  }
 
   // Search users by query
-  Future<List<ApiUser>> searchUsers(String query, {int limit = 20}) async {
+  Future<List<ApiUser>> searchUsers(String query, CancelToken? cancelToken, {int limit = 20}) async {
     try {
       final response = await _apiRepository.api.searchUsers(
         query: query,
         limit: limit,
+        cancelToken: cancelToken
       );
       return response?.data ?? [];
     } catch (e) {

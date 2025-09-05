@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/services/search_service.dart';
@@ -22,6 +23,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   final SearchService _searchService = SearchService();
   final TextEditingController _searchController = TextEditingController();
   late TabController _tabController;
+  CancelToken? _cancelToken;
 
   List<ApiVideo> _videos = [];
   List<ApiUser> _users = [];
@@ -82,16 +84,27 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   }
 
   void _performSearch(String query, {bool isLoading = true}) async {
+    if (_cancelToken != null && !_cancelToken!.isCancelled) {
+      print('Cancelling previous search...');
+      _cancelToken!.cancel('Cancelled previous request');
+    }
+
+    // Create a new token for this search
+    _cancelToken = CancelToken();
+    print('Performing search for: ${_cancelToken!.isCancelled}');
+    print('Performing search for: $query');
     if (query.trim().isEmpty) {
-      _loadDefaultContent(true);
+      print('Performing search for empty query:');
       setState(() {
+        _isLoading = true;
+        _videos.clear();
+        _users.clear();
         _hasSearched = false;
         _currentQuery = '';
       });
+      _loadDefaultContent(true);
       return;
     }
-
-    _searchService.cancelSearch();
 
     setState(() {
       if(isLoading) {
@@ -102,14 +115,16 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     });
 
     try {
-      final videos = await _searchService.searchVideos(query.trim());
-      final users = await _searchService.searchUsers(query.trim());
-
+      final videos = await _searchService.searchVideos(query.trim(),_cancelToken);
+      final users = await _searchService.searchUsers(query.trim(),_cancelToken);
+      print('Videos: ${videos.length}, Users: ${users.length}');
       setState(() {
         _videos = videos;
         _users = users;
         _isLoading = false;
       });
+      print('Videos: ${videos.length}');
+
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -121,6 +136,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: _isSearching ? _buildSearchField(context) : const Text('Search'),
         leading: _isSearching ? _buildBackButton() : null,
