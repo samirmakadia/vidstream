@@ -587,7 +587,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Text(
                           message.message,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                            color: isMe ? Colors.black : Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
