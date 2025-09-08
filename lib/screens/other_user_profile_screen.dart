@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/models/api_models.dart';
@@ -7,7 +6,6 @@ import 'package:vidstream/services/follow_service.dart';
 import 'package:vidstream/services/block_service.dart';
 import 'package:vidstream/screens/follower_following_list_screen.dart';
 import 'package:vidstream/screens/video_player_screen.dart';
-
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
@@ -16,7 +14,7 @@ import '../utils/utils.dart';
 import '../widgets/banner_ad_with_loader.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
-import '../widgets/professional_bottom_ad.dart';
+import '../widgets/video_grid_item_widget.dart';
 
 class OtherUserProfileScreen extends StatefulWidget {
   final String userId;
@@ -32,20 +30,16 @@ class OtherUserProfileScreen extends StatefulWidget {
   State<OtherUserProfileScreen> createState() => _OtherUserProfileScreenState();
 }
 
-class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
-    with TickerProviderStateMixin {
+class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with TickerProviderStateMixin {
   ApiUser? _user;
   List<ApiVideo> _userVideos = [];
   bool _isLoading = true;
   bool _isFollowing = false;
   bool _isFollowLoading = false;
   bool _isBlocked = false;
-  bool _isBlockLoading = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  late TabController _tabController;
-  int _selectedTabIndex = 0;
   int _followerCount = 0;
   int _followingCount = 0;
   final FollowService _followService = FollowService();
@@ -56,14 +50,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 1, vsync: this);
-    _tabController.addListener(() {
-      if (_tabController.indexIsChanging) {
-        setState(() {
-          _selectedTabIndex = _tabController.index;
-        });
-      }
-    });
     _initAnimations();
     _loadUserProfile();
     _videoUploadedSubscription = eventBus.on().listen((event) {
@@ -75,7 +61,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
 
   @override
   void dispose() {
-    _tabController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -109,46 +94,28 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
       if(isLoadingShow) {
         setState(() => _isLoading = true);
       }
-
-      // Load user profile
-      final user =
-          await ApiRepository.instance.auth.getUserProfile(widget.userId);
-
-      // Load user's videos
+      final user = await ApiRepository.instance.auth.getUserProfile(widget.userId);
       List<ApiVideo> videos = [];
       try {
-        videos =
-            await ApiRepository.instance.videos.getUserPostedVideos(widget.userId);
+        videos = await ApiRepository.instance.videos.getUserPostedVideos(widget.userId);
       } catch (e) {
         print('Failed to load user videos: $e');
       }
 
-      // Get follow counts
       try {
-        final followerCount = await ApiRepository.instance.follows
-            .getFollowerCount(widget.userId);
-        final followingCount = await ApiRepository.instance.follows
-            .getFollowingCount(widget.userId);
-
+        final followerCount = await ApiRepository.instance.follows.getFollowerCount(widget.userId);
+        final followingCount = await ApiRepository.instance.follows.getFollowingCount(widget.userId);
         _followerCount = followerCount;
         _followingCount = followingCount;
       } catch (e) {
         print('Failed to load follow counts: $e');
       }
 
-      // Check if current user is following this user and block status
       final currentUserId = ApiRepository.instance.auth.currentUser?.id;
       if (currentUserId != null && currentUserId != widget.userId) {
         try {
-          _isFollowing = await _followService.isFollowing(
-            followerId: currentUserId,
-            followedId: widget.userId,
-          );
-
-          _isBlocked = await _blockService.isUserBlocked(
-            checkerId: currentUserId,
-            checkedId: widget.userId,
-          );
+          _isFollowing = await _followService.isFollowing(followerId: currentUserId, followedId: widget.userId,);
+          _isBlocked = await _blockService.isUserBlocked(checkerId: currentUserId, checkedId: widget.userId,);
         } catch (e) {
           print('Failed to check follow/block status: $e');
         }
@@ -191,7 +158,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
         followedId: widget.userId,
       );
 
-      // Update UI state
       setState(() {
         _isFollowing = !_isFollowing;
         if (_isFollowing) {
@@ -228,8 +194,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
   Future<void> _toggleBlock() async {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
     if (currentUserId == null || currentUserId == widget.userId) return;
-
-    setState(() => _isBlockLoading = true);
     await Utils.showLoaderWhile(context, () async {
       try {
         if (_isBlocked) {
@@ -269,8 +233,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-      } finally {
-        setState(() => _isBlockLoading = false);
       }
     });
   }
@@ -329,36 +291,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-          title: Text(widget.displayName ?? 'Profile'),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (_user == null) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-          title: const Text('Profile'),
-        ),
-        body: const Center(
-          child: Text(
-            'User not found',
-            style: TextStyle(color: Colors.white, fontSize: 18),
-          ),
-        ),
-      );
-    }
+    if (_isLoading) return _buildLoadingScaffold();
+    if (_user == null) return _buildNotFoundScaffold();
 
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
     final isOwnProfile = currentUserId == widget.userId;
@@ -391,7 +325,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                         _buildSliverAppBar(isOwnProfile),
                         _buildProfileInfo(isOwnProfile),
                         _buildStatsSection(),
-                        _buildTabBar(),
+                        _buildTabBar(context),
                         _buildTabContent(),
                         SliverToBoxAdapter(
                           child: SizedBox(height: 100),
@@ -401,16 +335,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
                   ),
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: SafeArea(child: BannerAdWithLoader())),
-              Positioned(
-                top: 300 - offsetY - 70,
-                left: MediaQuery.of(context).size.width / 2 - 100 / 2,
-                child: _buildFloatingAvatar(),
-              ),
+              _buildBottomBannerAd(),
+              _buildFloatingAvatar(),
             ],
           ),
         ),
@@ -418,57 +344,99 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
     );
   }
 
-  Widget _buildFloatingAvatar() {
-    return GestureDetector(
-      onTap: (){
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ImagePreviewScreen(
-              imageUrl: _user?.profileImageUrl ?? _user?.photoURL,
-              isAvatar: true,
-            ),
-          ),
-        );
-      },
-      child: Container(
-        width: 100,
-        height: 100,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 4),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+  Widget _buildLoadingScaffold() {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(widget.displayName ?? 'Profile'),
+      ),
+      body: const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  Widget _buildNotFoundScaffold() {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: const Text('Profile'),
+      ),
+      body: const Center(
+        child: Text(
+          'User not found',
+          style: TextStyle(color: Colors.white, fontSize: 18),
         ),
-        child: (_user?.profileImageUrl != null && _user!.profileImageUrl!.isNotEmpty) ||
-            (_user?.photoURL != null && _user!.photoURL!.isNotEmpty)
-            ? ClipOval(
-          child: CustomImageWidget(
-            imageUrl: _user?.profileImageUrl?.isNotEmpty == true
-                ? _user!.profileImageUrl!
-                : _user!.photoURL!,
-            height: double.infinity,
-            width: double.infinity,
-            cornerRadius: 0,
-            borderWidth: 0,
-            fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  Widget _buildFloatingAvatar() {
+    return Positioned(
+      top: 300 - offsetY - 70,
+      left: MediaQuery.of(context).size.width / 2 - 100 / 2,
+      child: GestureDetector(
+        onTap: (){
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ImagePreviewScreen(
+                imageUrl: _user?.profileImageUrl ?? _user?.photoURL,
+                isAvatar: true,
+              ),
+            ),
+          );
+        },
+        child: Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 4),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-        )
-            : CircleAvatar(
-          radius: 46,
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          child: const Icon(
-            Icons.person,
-            size: 40,
-            color: Colors.white,
+          child: (_user?.profileImageUrl != null && _user!.profileImageUrl!.isNotEmpty) ||
+              (_user?.photoURL != null && _user!.photoURL!.isNotEmpty)
+              ? ClipOval(
+            child: CustomImageWidget(
+              imageUrl: _user?.profileImageUrl?.isNotEmpty == true
+                  ? _user!.profileImageUrl!
+                  : _user!.photoURL!,
+              height: double.infinity,
+              width: double.infinity,
+              cornerRadius: 0,
+              borderWidth: 0,
+              fit: BoxFit.cover,
+            ),
+          )
+              : CircleAvatar(
+            radius: 46,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            child: const Icon(
+              Icons.person,
+              size: 40,
+              color: Colors.white,
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBottomBannerAd() {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: const SafeArea(child: BannerAdWithLoader()),
     );
   }
 
@@ -768,72 +736,39 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
     return child;
   }
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(BuildContext context) {
     return SliverToBoxAdapter(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
-        child: TabBar(
-          controller: _tabController,
-          onTap: (index) {
-            setState(() {
-              _selectedTabIndex = index;
-            });
-          },
-          tabs: [
-            Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.video_library_outlined, size: 20),
-                  const SizedBox(width: 8),
-                  Text('Posts (${_userVideos.length})'),
-                ],
-              ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.grey[700]!,
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.video_library_outlined, size: 20, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              'Posts (${_userVideos.length})',
+              style: const TextStyle(color: Colors.white),
             ),
           ],
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
-          indicator: const BoxDecoration(),
-          dividerColor: Colors.grey[700],
         ),
       ),
     );
-  }
+  } 
 
   Widget _buildTabContent() {
     final videos = _userVideos;
 
     if (videos.isEmpty) {
-      return SliverToBoxAdapter(
-        child: SizedBox(
-          height: 250,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.video_library_outlined,
-                size: 64,
-                color: Colors.white.withValues(alpha: 0.6),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No videos yet',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${_user?.displayName ?? 'This user'} hasn\'t posted any videos yet.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.6),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildEmptyVideosState();
     }
 
     const int videosPerRow = 3;
@@ -859,7 +794,10 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
           ),
           itemBuilder: (context, index) {
             final video = videosChunk[index];
-            return _buildVideoGridItem(video);
+            return VideoGridItemWidget(
+              video: video,
+              onTap: () => _openVideoPlayer(video),
+            );
           },
         ),
       );
@@ -879,144 +817,34 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
     );
   }
 
-
-  Widget _buildVideoGridItem(ApiVideo video) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => _openVideoPlayer(video),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.grey[900],
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Thumbnail
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: video.thumbnailUrl.isNotEmpty
-                    ? Image.network(
-                        video.thumbnailUrl,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: Colors.grey[800],
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes !=
-                                        null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[800],
-                            child: Icon(
-                              Icons.broken_image,
-                              color: Colors.white.withValues(alpha: 0.6),
-                              size: 32,
-                            ),
-                          );
-                        },
-                      )
-                    : Container(
-                        color: Colors.grey[800],
-                        child: Icon(
-                          Icons.video_library,
-                          color: Colors.white.withValues(alpha: 0.6),
-                          size: 32,
-                        ),
-                      ),
+  Widget _buildEmptyVideosState() {
+    return SliverToBoxAdapter(
+      child: SizedBox(
+        height: 250,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.video_library_outlined,
+              size: 64,
+              color: Colors.white.withValues(alpha: 0.6),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No videos yet',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.white.withValues(alpha: 0.8),
               ),
-
-              // Play button overlay
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.play_arrow,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${_user?.displayName ?? 'This user'} hasn\'t posted any videos yet.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.white.withValues(alpha: 0.6),
               ),
-
-              // Video stats
-              Positioned(
-                bottom: 4,
-                left: 4,
-                right: 4,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.favorite,
-                            size: 12,
-                            color: Colors.red,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            video.likesCount.toString(),
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.visibility,
-                            size: 12,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            video.viewsCount.toString(),
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
