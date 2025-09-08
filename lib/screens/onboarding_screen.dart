@@ -48,11 +48,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void initState() {
     super.initState();
     _pageController = PageController();
+    _startAnimation();
+  }
+
+  void _startAnimation() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -60,7 +64,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
@@ -68,7 +72,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       parent: _animationController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _animationController.forward();
   }
 
@@ -108,12 +112,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // Background gradient
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -126,136 +128,133 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               ),
             ),
           ),
-          
-          // Main content
-          SafeArea(
+          _buildOnboarding(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOnboarding() {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'VidMeet',
+                  style: GoogleFonts.inter(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+
+                // Skip button
+                if (_currentPage < _pages.length - 1)
+                  TextButton(
+                    onPressed: _skipOnboarding,
+                    child: Text(
+                      'Skip',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+                _animationController.reset();
+                _animationController.forward();
+              },
+              itemCount: _pages.length,
+              itemBuilder: (context, index) {
+                return FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: OnboardingPageWidget(
+                      page: _pages[index],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
-                // Top section with skip button
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Logo
-                      Text(
-                        'VidMeet',
-                        style: GoogleFonts.inter(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
+                // Page indicators
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    _pages.length,
+                        (index) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: _currentPage == index ? 24 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        color: _currentPage == index
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.primary.withValues(alpha: 0.3),
                       ),
-                      
-                      // Skip button
-                      if (_currentPage < _pages.length - 1)
-                        TextButton(
-                          onPressed: _skipOnboarding,
-                          child: Text(
-                            'Skip',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 ),
-                
-                // PageView content
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentPage = index;
-                      });
-                      _animationController.reset();
-                      _animationController.forward();
-                    },
-                    itemCount: _pages.length,
-                    itemBuilder: (context, index) {
-                      return FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: SlideTransition(
-                          position: _slideAnimation,
-                          child: OnboardingPageWidget(
-                            page: _pages[index],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                
-                // Bottom section with indicators and button
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      // Page indicators
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          _pages.length,
-                          (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: _currentPage == index ? 24 : 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(4),
-                              color: _currentPage == index
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.primary.withValues(alpha: 0.3),
-                            ),
-                          ),
-                        ),
+
+                const SizedBox(height: 32),
+
+                // Continue/Get Started button
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _nextPage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      
-                      const SizedBox(height: 32),
-                      
-                      // Continue/Get Started button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _nextPage,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: theme.colorScheme.onPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _currentPage == _pages.length - 1
-                                    ? 'Get Started'
-                                    : 'Continue',
-                                style: GoogleFonts.inter(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                _currentPage == _pages.length - 1
-                                    ? Icons.rocket_launch
-                                    : Icons.arrow_forward,
-                                size: 20,
-                                color: Colors.black,
-                              ),
-                            ],
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _currentPage == _pages.length - 1
+                              ? 'Get Started'
+                              : 'Continue',
+                          style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Icon(
+                          _currentPage == _pages.length - 1
+                              ? Icons.rocket_launch
+                              : Icons.arrow_forward,
+                          size: 20,
+                          color: Colors.black,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -279,19 +278,22 @@ class OnboardingPageWidget extends StatefulWidget {
   State<OnboardingPageWidget> createState() => _OnboardingPageWidgetState();
 }
 
-class _OnboardingPageWidgetState extends State<OnboardingPageWidget> 
-    with SingleTickerProviderStateMixin {
+class _OnboardingPageWidgetState extends State<OnboardingPageWidget> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
+    _startAnimation();
+  }
+
+  void _startAnimation() {
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    
+
     _pulseAnimation = Tween<double>(
       begin: 1.0,
       end: 1.1,
@@ -299,7 +301,7 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-    
+
     _pulseController.repeat(reverse: true);
   }
 
@@ -312,13 +314,11 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icon with gradient background and pulse animation
           AnimatedBuilder(
             animation: _pulseAnimation,
             builder: (context, child) {
@@ -358,10 +358,7 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
               );
             },
           ),
-          
           const SizedBox(height: 48),
-          
-          // Title
           Text(
             widget.page.title,
             textAlign: TextAlign.center,
@@ -372,10 +369,7 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
               height: 1.2,
             ),
           ),
-          
           const SizedBox(height: 24),
-          
-          // Description
           Text(
             widget.page.description,
             textAlign: TextAlign.center,
@@ -385,10 +379,7 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
               height: 1.5,
             ),
           ),
-          
           const SizedBox(height: 32),
-          
-          // Features
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(

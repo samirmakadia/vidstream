@@ -1,15 +1,13 @@
-import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:video_player/video_player.dart';
 import 'dart:io';
-
 import '../models/api_models.dart';
 import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
+import 'full_screen_video_player.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -36,6 +34,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   @override
   void initState() {
     super.initState();
+    _startAnimation();
+  }
+
+  void _startAnimation() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -212,44 +214,48 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.close, color: Colors.white),
-        ),
-        title: const Text('Create Post'),
-        actions: [
-          if (_selectedVideo != null)
-            TextButton(
-              onPressed: _isUploading ? null : _uploadVideo,
-              child: _isUploading
-                  ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-                  : Text(
-                'Share',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-        ],
-      ),
+      appBar:_buildAppBar(context),
       body: ProfessionalBottomAd( 
         child: ScaleTransition(
           scale: _scaleAnimation,
           child: _selectedVideo == null ? _buildVideoSelectionView() : _buildVideoEditView(),
         ),
       ),
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        onPressed: () => Navigator.of(context).pop(),
+        icon: const Icon(Icons.close, color: Colors.white),
+      ),
+      title: const Text('Create Post'),
+      actions: [
+        if (_selectedVideo != null)
+          TextButton(
+            onPressed: _isUploading ? null : _uploadVideo,
+            child: _isUploading
+                ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+                : Text(
+              'Share',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -328,7 +334,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: Material(
         color: Colors.white.withValues(alpha: 0.1),
@@ -562,49 +568,3 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
 }
 
 
-class FullScreenVideoPlayer extends StatefulWidget {
-  final String videoUrl;
-  const FullScreenVideoPlayer({super.key, required this.videoUrl});
-
-  @override
-  State<FullScreenVideoPlayer> createState() => _FullScreenVideoPlayerState();
-}
-
-class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
-  late VideoPlayerController _videoController;
-  ChewieController? _chewieController;
-
-  @override
-  void initState() {
-    super.initState();
-    _videoController = VideoPlayerController.network(widget.videoUrl)
-      ..initialize().then((_) {
-        setState(() {
-          _chewieController = ChewieController(
-            videoPlayerController: _videoController,
-            autoPlay: true,
-            looping: false,
-            allowFullScreen: true,
-            allowPlaybackSpeedChanging: true,
-          );
-        });
-      });
-  }
-
-  @override
-  void dispose() {
-    _videoController.dispose();
-    _chewieController?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: _chewieController != null
-          ? Chewie(controller: _chewieController!)
-          : const Center(child: CircularProgressIndicator()),
-    );
-  }
-}

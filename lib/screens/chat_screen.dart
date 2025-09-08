@@ -8,7 +8,6 @@ import 'dart:async';
 import 'package:vidstream/storage/message_storage_drift.dart';
 import 'package:vidstream/utils/utils.dart';
 import '../helper/navigation_helper.dart';
-import '../manager/app_open_ad_manager.dart';
 import '../repositories/api_repository.dart';
 import '../services/chat_service.dart';
 import '../services/socket_manager.dart';
@@ -368,62 +367,66 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: GestureDetector(
-          onTap: () {
-            if (_otherUser != null){
-              _navigateToUserProfile(_otherUser!);
-            }
-          },
-          child: Row(
-            children: [
-              widget.imageUrl != null && widget.imageUrl!.isNotEmpty ?
-              CustomImageWidget(
-                imageUrl: widget.imageUrl ?? _otherUser?.profileImageUrl ?? '',
-                height: 35,
-                width: 35,
-                cornerRadius: 30,
-              ) :
-              CircleAvatar(
-                  radius: 17,
-                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  backgroundImage: _otherUser?.profileImageUrl != null ? NetworkImage(_otherUser!.profileImageUrl!) : null,
-                  child: Icon(Icons.person, size: 20, color: Theme.of(context).colorScheme.primary)
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  _otherUser?.displayName ?? widget.name ?? 'Loading...',
-                  style: Theme.of(context).appBarTheme.titleTextStyle,
-                ),
-              ),
-            ],
-          ),
-        ),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'delete') {
-                _deleteConversation();
-              }
-            },
-            itemBuilder: (BuildContext context) => [
-              const PopupMenuItem<String>(
-                value: 'delete',
-                child: Text('Delete Conversation'),
-              ),
-            ],
-          ),
-        ],
-      ),
+      appBar: buildChatAppBar(context),
       body: Column(
         children: [
           BannerAdWithLoader(),
           Expanded(child: _isLoading ? _buildLoadingState() : _buildChatBody()),
         ],
       ),
+    );
+  }
+
+  AppBar buildChatAppBar(BuildContext context) {
+    return AppBar(
+      title: GestureDetector(
+        onTap: () {
+          if (_otherUser != null){
+            _navigateToUserProfile(_otherUser!);
+          }
+        },
+        child: Row(
+          children: [
+            widget.imageUrl != null && widget.imageUrl!.isNotEmpty ?
+            CustomImageWidget(
+              imageUrl: widget.imageUrl ?? _otherUser?.profileImageUrl ?? '',
+              height: 35,
+              width: 35,
+              cornerRadius: 30,
+            ) :
+            CircleAvatar(
+                radius: 17,
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                backgroundImage: _otherUser?.profileImageUrl != null ? NetworkImage(_otherUser!.profileImageUrl!) : null,
+                child: Icon(Icons.person, size: 20, color: Theme.of(context).colorScheme.primary)
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _otherUser?.displayName ?? widget.name ?? 'Loading...',
+                style: Theme.of(context).appBarTheme.titleTextStyle,
+              ),
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      elevation: 0,
+      actions: [
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'delete') {
+              _deleteConversation();
+            }
+          },
+          itemBuilder: (BuildContext context) => [
+            const PopupMenuItem<String>(
+              value: 'delete',
+              child: Text('Delete Conversation'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -701,18 +704,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && widget.conversationId != null) {
-      // Mark messages as read when user returns to the chat
-      if (widget.conversationId != null) {
-        // TODO mark messages as read
-      }
-    }
-  }
-
-  @override
   void dispose() {
-    // WidgetsBinding.instance.removeObserver(this);
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();

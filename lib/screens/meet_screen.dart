@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:vidstream/services/meet_service.dart';
 import 'package:vidstream/models/api_models.dart';
@@ -7,7 +6,6 @@ import 'package:vidstream/screens/chat_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
-import '../utils/utils.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
 
@@ -133,19 +131,6 @@ class _MeetScreenState extends State<MeetScreen> {
     );
   }
 
-  String _getGenderDisplayName(String gender) {
-    switch (gender) {
-      case 'male':
-        return 'Male';
-      case 'female':
-        return 'Female';
-      case 'other':
-        return 'Other';
-      default:
-        return 'All';
-    }
-  }
-
   void _showGenderFilterBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -242,31 +227,6 @@ class _MeetScreenState extends State<MeetScreen> {
       ),
       body: ProfessionalBottomAd(
           child: _hasJoinedMeet ? _buildMeetContent() : _buildJoinPrompt()),
-    );
-  }
-
-  Widget _buildFilterIconButton(BuildContext context) {
-    return IconButton(
-      onPressed: _showGenderFilterBottomSheet,
-      icon: Stack(
-        children: [
-          const Icon(Icons.filter_list),
-          if (_selectedGenderFilter != 'all')
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
-      ),
-      tooltip: 'Filter by Gender',
     );
   }
 

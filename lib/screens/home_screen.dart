@@ -47,7 +47,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     _loadVideos();
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'updatedVideo') {
-        print('A new video was uploaded!');
         _loadVideos(isLoadingShow: false);
       }
     });
@@ -60,7 +59,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     super.dispose();
   }
 
-
   Future<void> _loadVideos({bool isLoadingShow = true}) async {
     if(isLoadingShow) {
       setState(() => _isLoading = true);
@@ -72,7 +70,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         _allVideos = videos;
         _isLoading = false;
       });
-      print('Loaded home ${videos.length} videos');
 
     } catch (e) {
       if(mounted) {

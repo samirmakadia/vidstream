@@ -123,65 +123,8 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           child: _isLoading
               ? const Center(child: CircularProgressIndicator(color: Colors.white))
               : _reports.isEmpty
-              ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.report_off, color: Colors.grey[400], size: 64),
-                                      const SizedBox(height: 16),
-                                      const Text(
-                                        'No Reports Yet',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'You haven\'t reported any content yet.\nHelp keep our community safe by reporting inappropriate content.',
-                                        style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 14,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                        ),
-                      ),
-                    )
-              : SafeArea(
-                child: RefreshIndicator(
-            onRefresh: _fetchReports,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: Utils.getTotalItems(_reports.length, _adInterval),
-              itemBuilder: (context, index) {
-                if (Utils.isAdIndex(
-                    index,
-                    _reports.length,
-                    _adInterval,
-                    Utils.getTotalItems(_reports.length, _adInterval))) {
-                  if (AppLovinAdManager.isNativeAdLoaded) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: AppLovinAdManager.nativeAdSmall(height: 90),
-                    );
-                  } else {
-                    return const SizedBox.shrink();
-                  }
-                }
-
-                final reportIndex = Utils.getUserIndex(index, _reports.length, _adInterval);
-                final report = _reports[reportIndex];
-
-                return _buildReportItem(report);
-              },
-            ),
-          ),
-        ),
+              ? _buildEmptyState()
+              : _buildReportList()
         ),
       ),
     );
@@ -410,6 +353,71 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportList() {
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _fetchReports,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: Utils.getTotalItems(_reports.length, _adInterval),
+          itemBuilder: (context, index) {
+            if (Utils.isAdIndex(
+                index,
+                _reports.length,
+                _adInterval,
+                Utils.getTotalItems(_reports.length, _adInterval))) {
+              if (AppLovinAdManager.isNativeAdLoaded) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: AppLovinAdManager.nativeAdSmall(height: 90),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            }
+
+            final reportIndex = Utils.getUserIndex(index, _reports.length, _adInterval);
+            final report = _reports[reportIndex];
+
+            return _buildReportItem(report);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.report_off, color: Colors.grey[400], size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'No Reports Yet',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You haven\'t reported any content yet.\nHelp keep our community safe by reporting inappropriate content.',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

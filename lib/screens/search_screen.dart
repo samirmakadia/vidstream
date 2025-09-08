@@ -11,6 +11,7 @@ import '../manager/app_open_ad_manager.dart';
 import '../utils/utils.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
+import '../widgets/video_grid_item_widget.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -85,16 +86,11 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
 
   void _performSearch(String query, {bool isLoading = true}) async {
     if (_cancelToken != null && !_cancelToken!.isCancelled) {
-      print('Cancelling previous search...');
       _cancelToken!.cancel('Cancelled previous request');
     }
 
-    // Create a new token for this search
     _cancelToken = CancelToken();
-    print('Performing search for: ${_cancelToken!.isCancelled}');
-    print('Performing search for: $query');
     if (query.trim().isEmpty) {
-      print('Performing search for empty query:');
       setState(() {
         _isLoading = true;
         _videos.clear();
@@ -117,13 +113,11 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     try {
       final videos = await _searchService.searchVideos(query.trim(),_cancelToken);
       final users = await _searchService.searchUsers(query.trim(),_cancelToken);
-      print('Videos: ${videos.length}, Users: ${users.length}');
       setState(() {
         _videos = videos;
         _users = users;
         _isLoading = false;
       });
-      print('Videos: ${videos.length}');
 
     } catch (e) {
       setState(() {
@@ -268,7 +262,6 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     );
   }
 
-
   Widget _buildVideosTab() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (_videos.isEmpty) return _buildEmptyVideosState();
@@ -297,7 +290,10 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
           ),
           itemBuilder: (context, index) {
             final video = videosChunk[index];
-            return _buildVideoGridItem(video, double.infinity, double.infinity);
+            return VideoGridItemWidget(
+              video: video,
+              onTap: () => _openVideoPlayer(video),
+            );
           },
         ),
       );
@@ -469,129 +465,25 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildVideoGridItem(ApiVideo video, double width, double height) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () async {
-          AppLovinAdManager.handleScreenOpen(() {
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              final  result = await Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) =>  VideoPlayerScreen(
-                  video: video,
-                  allVideos: _videos,
-                  user: null,
-                )),
-              );
-              if (result != null) {
-                if (_currentQuery.isNotEmpty) {
-                  _performSearch(_currentQuery, isLoading: false);
-                } else {
-                  _loadDefaultContent(false);
-                }
-              }
-            });
-          });
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: Theme.of(context).colorScheme.surfaceContainer,
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Thumbnail
-              CustomImageWidget(
-                imageUrl: video.thumbnailUrl,
-                height: height,
-                width: width,
-                cornerRadius: 12,
-              ),
-
-              // Play button
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.play_arrow,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-
-              // Video stats
-              Positioned(
-                bottom: 6,
-                left: 6,
-                right: 6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.favorite,
-                            size: 12,
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            _formatCount(video.likesCount),
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: Colors.white,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.visibility,
-                            size: 12,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            _formatCount(video.viewsCount),
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: Colors.white,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _formatCount(int count) {
-    if (count >= 1000000) {
-      return '${(count / 1000000).toStringAsFixed(1)}M';
-    } else if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}K';
-    }
-    return count.toString();
+  Future<void> _openVideoPlayer(ApiVideo video) async {
+    AppLovinAdManager.handleScreenOpen(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final  result = await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) =>  VideoPlayerScreen(
+            video: video,
+            allVideos: _videos,
+            user: null,
+          )),
+        );
+        if (result != null) {
+          if (_currentQuery.isNotEmpty) {
+            _performSearch(_currentQuery, isLoading: false);
+          } else {
+            _loadDefaultContent(false);
+          }
+        }
+      });
+    });
   }
 }
 

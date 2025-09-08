@@ -11,6 +11,7 @@ import '../manager/app_open_ad_manager.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
 import '../widgets/professional_bottom_ad.dart';
+import '../widgets/video_grid_item_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -670,7 +671,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ),
           itemBuilder: (context, index) {
             final video = videosChunk[index];
-            return _buildVideoGridItem(video, double.infinity, double.infinity);
+            return VideoGridItemWidget(
+              video: video,
+              onTap: () => _openVideoPlayer(video),
+            );
           },
         ),
       );
@@ -686,99 +690,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(children: children),
-      ),
-    );
-  }
-
-  Widget _buildVideoGridItem(ApiVideo video, double width, double height) {
-    return InkWell(
-      onTap: () => _openVideoPlayer(video),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: Theme.of(context).colorScheme.surfaceContainer,
-        ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            CustomImageWidget(
-              imageUrl: video.thumbnailUrl,
-              height: height,
-              width: width,
-              cornerRadius: 12,
-            ),
-
-            // Simple play button
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-            ),
-
-            // Simple video stats
-            Positioned(
-              bottom: 6,
-              left: 6,
-              right: 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.favorite,
-                          size: 12,
-                          color: Colors.red,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          video.likesCount.toString(),
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.visibility,
-                          size: 12,
-                          color: Colors.blue,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          video.viewsCount.toString(),
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

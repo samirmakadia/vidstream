@@ -3,8 +3,6 @@ import 'package:vidstream/services/follow_service.dart';
 import 'package:vidstream/models/api_models.dart';
 import 'package:vidstream/repositories/api_repository.dart';
 import 'package:vidstream/screens/other_user_profile_screen.dart';
-import 'package:vidstream/utils/utils.dart';
-
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
@@ -13,7 +11,7 @@ import '../widgets/professional_bottom_ad.dart';
 
 class FollowerFollowingListScreen extends StatefulWidget {
   final String userId;
-  final int initialTabIndex; // 0 for followers, 1 for following
+  final int initialTabIndex;
   final String displayName;
 
   const FollowerFollowingListScreen({
@@ -27,8 +25,7 @@ class FollowerFollowingListScreen extends StatefulWidget {
   State<FollowerFollowingListScreen> createState() => _FollowerFollowingListScreenState();
 }
 
-class _FollowerFollowingListScreenState extends State<FollowerFollowingListScreen>
-    with TickerProviderStateMixin {
+class _FollowerFollowingListScreenState extends State<FollowerFollowingListScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   final FollowService _followService = FollowService();
   String? _currentUserId;
@@ -53,27 +50,7 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(widget.displayName),
-        centerTitle: true,
-        bottom: TabBar(
-          dividerColor: Colors.grey.withOpacity(0.5),
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
-          indicatorColor: Theme.of(context).colorScheme.primary,
-          tabs: const [
-            Tab(text: 'Followers'),
-            Tab(text: 'Following'),
-          ],
-        ),
-      ),
+      appBar: _buildAppBar(context),
       body: SafeArea(
         child: ProfessionalBottomAd(
           child: TabBarView(
@@ -84,6 +61,30 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.black,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: Text(widget.displayName),
+      centerTitle: true,
+      bottom: TabBar(
+        dividerColor: Colors.grey.withOpacity(0.5),
+        controller: _tabController,
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
+        indicatorColor: Theme.of(context).colorScheme.primary,
+        tabs: const [
+          Tab(text: 'Followers'),
+          Tab(text: 'Following'),
+        ],
       ),
     );
   }
