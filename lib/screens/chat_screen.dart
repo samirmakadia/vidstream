@@ -346,12 +346,11 @@ class _ChatScreenState extends State<ChatScreen> {
         reason: reason,
         description: description,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result),
-          backgroundColor: result.toLowerCase().contains('success') ? Colors.green : Colors.red,
-        ),
-      );
+      if (result.toLowerCase().contains('success')) {
+        Graphics.showTopDialog(context, "Success", result, type: ToastType.success,);
+      } else {
+        Graphics.showTopDialog(context, "Error", result, type: ToastType.error,);
+      }
       return result;
     } catch (e) {
       Graphics.showTopDialog(

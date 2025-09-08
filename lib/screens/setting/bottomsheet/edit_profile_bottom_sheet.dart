@@ -5,6 +5,7 @@ import '../../../models/api_models.dart';
 import '../../../repositories/api_repository.dart';
 import '../../../services/socket_manager.dart';
 import '../../../services/video_service.dart';
+import '../../../utils/graphics.dart';
 import '../../../widgets/banner_ad_with_loader.dart';
 import '../../../widgets/custom_image_widget.dart';
 import '../../../widgets/professional_bottom_ad.dart';
@@ -85,7 +86,12 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);
-      _showErrorSnackBar('Failed to pick image: $e');
+      Graphics.showTopDialog(
+        context,
+        "Error!",
+        'Failed to pick image: $e',
+        type: ToastType.error,
+      );
     }
   }
 
@@ -99,23 +105,24 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
       );
 
       if (uploadedFile == null) {
-        _showErrorSnackBar("Failed to upload file to server");
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          "Failed to upload file to server",
+          type: ToastType.error,
+        );
         return null;
       }
       return uploadedFile;
     } catch (e) {
-      _showErrorSnackBar('Failed to upload file: $e');
+      Graphics.showTopDialog(
+        context,
+        "Error!",
+        'Failed to upload file: $e',
+        type: ToastType.error,
+      );
       return null;
     }
-  }
-
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      ),
-    );
   }
 
   void _showImagePickerOptions(String type) {
@@ -214,7 +221,12 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
 
   Future<void> _saveProfile() async {
     if (_nameController.text.trim().isEmpty) {
-      _showErrorSnackBar('Display name cannot be empty');
+      Graphics.showTopDialog(
+        context,
+        "Error!",
+        'Display name cannot be empty',
+        type: ToastType.error,
+      );
       return;
     }
 
@@ -248,22 +260,31 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
         print('Profile update completed successfully');
       } else {
         print('Error: userId is null');
-        _showErrorSnackBar('User ID is missing');
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'User ID is missing',
+          type: ToastType.error,
+        );
         return;
       }
 
       widget.onProfileUpdated();
       Navigator.of(context).pop(true);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully!'),
-          backgroundColor: Colors.green,
-        ),
+      Graphics.showTopDialog(
+        context,
+        "Success!",
+        'Profile updated successfully!',
       );
     } catch (e) {
       print('Profile update error: $e');
-      _showErrorSnackBar('Failed to update profile: $e');
+      Graphics.showTopDialog(
+        context,
+        "Error!",
+        'Failed to update profile: $e',
+        type: ToastType.error,
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

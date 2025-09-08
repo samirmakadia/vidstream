@@ -9,6 +9,7 @@ import 'dart:async';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
+import '../utils/graphics.dart';
 import 'home/bottomsheet/filter_bottom_sheet.dart';
 import 'home/widget/video_feed_item_widget.dart';
 
@@ -76,11 +77,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         setState(() => _isLoading = false);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load videos: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'Failed to load videos: $e',
+          type: ToastType.error,
         );
       }
     }

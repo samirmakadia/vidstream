@@ -13,7 +13,7 @@ class Graphics{
 
   Graphics(this.context);
 
-  static void showTopDialog(BuildContext context, String? title, String subtitle, {ToastType type = ToastType.success,}) {
+  static void showTopDialog(BuildContext context, String? title, String subtitle, {ToastType type = ToastType.success, String? actionLabel, VoidCallback? onAction,}) {
     Color backgroundColor;
     Widget icon;
 
@@ -89,6 +89,17 @@ class Graphics{
                                 .textTheme
                                 .bodyMedium
                                 ?.copyWith(color: Colors.white)),
+                        if (actionLabel != null && onAction != null)
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // close dialog
+                              onAction();
+                            },
+                            child: Text(
+                              actionLabel,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
                       ],
                     ),
                   ),

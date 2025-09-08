@@ -108,11 +108,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to post comment: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'Failed to post comment: $e',
+          type: ToastType.error,
         );
       }
     } finally {
@@ -639,20 +639,19 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         await _commentService.deleteComment(comment.id, widget.videoId);
         _loadComments();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Comment deleted successfully'),
-              backgroundColor: Colors.green,
-            ),
+          Graphics.showTopDialog(
+            context,
+            "Success!",
+            'Comment deleted successfully',
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to delete comment: $e'),
-              backgroundColor: Colors.red,
-            ),
+          Graphics.showTopDialog(
+            context,
+            "Error!",
+            'Failed to delete comment: $e',
+            type: ToastType.error,
           );
         }
       }

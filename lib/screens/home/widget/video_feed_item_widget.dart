@@ -6,6 +6,7 @@ import 'package:vidstream/screens/home/widget/video_player_widget.dart';
 import '../../../models/api_models.dart';
 import '../../../repositories/api_repository.dart';
 import '../../../services/socket_manager.dart';
+import '../../../utils/graphics.dart';
 import '../../../widgets/user_info_widget.dart';
 import 'video_actions_widget.dart';
 
@@ -110,11 +111,11 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
         widget.onLikeUpdated?.call(_localLikeCount, _isLiked);
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to update like: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
+          Graphics.showTopDialog(
+            context,
+            "Error!",
+            'Failed to update like: $e',
+            type: ToastType.error,
           );
         }
       } finally {
@@ -155,11 +156,11 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to update follow: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
+          Graphics.showTopDialog(
+            context,
+            "Error!",
+            'Failed to update follow: $e',
+            type: ToastType.error,
           );
         }
       } finally {

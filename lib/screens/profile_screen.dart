@@ -8,6 +8,7 @@ import 'package:vidstream/screens/video_player_screen.dart';
 import 'package:vidstream/services/socket_manager.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
+import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
 import '../widgets/professional_bottom_ad.dart';
@@ -121,15 +122,23 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load profile: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: _loadUserProfile,
-            ),
-          ),
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text('Failed to load profile: ${e.toString()}'),
+        //     backgroundColor: Theme.of(context).colorScheme.error,
+        //     action: SnackBarAction(
+        //       label: 'Retry',
+        //       onPressed: _loadUserProfile,
+        //     ),
+        //   ),
+        // );
+        Graphics.showTopDialog(
+          context,
+          "Error",
+          'Failed to load profile: ${e.toString()}',
+          type: ToastType.error,
+          actionLabel: "Retry",
+          onAction: _loadUserProfile,
         );
       }
     }

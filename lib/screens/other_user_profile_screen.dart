@@ -131,15 +131,23 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load profile: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: _loadUserProfile,
-            ),
-          ),
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text('Failed to load profile: ${e.toString()}'),
+        //     backgroundColor: Theme.of(context).colorScheme.error,
+        //     action: SnackBarAction(
+        //       label: 'Retry',
+        //       onPressed: _loadUserProfile,
+        //     ),
+        //   ),
+        // );
+        Graphics.showTopDialog(
+          context,
+          "Error",
+          'Failed to load profile: ${e.toString()}',
+          type: ToastType.error,
+          actionLabel: "Retry",
+          onAction: _loadUserProfile,
         );
       }
     }
@@ -218,20 +226,20 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
           }
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isBlocked
-                ? 'Blocked ${_user?.displayName}'
-                : 'Unblocked ${_user?.displayName}'),
-            backgroundColor: _isBlocked ? Colors.red : Colors.green,
-          ),
+        Graphics.showTopDialog(
+          context,
+          _isBlocked ? "Blocked" : "Unblocked",
+          _isBlocked
+              ? 'Blocked ${_user?.displayName ?? ""}'
+              : 'Unblocked ${_user?.displayName ?? ""}',
+          type: _isBlocked ? ToastType.error : ToastType.success,
         );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to ${_isBlocked ? 'unblock' : 'block'}: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'Failed to ${_isBlocked ? 'unblock' : 'block'}: $e',
+          type: ToastType.error,
         );
       }
     });

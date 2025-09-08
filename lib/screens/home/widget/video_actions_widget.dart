@@ -65,11 +65,10 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
 
   void _shareVideo(BuildContext context) {
     Clipboard.setData(ClipboardData(text: 'Check out this video on VidStream!'));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Link copied to clipboard!'),
-        duration: Duration(seconds: 2),
-      ),
+    Graphics.showTopDialog(
+      context,
+      "Success!",
+      'Link copied to clipboard!',
     );
   }
 
@@ -158,19 +157,18 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
         await ApiRepository.instance.videos.deleteVideo(widget.video.id);
         widget.onVideoDeleted?.call(widget.video);
         eventBus.fire('updatedVideo');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Video deleted successfully'),
-            backgroundColor: Colors.green,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Success!",
+          'Video deleted successfully',
         );
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to delete video: $e'),
-              backgroundColor: Colors.red,
-            ),
+          Graphics.showTopDialog(
+            context,
+            "Error!",
+            'Failed to delete video: $e',
+            type: ToastType.error,
           );
         }
       }

@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 
+import '../utils/graphics.dart';
+
 class AppUpdateInfo {
   final String latestVersion;
   final String currentVersion;
@@ -200,13 +202,11 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> with TickerProviderSt
     } catch (e) {
       debugPrint('Error opening update URL: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to open app store'),
-            backgroundColor: Colors.red,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            behavior: SnackBarBehavior.floating,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'Failed to open app store',
+          type: ToastType.error,
         );
       }
     } finally {

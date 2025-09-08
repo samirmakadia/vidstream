@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../utils/graphics.dart';
+
 class RateUsDialog extends StatefulWidget {
   const RateUsDialog({super.key});
 
@@ -166,22 +168,10 @@ class _RateUsDialogState extends State<RateUsDialog> with TickerProviderStateMix
   }
 
   void _showThankYouSnackBar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.favorite, color: Colors.white),
-            SizedBox(width: 8),
-            Text('Thank you for your rating!'),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-      ),
+    Graphics.showTopDialog(
+      context,
+      "Success!",
+      'Thank you for your rating!',
     );
   }
 
