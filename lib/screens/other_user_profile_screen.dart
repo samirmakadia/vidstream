@@ -177,7 +177,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
 
       Graphics.showTopDialog(
         context,
-        "Error",
+        "Success!",
         _isFollowing
             ? 'Following ${_user?.displayName}'
             : 'Unfollowed ${_user?.displayName}',
@@ -202,8 +202,9 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
   Future<void> _toggleBlock() async {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
     if (currentUserId == null || currentUserId == widget.userId) return;
-    await Utils.showLoaderWhile(context, () async {
-      try {
+
+    try {
+      await Utils.showLoaderWhile(context, () async {
         if (_isBlocked) {
           await _blockService.unblockUser(
             blockerId: currentUserId,
@@ -218,31 +219,28 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
 
         setState(() {
           _isBlocked = !_isBlocked;
-          if (_isBlocked) {
-            if (_isFollowing) {
-              _isFollowing = false;
-              // _followerCount--;
-            }
+          if (_isBlocked && _isFollowing) {
+            _isFollowing = false;
           }
         });
+      });
 
-        Graphics.showTopDialog(
-          context,
-          _isBlocked ? "Blocked" : "Unblocked",
-          _isBlocked
-              ? 'Blocked ${_user?.displayName ?? ""}'
-              : 'Unblocked ${_user?.displayName ?? ""}',
-          type: _isBlocked ? ToastType.error : ToastType.success,
-        );
-      } catch (e) {
-        Graphics.showTopDialog(
-          context,
-          "Error!",
-          'Failed to ${_isBlocked ? 'unblock' : 'block'}: $e',
-          type: ToastType.error,
-        );
-      }
-    });
+      Graphics.showTopDialog(
+        context,
+        _isBlocked ? "Blocked" : "Unblocked",
+        _isBlocked
+            ? 'Blocked ${_user?.displayName ?? ""}'
+            : 'Unblocked ${_user?.displayName ?? ""}',
+        type: _isBlocked ? ToastType.error : ToastType.success,
+      );
+    } catch (e) {
+      Graphics.showTopDialog(
+        context,
+        "Error!",
+        'Failed to ${_isBlocked ? 'unblock' : 'block'}: $e',
+        type: ToastType.error,
+      );
+    }
   }
 
   void _showBlockConfirmationDialog() {
@@ -258,7 +256,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
           content: Text(
             _isBlocked
                 ? 'Are you sure you want to unblock ${_user?.displayName}? They will be able to see your profile and interact with your content again.'
-                : 'Are you sure you want to block ${_user?.displayName}? They won\'t be able to see your profile or interact with your content. This will also unfollow both of you.',
+                : 'Are you sure you want to block ${_user?.displayName}? They won\'t be able to see your profile or interact with your content.',
             style: const TextStyle(color: Colors.white70),
           ),
           actions: [
