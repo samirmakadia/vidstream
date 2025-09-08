@@ -241,7 +241,8 @@ class AppLovinAdManager {
   }
 
   static Widget nativeAdLarge({double height = 300}) {
-    final controller = MaxNativeAdViewController();
+    final MaxNativeAdViewController controller = MaxNativeAdViewController();
+    double mediaViewAspectRatio = 1.91; // default fallback
 
     return SizedBox(
       height: height,
@@ -250,11 +251,14 @@ class AppLovinAdManager {
         controller: controller,
         listener: NativeAdListener(
           onAdLoadedCallback: (ad) {
-            debugPrint("✅ Native large loaded");
+            debugPrint("✅ Native large loaded from ${ad.networkName}");
             isNativeAdLoaded = true;
+            if (ad.nativeAd?.mediaContentAspectRatio != null) {
+              mediaViewAspectRatio = ad.nativeAd!.mediaContentAspectRatio!;
+            }
           },
           onAdLoadFailedCallback: (adUnitId, error) {
-            debugPrint("❌ Native large load failed: ${error.message}");
+            debugPrint("❌ Native large failed: ${error.message}");
             isNativeAdLoaded = false;
           },
           onAdClickedCallback: (ad) => debugPrint("👆 Native clicked: ${ad.adUnitId}"),
@@ -263,38 +267,62 @@ class AppLovinAdManager {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
+            color: const Color(0xffefefef),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
-                  MaxNativeAdIconView(width: 48, height: 48),
-                  SizedBox(width: 8),
+                children: [
+                  const MaxNativeAdIconView(width: 48, height: 48),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: MaxNativeAdTitleView(
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        color: Colors.white,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        MaxNativeAdTitleView(
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        MaxNativeAdAdvertiserView(
+                          maxLines: 1,
+                          style: TextStyle(fontSize: 10),
+                        ),
+                        MaxNativeAdStarRatingView(size: 10),
+                      ],
                     ),
                   ),
-                  MaxNativeAdOptionsView(width: 20, height: 20),
+                  const MaxNativeAdOptionsView(width: 20, height: 20),
                 ],
               ),
               const SizedBox(height: 8),
-              const Expanded(child: MaxNativeAdMediaView()),
+              // Body text
+              const MaxNativeAdBodyView(
+                maxLines: 3,
+                style: TextStyle(fontSize: 14),
+              ),
               const SizedBox(height: 8),
+              // Media View
+              Expanded(
+                child: AspectRatio(
+                  aspectRatio: mediaViewAspectRatio,
+                  child: const MaxNativeAdMediaView(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // CTA Button
               SizedBox(
                 width: double.infinity,
-                child: MaxNativeAdCallToActionView(
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
+                child: const MaxNativeAdCallToActionView(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStatePropertyAll(Color(0xff2d545e)),
+                    textStyle: MaterialStatePropertyAll(
+                      TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ),
@@ -305,11 +333,9 @@ class AppLovinAdManager {
     );
   }
 
-  static Widget nativeAdSmall({double height = 110, double width = double.infinity}) {
-    final controller = MaxNativeAdViewController();
 
-    const backgroundColor = Color(0xFF1E1E1E);
-    const borderColor = Color(0xFF333333);
+  static Widget nativeAdSmall({double height = 110, double width = double.infinity}) {
+    final MaxNativeAdViewController controller = MaxNativeAdViewController();
 
     return SizedBox(
       height: height,
@@ -319,33 +345,31 @@ class AppLovinAdManager {
         controller: controller,
         listener: NativeAdListener(
           onAdLoadedCallback: (ad) {
-            debugPrint("✅ Native small loaded");
-            isNativeAdLoaded = true;
+            debugPrint("✅ Native small loaded from ${ad.networkName}");
           },
           onAdLoadFailedCallback: (adUnitId, error) {
             debugPrint("❌ Native small load failed: ${error.message}");
-            isNativeAdLoaded = false;
           },
-          onAdClickedCallback: (ad) {},
-          onAdRevenuePaidCallback: (ad) {},
+          onAdClickedCallback: (ad) => debugPrint("👆 Native small clicked"),
+          onAdRevenuePaidCallback: (ad) => debugPrint("💰 Native revenue: ${ad.revenue}"),
         ),
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: backgroundColor,
+            color: const Color(0xFF1E1E1E),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor),
+            border: Border.all(color: const Color(0xFF333333)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              MaxNativeAdIconView(width: 40, height: 40),
+              const MaxNativeAdIconView(width: 40, height: 40),
               const SizedBox(width: 8),
-              Expanded(
+              const Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     MaxNativeAdTitleView(
                       maxLines: 1,
                       style: TextStyle(
@@ -362,10 +386,52 @@ class AppLovinAdManager {
                 ),
               ),
               const SizedBox(width: 8),
-              MaxNativeAdCallToActionView(),
+              MaxNativeAdCallToActionView(
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
               const SizedBox(width: 6),
-              MaxNativeAdOptionsView(width: 16, height: 16),
+              const MaxNativeAdOptionsView(width: 16, height: 16),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  static Widget mrecAdWidget() {
+    return Center(
+      child: Container(
+        width: 300,
+        height: 250,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey, width: 1),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: MaxAdView(
+            adUnitId: AdUnitIds.mrecAdUnit,
+            adFormat: AdFormat.mrec,
+            listener: AdViewAdListener(
+              onAdLoadedCallback: (ad) {
+                debugPrint("✅ MREC loaded from network: ${ad.networkName}");
+              },
+              onAdLoadFailedCallback: (adUnitId, error) {
+                debugPrint("❌ MREC load failed: ${error.message}");
+              },
+              onAdClickedCallback: (ad) =>
+                  debugPrint("👆 MREC clicked: ${ad.adUnitId}"),
+              onAdExpandedCallback: (ad) =>
+                  debugPrint("🔼 MREC expanded"),
+              onAdCollapsedCallback: (ad) =>
+                  debugPrint("🔽 MREC collapsed"),
+            ),
           ),
         ),
       ),

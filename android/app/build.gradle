@@ -82,7 +82,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging'
     implementation 'com.google.android.gms:play-services-auth:20.7.0'
 
-    implementation 'com.applovin:applovin-sdk:12.1.0'
+    implementation 'com.applovin:applovin-sdk:13.4.0'
     implementation 'com.applovin.mediation:google-adapter:24.5.0.0'
     implementation 'com.applovin.mediation:facebook-adapter:6.20.0.0'
     implementation 'com.applovin.mediation:unityads-adapter:4.16.1.0'

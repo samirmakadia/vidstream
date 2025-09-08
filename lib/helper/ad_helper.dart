@@ -36,4 +36,11 @@ class AdUnitIds {
     if (Platform.isIOS) return "5bfae7fd54dd8e11";
     throw UnsupportedError("Unsupported platform");
   }
+
+  // -------------------- NATIVE --------------------
+  static String get mrecAdUnit {
+    if (Platform.isAndroid) return "6143938bf3c8cc37";
+    if (Platform.isIOS) return "45d926b7c85fa773";
+    throw UnsupportedError("Unsupported platform");
+  }
 }
