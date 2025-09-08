@@ -11,6 +11,7 @@ import 'package:vidstream/screens/video_player_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
+import '../utils/graphics.dart';
 import '../utils/utils.dart';
 import '../widgets/banner_ad_with_loader.dart';
 import '../widgets/custom_image_widget.dart';
@@ -200,13 +201,12 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
         }
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isFollowing
-              ? 'Following ${_user?.displayName}'
-              : 'Unfollowed ${_user?.displayName}'),
-          backgroundColor: Colors.green,
-        ),
+      Graphics.showTopDialog(
+        context,
+        "Error",
+        _isFollowing
+            ? 'Following ${_user?.displayName}'
+            : 'Unfollowed ${_user?.displayName}',
       );
       eventBus.fire('updatedUser');
       eventBus.fire({
@@ -214,12 +214,11 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen>
         "isFollow": _isFollowing,
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Failed to ${_isFollowing ? 'unfollow' : 'follow'}: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
+      Graphics.showTopDialog(
+        context,
+        "Error",
+        'Failed to ${_isFollowing ? 'unfollow' : 'follow'}: $e',
+        type: ToastType.error,
       );
     } finally {
       setState(() => _isFollowLoading = false);

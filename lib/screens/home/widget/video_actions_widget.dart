@@ -219,9 +219,11 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
 
     if (currentUserId == null) {
-      Graphics.showToast(
-        message: 'User is not logged in. Cannot submit report.',
-        isSuccess: false,
+      Graphics.showTopDialog(
+        context,
+        "Error",
+        'User is not logged in. Cannot submit report.',
+        type: ToastType.error,
       );
       return '';
     }
@@ -244,9 +246,11 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
 
       return result;
     } catch (e) {
-      Graphics.showToast(
-        message: 'Failed to submit report: $e',
-        isSuccess: false,
+      Graphics.showTopDialog(
+        context,
+        "Error",
+        'Failed to submit report: $e',
+        type: ToastType.error,
       );
       return '';
     }

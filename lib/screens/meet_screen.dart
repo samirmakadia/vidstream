@@ -6,6 +6,7 @@ import 'package:vidstream/screens/chat_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
+import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
 
@@ -58,8 +59,11 @@ class _MeetScreenState extends State<MeetScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading online users: $e')),
+        Graphics.showTopDialog(
+          context,
+          "Error",
+          'Error loading online users: $e',
+          type: ToastType.error,
         );
       }
     }
@@ -89,8 +93,11 @@ class _MeetScreenState extends State<MeetScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error joining meet: $e')),
+        Graphics.showTopDialog(
+          context,
+          "Error",
+          'Error joining meet: $e',
+          type: ToastType.error,
         );
       }
     }
@@ -113,8 +120,11 @@ class _MeetScreenState extends State<MeetScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error leaving meet: $e')),
+        Graphics.showTopDialog(
+          context,
+          "Error",
+          'Error leaving meet: $e',
+          type: ToastType.error,
         );
       }
     }

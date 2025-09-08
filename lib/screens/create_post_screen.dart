@@ -5,6 +5,7 @@ import 'dart:io';
 import '../models/api_models.dart';
 import '../services/socket_manager.dart';
 import '../services/video_service.dart';
+import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
 import 'full_screen_video_player.dart';
@@ -184,17 +185,25 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       if (uploadedVideo != null && mounted) {
         eventBus.fire('updatedVideo');
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Video shared successfully!'),
-            backgroundColor: Colors.green,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Success!",
+          'Video shared successfully!',
         );
       } else {
-        _showErrorSnackBar("Failed to upload video metadata");
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          "Failed to upload video metadata",
+        );
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to upload video: $e');
+      Graphics.showTopDialog(
+        context,
+        "Error",
+        'Failed to upload video: $e',
+        type: ToastType.error,
+      );
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
@@ -202,11 +211,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
 
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      ),
+    Graphics.showTopDialog(
+      context,
+      "Error",
+      message,
+      type: ToastType.error,
     );
   }
 

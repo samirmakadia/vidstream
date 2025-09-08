@@ -6,6 +6,7 @@ import 'package:vidstream/screens/other_user_profile_screen.dart';
 
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
+import '../utils/graphics.dart';
 import '../utils/utils.dart';
 import '../widgets/professional_bottom_ad.dart';
 
@@ -66,11 +67,11 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load blocked users: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error",
+          'Failed to load blocked users: ${e.toString()}',
+          type: ToastType.error,
         );
       }
     }
@@ -90,19 +91,18 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
       setState(() {
         _blockedUsers.removeWhere((blockedUser) => blockedUser.id == user.id);
       });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unblocked ${user.displayName}'),
-          backgroundColor: Colors.green,
-        ),
+
+      Graphics.showTopDialog(
+        context,
+        "Success!",
+        'Unblocked ${user.displayName}',
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to unblock user: ${e.toString()}'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
+      Graphics.showTopDialog(
+        context,
+        "Error!",
+        'Failed to unblock user: ${e.toString()}',
+        type: ToastType.error,
       );
     }
   }

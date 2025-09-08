@@ -61,11 +61,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load comments: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'Failed to load comments: $e',
+          type: ToastType.error,
         );
       }
     }
@@ -78,8 +78,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
     if (currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login to comment')),
+      Graphics.showTopDialog(
+        context,
+        "Error!",
+        'Please login to comment',
+        type: ToastType.error,
       );
       return;
     }
@@ -142,11 +145,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       _loadComments();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to like comment: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'Failed to like comment: $e',
+          type: ToastType.error,
         );
       }
     }finally {
@@ -697,9 +700,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
 
     if (currentUserId == null) {
-      Graphics.showToast(
-        message: 'User is not logged in. Cannot submit report.',
-        isSuccess: false,
+      Graphics.showTopDialog(
+        context,
+        "Error",
+        'User is not logged in. Cannot submit report.',
+        type: ToastType.error,
       );
       return ''; // Keep dialog open
     }
@@ -725,9 +730,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
       return result;
     } catch (e) {
-      Graphics.showToast(
-        message: 'Failed to submit report: $e',
-        isSuccess: false,
+      Graphics.showTopDialog(
+        context,
+        "Error",
+        'Failed to submit report: $e',
+        type: ToastType.error,
       );
       return '';
     }

@@ -3,8 +3,8 @@ import 'package:vidstream/services/report_service.dart';
 import 'package:vidstream/models/api_models.dart';
 
 import '../manager/app_open_ad_manager.dart';
+import '../utils/graphics.dart';
 import '../utils/utils.dart';
-import '../widgets/common_snackbar.dart';
 import '../widgets/professional_bottom_ad.dart';
 
 class MyReportsScreen extends StatefulWidget {
@@ -54,11 +54,11 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
       await _reportService.deleteReport(report.id);
       await _fetchReports(isLoadingShow: false);
       if (mounted) {
-        AppSnackBar.showSuccess(context, 'Report deleted successfully');
+        Graphics.showTopDialog(context, "Success", 'Report deleted successfully');
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Failed to delete report: $e');
+        Graphics.showTopDialog(context, "Oops!", 'Failed to delete report: $e', type: ToastType.error);
       }
     } finally {
       if (mounted) {

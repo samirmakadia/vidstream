@@ -97,12 +97,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Apple sign in failed: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        Graphics.showTopDialog(context, "Error", 'Apple sign in failed: $e', type: ToastType.error);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -120,25 +115,14 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         );
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Guest sign in was cancelled or failed'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
+          Graphics.showTopDialog(context, "Error", 'Guest sign in was cancelled or failed', type: ToastType.error,);
         }
       }
     } catch (e,s) {
       print(e);
       print(s);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Guest sign in failed: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        Graphics.showTopDialog(context, "Error", 'Guest sign in failed: $e', type: ToastType.error);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -176,11 +160,11 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         );
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Google sign in was cancelled or failed'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
+          Graphics.showTopDialog(
+            context,
+            "Error!",
+            'Google sign in was cancelled or failed',
+            type: ToastType.error,
           );
         }
       }
@@ -188,12 +172,11 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       print(e);
       print(s);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Google sign in failed: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 4),
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'Google sign in failed: $e',
+          type: ToastType.error,
         );
       }
     } finally {

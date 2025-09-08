@@ -13,6 +13,7 @@ import '../services/chat_service.dart';
 import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../utils/app_toaster.dart';
+import '../utils/graphics.dart';
 import '../widgets/banner_ad_with_loader.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/image_preview_screen.dart';
@@ -61,7 +62,12 @@ class _ChatScreenState extends State<ChatScreen> {
   MessageModel? _getMessage({String? mediaUrl, int mediaSize = 0, double mediaDuration =0, String messageType = 'text'}) {
     final messageText = _messageController.text.trim();
     if (messageText.isEmpty && mediaUrl == null) {
-      AppToast.showError("Enter message or attach media");
+      Graphics.showTopDialog(
+        context,
+        "Error",
+        "Enter message or attach media",
+        type: ToastType.error,
+      );
       return null;
     }
     final nowIso = DateTime.now().toIso8601String();
@@ -95,8 +101,11 @@ class _ChatScreenState extends State<ChatScreen> {
       _messageController.clear();
     } catch (e, stack) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sending message: $e')),
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'Error sending message: $e',
+          type: ToastType.error,
         );
       }
     } finally {
@@ -195,22 +204,21 @@ class _ChatScreenState extends State<ChatScreen> {
       await MessageDatabase.instance.deleteMessagesByConversationId(widget.conversation?.id ?? '');
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Conversation deleted successfully'),
-            backgroundColor: Colors.green,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Success!",
+          'Conversation deleted successfully',
         );
 
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to delete conversation: $e'),
-            backgroundColor: Colors.red,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'Failed to delete conversation: $e',
+          type: ToastType.error,
         );
       }
     }
@@ -257,20 +265,19 @@ class _ChatScreenState extends State<ChatScreen> {
       try {
         await _chatService.deleteChatMessage(message.id ?? '');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Message deleted'),
-              backgroundColor: Colors.green,
-            ),
+          Graphics.showTopDialog(
+            context,
+            "Success!",
+            'Message deleted',
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to delete: $e'),
-              backgroundColor: Colors.red,
-            ),
+          Graphics.showTopDialog(
+            context,
+            "Error!",
+            'Failed to delete: $e',
+            type: ToastType.error,
           );
         }
       }
@@ -280,11 +287,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      ),
+    Graphics.showTopDialog(
+      context,
+      "Error!",
+      message,
+      type: ToastType.error,
     );
   }
 
@@ -323,8 +330,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }) async {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
     if (currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User is not logged in. Cannot submit report.'), backgroundColor: Colors.red),
+      Graphics.showTopDialog(
+        context,
+        "Error!",
+        'User is not logged in. Cannot submit report.',
+        type: ToastType.error,
       );
       return '';
     }
@@ -344,11 +354,11 @@ class _ChatScreenState extends State<ChatScreen> {
       );
       return result;
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit report: $e'),
-          backgroundColor: Colors.red,
-        ),
+      Graphics.showTopDialog(
+        context,
+        "Error!",
+        'Failed to submit report: $e',
+        type: ToastType.error,
       );
       return '';
     }

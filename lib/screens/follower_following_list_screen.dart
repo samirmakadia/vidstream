@@ -6,6 +6,7 @@ import 'package:vidstream/screens/other_user_profile_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
+import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
 
@@ -387,11 +388,11 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update follow status: $e'),
-            backgroundColor: Colors.red,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Error",
+          'Failed to update follow status: $e',
+          type: ToastType.error,
         );
       }
     } finally {

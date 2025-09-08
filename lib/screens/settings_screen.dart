@@ -15,6 +15,7 @@ import 'package:vidstream/widgets/rate_us_dialog.dart';
 import 'package:vidstream/widgets/app_update_dialog.dart';
 import 'package:vidstream/services/dialog_manager_service.dart';
 import '../helper/navigation_helper.dart';
+import '../utils/graphics.dart';
 import '../widgets/common_app_dialog.dart';
 import '../widgets/common_snackbar.dart';
 import '../widgets/professional_bottom_ad.dart';
@@ -64,7 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     } catch (e) {
-      AppSnackBar.showError(context, 'Failed to sign out: $e');
+      Graphics.showTopDialog(context, "Error", 'Failed to sign out: $e', type: ToastType.error);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -95,15 +96,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           MaterialPageRoute(builder: (_) => const AuthScreen()),
           (route) => false,
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account deleted successfully'),
-            backgroundColor: Colors.green,
-          ),
+        Graphics.showTopDialog(
+          context,
+          "Success!",
+          'Account deleted successfully',
         );
       }
     } catch (e) {
-      AppSnackBar.showError(context, 'Failed to delete account: $e');
+      Graphics.showTopDialog(context, "Error", 'Failed to delete account: $e', type: ToastType.error);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -241,14 +241,14 @@ Instagram: @VidMeetOfficial''',
           if (updateInfo.hasUpdate) {
             await AppUpdateDialog.show(context, updateInfo);
           } else {
-            AppSnackBar.showSuccess(context, 'You\'re using the latest version!');
+            Graphics.showTopDialog(context, "Congrats!", 'You\'re using the latest version!');
           }
         }
       } else {
-        AppSnackBar.showError(context, 'Unable to check for updates');
+        Graphics.showTopDialog(context, "Oops!", 'Unable to check for updates', type: ToastType.error);
       }
     } catch (e) {
-      AppSnackBar.showError(context, 'Error checking for updates: $e');
+      Graphics.showTopDialog(context, "Error", 'Error checking for updates: $e', type: ToastType.error);
     }
   }
 
@@ -261,10 +261,10 @@ Instagram: @VidMeetOfficial''',
       
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        AppSnackBar.showSuccess(context, "Onboarding reset! Restart the app to see onboarding.");
+        Graphics.showTopDialog(context, "Success", "Onboarding reset! Restart the app to see onboarding.");
       }
     } catch (e) {
-      AppSnackBar.showError(context, 'Failed to reset onboarding: $e');
+        Graphics.showTopDialog(context, "Error", "Failed to reset onboarding: $e", type: ToastType.error);
     }
   }
 
@@ -334,7 +334,7 @@ Instagram: @VidMeetOfficial''',
                     ),
                   );
                 } else {
-                  AppSnackBar.showError(context, 'User not found');
+                  Graphics.showTopDialog(context, "Error", 'User not found', type: ToastType.error,);
                 }
               },
             ),
