@@ -38,7 +38,7 @@ class AdUnitIds {
   }
 
   // -------------------- NATIVE --------------------
-  static String get mrecAdUnit {
+  static String get mrecAdUnitId {
     if (Platform.isAndroid) return "6143938bf3c8cc37";
     if (Platform.isIOS) return "45d926b7c85fa773";
     throw UnsupportedError("Unsupported platform");

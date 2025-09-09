@@ -24,7 +24,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   List<Report> _reports = [];
   bool _isLoading = true;
   final Set<String> _deletingReports = {};
-  final int _adInterval = 4;
+  final int _adInterval = 2;
 
   @override
   void initState() {
@@ -368,15 +368,12 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           padding: const EdgeInsets.all(16),
           itemCount: Utils.getTotalItems(_reports.length, _adInterval),
           itemBuilder: (context, index) {
-            if (Utils.isAdIndex(
-                index,
-                _reports.length,
-                _adInterval,
+            if (Utils.isAdIndex(index, _reports.length, _adInterval,
                 Utils.getTotalItems(_reports.length, _adInterval))) {
-              if (AppLovinAdManager.isNativeAdLoaded) {
+              if (AppLovinAdManager.isMrecAdLoaded) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: AppLovinAdManager.nativeAdSmall(height: 90),
+                  child: AppLovinAdManager.mrecAd(),
                 );
               } else {
                 return const SizedBox.shrink();

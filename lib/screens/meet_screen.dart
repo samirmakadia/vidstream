@@ -362,8 +362,8 @@ class _MeetScreenState extends State<MeetScreen> {
       );
 
       children.add(const SizedBox(height: 16));
-      if (AppLovinAdManager.isNativeAdLoaded) {
-        children.add(AppLovinAdManager.nativeAdSmall(height: 120));
+      if (AppLovinAdManager.isMrecAdLoaded) {
+        children.add(AppLovinAdManager.mrecAd(height: 120));
         children.add(const SizedBox(height: 16));
       }
     }

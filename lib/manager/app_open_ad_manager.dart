@@ -2,6 +2,7 @@ import 'package:applovin_max/applovin_max.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../helper/ad_helper.dart';
+import '../widgets/fancy_swipe_arrow.dart';
 
 class AppLovinAdManager {
   static final String _appOpenAdUnitId = AdUnitIds.appOpen;
@@ -15,6 +16,7 @@ class AppLovinAdManager {
 
   static bool _isInterstitialAvailable = false;
   static bool _isRewardedAvailable = false;
+  static bool isMrecAdLoaded = true;
 
   static bool isBannerLoaded = false;
 
@@ -35,6 +37,8 @@ class AppLovinAdManager {
     loadAppOpenAd();
     loadInterstitialAd();
     loadRewardedAd();
+    loadMrecAd();
+    loadBanner();
   }
 
   // -------------------- Interstitial Listener --------------------
@@ -213,6 +217,8 @@ class AppLovinAdManager {
   static void loadAppOpenAd() => AppLovinMAX.loadAppOpenAd(_appOpenAdUnitId);
   static void loadInterstitialAd() => AppLovinMAX.loadInterstitial(_interstitialAdUnitId);
   static void loadRewardedAd() => AppLovinMAX.loadRewardedAd(_rewardedAdUnitId);
+  static void loadMrecAd() => AppLovinMAX.loadMRec(AdUnitIds.mrecAdUnitId);
+  static void loadBanner() => AppLovinMAX.loadBanner(AdUnitIds.banner);
 
   static void showAppOpenAd({VoidCallback? onDismissed}) {
     if (!_isAppOpenAvailable || _isShowingAppOpen) {
@@ -402,39 +408,86 @@ class AppLovinAdManager {
     );
   }
 
+  static Widget mrecAd({double height = 250, double width = 300}) {
+    return MaxAdView(
+      adUnitId: AdUnitIds.mrecAdUnitId,
+      adFormat: AdFormat.mrec,
+      listener: AdViewAdListener(
+        onAdLoadedCallback: (ad) {
+          isMrecAdLoaded = true;
+          debugPrint("✅ MREC loaded");
+        },
+        onAdLoadFailedCallback: (adUnitId, error) {
+          isMrecAdLoaded = false;
+          debugPrint("❌ MREC load failed: ${error.message}");
+        },
+        onAdClickedCallback: (ad) =>
+            debugPrint("👆 MREC clicked: ${ad.adUnitId}"),
+        onAdRevenuePaidCallback: (ad) =>
+            debugPrint("💰 MREC revenue: ${ad.revenue}"),
+        onAdExpandedCallback: (ad) => debugPrint("🔼 MREC expanded"),
+        onAdCollapsedCallback: (ad) => debugPrint("🔽 MREC collapsed"),
+      ),
+    );
+  }
 
-  static Widget mrecAdWidget() {
+  static Widget largeMrecAd({double height = 300, double width = 300}) {
     return Center(
-      child: Container(
-        width: 300,
-        height: 250,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey, width: 1),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: MaxAdView(
-            adUnitId: AdUnitIds.mrecAdUnit,
-            adFormat: AdFormat.mrec,
-            listener: AdViewAdListener(
-              onAdLoadedCallback: (ad) {
-                debugPrint("✅ MREC loaded from network: ${ad.networkName}");
-              },
-              onAdLoadFailedCallback: (adUnitId, error) {
-                debugPrint("❌ MREC load failed: ${error.message}");
-              },
-              onAdClickedCallback: (ad) =>
-                  debugPrint("👆 MREC clicked: ${ad.adUnitId}"),
-              onAdExpandedCallback: (ad) =>
-                  debugPrint("🔼 MREC expanded"),
-              onAdCollapsedCallback: (ad) =>
-                  debugPrint("🔽 MREC collapsed"),
+      child: SizedBox(
+        height: height,
+        width: width,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            MaxAdView(
+              adUnitId: AdUnitIds.mrecAdUnitId,
+              adFormat: AdFormat.mrec,
+              listener: AdViewAdListener(
+                onAdLoadedCallback: (ad) {
+                  isMrecAdLoaded = true;
+                  debugPrint("✅ Large MREC loaded");
+                },
+                onAdLoadFailedCallback: (adUnitId, error) {
+                  isMrecAdLoaded = false;
+                  debugPrint("❌ Large MREC load failed: ${error.message}");
+                },
+                onAdClickedCallback: (ad) =>
+                    debugPrint("👆 Large MREC clicked: ${ad.adUnitId}"),
+                onAdRevenuePaidCallback: (ad) =>
+                    debugPrint("💰 Large MREC revenue: ${ad.revenue}"),
+                onAdExpandedCallback: (MaxAd ad) {},
+                onAdCollapsedCallback: (MaxAd ad) {},
+              ),
             ),
-          ),
+            Positioned(
+              bottom: 8,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Text(
+                    "Swipe to next",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 4,
+                          color: Colors.black45,
+                          offset: Offset(1, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  FancySwipeArrow(size: 50, color: Colors.white),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+
 }

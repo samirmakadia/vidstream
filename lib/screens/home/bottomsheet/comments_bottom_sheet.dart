@@ -273,11 +273,10 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                   itemCount: _comments.length + (_comments.length / 4).ceil(),
                   itemBuilder: (context, index) {
                     if ((index + 1) % 5 == 0) {
-                      // Only show ad if it is loaded
-                      if (AppLovinAdManager.isNativeAdLoaded) {
+                      if (AppLovinAdManager.isMrecAdLoaded) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: AppLovinAdManager.nativeAdSmall(height: 80),
+                          child: AppLovinAdManager.mrecAd(),
                         );
                       } else {
                         return const SizedBox.shrink();
@@ -286,10 +285,10 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
                     final commentIndex = index - (index ~/ 5);
                     if (commentIndex >= _comments.length) {
-                      if (AppLovinAdManager.isNativeAdLoaded) {
+                      if (AppLovinAdManager.isMrecAdLoaded) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: AppLovinAdManager.nativeAdSmall(height: 80),
+                          child: AppLovinAdManager.mrecAd(),
                         );
                       } else {
                         return const SizedBox.shrink();

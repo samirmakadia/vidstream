@@ -283,7 +283,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
   Widget _buildFeedView() {
     const int videosPerAd = 4;
-    final showAds = AppLovinAdManager.isNativeAdLoaded;
+    final showAds = AppLovinAdManager.isMrecAdLoaded;
     final loadedVideos = _videos;
 
     final totalAds = showAds ? (loadedVideos.length / videosPerAd).floor() : 0;
@@ -301,8 +301,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
           if (isAdIndex) {
             return SizedBox.expand(
-              child: AppLovinAdManager.nativeAdLarge(
+              child: AppLovinAdManager.largeMrecAd(
                 height: Utils(context).screenHeight,
+                width: Utils(context).screenWidth,
+
               ),
             );
           }

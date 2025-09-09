@@ -104,7 +104,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
   Widget _buildVideo() {
     const int videosPerAd = 4;
     final loadedVideos = _videos;
-    final showAds = AppLovinAdManager.isNativeAdLoaded;
+    final showAds = AppLovinAdManager.isMrecAdLoaded;
 
     final totalAds = showAds ? (loadedVideos.length / videosPerAd).floor() : 0;
     final totalItems = loadedVideos.length + totalAds;
@@ -123,7 +123,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
 
         if (isAdIndex) {
           return SizedBox.expand(
-            child: AppLovinAdManager.nativeAdLarge(
+            child: AppLovinAdManager.largeMrecAd(
               height: Utils(context).screenHeight,
             ),
           );

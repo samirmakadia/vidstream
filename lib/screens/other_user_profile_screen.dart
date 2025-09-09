@@ -131,16 +131,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     content: Text('Failed to load profile: ${e.toString()}'),
-        //     backgroundColor: Theme.of(context).colorScheme.error,
-        //     action: SnackBarAction(
-        //       label: 'Retry',
-        //       onPressed: _loadUserProfile,
-        //     ),
-        //   ),
-        // );
         Graphics.showTopDialog(
           context,
           "Error",
@@ -334,7 +324,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
                         _buildTabBar(context),
                         _buildTabContent(),
                         SliverToBoxAdapter(
-                          child: SizedBox(height: 100),
+                          child: SizedBox(height: 130),
                         ),
                       ],
                     ),
@@ -790,6 +780,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
       children.add(
         GridView.builder(
           shrinkWrap: true,
+          padding: EdgeInsets.zero,
+
           physics: const NeverScrollableScrollPhysics(),
           itemCount: videosChunk.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -809,15 +801,18 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
       );
 
       children.add(const SizedBox(height: 8));
-      if (AppLovinAdManager.isNativeAdLoaded) {
-        children.add(AppLovinAdManager.nativeAdSmall(height: 110));
+      if (AppLovinAdManager.isMrecAdLoaded) {
+        children.add(AppLovinAdManager.mrecAd());
         children.add(const SizedBox(height: 8));
+      } else {
+        // No ad → add nothing (zero height)
+        children.add(const SizedBox.shrink());
       }
     }
 
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 10),
         child: Column(children: children),
       ),
     );

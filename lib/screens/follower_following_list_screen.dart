@@ -114,16 +114,26 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           );
         }
 
-        final adInterval = 4;
+        const adInterval = 4;
         final List<Widget> items = [];
 
         for (int i = 0; i < followers.length; i++) {
           items.add(_buildUserListItem(followers[i]));
 
-          if ((i + 1) % adInterval == 0 && AppLovinAdManager.isNativeAdLoaded) {
+          if ((i + 1) % adInterval == 0 && AppLovinAdManager.isMrecAdLoaded) {
             items.add(Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: AppLovinAdManager.nativeAdSmall(height: 70),
+              child: AppLovinAdManager.mrecAd(),
+            ));
+          }
+        }
+
+        final remainder = followers.length % adInterval;
+        if (AppLovinAdManager.isMrecAdLoaded) {
+          if (followers.length < adInterval || remainder > 1) {
+            items.add(Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: AppLovinAdManager.mrecAd(),
             ));
           }
         }
@@ -162,16 +172,25 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           );
         }
 
-        final adInterval = 4;
+        const adInterval = 4;
         final List<Widget> items = [];
 
         for (int i = 0; i < following.length; i++) {
           items.add(_buildUserListItem(following[i]));
-
-          if ((i + 1) % adInterval == 0 && AppLovinAdManager.isNativeAdLoaded) {
+          if ((i + 1) % adInterval == 0 && AppLovinAdManager.isMrecAdLoaded) {
             items.add(Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: AppLovinAdManager.nativeAdSmall(height: 70),
+              child: AppLovinAdManager.mrecAd(height: 70),
+            ));
+          }
+        }
+
+        final remainder = following.length % adInterval;
+        if (AppLovinAdManager.isMrecAdLoaded) {
+          if (following.length < adInterval || remainder > 1) {
+            items.add(Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: AppLovinAdManager.mrecAd(height: 70),
             ));
           }
         }

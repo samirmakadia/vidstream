@@ -177,10 +177,10 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                 // Insert ad
                 if (Utils.isAdIndex(index, _blockedUsers.length, _adInterval,
                     Utils.getTotalItems(_blockedUsers.length, _adInterval))) {
-                  if (AppLovinAdManager.isNativeAdLoaded) {
+                  if (AppLovinAdManager.isMrecAdLoaded) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: AppLovinAdManager.nativeAdSmall(height: 90),
+                      child: AppLovinAdManager.mrecAd(),
                     );
                   } else {
                     return const SizedBox.shrink();

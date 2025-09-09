@@ -605,56 +605,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildTabContent() {
     final videos = _selectedTabIndex == 0 ? _userVideos : _likedVideos;
-    final emptyTitle = _selectedTabIndex == 0 ? 'No videos yet' : 'No liked videos';
-    final emptySubtitle = _selectedTabIndex == 0
-        ? 'Create your first video using the + button!'
-        : 'Like some videos to see them here!';
-    final emptyIcon = _selectedTabIndex == 0 ? Icons.video_library_outlined : Icons.favorite_outline;
-
     if (videos.isEmpty) {
-      return SliverToBoxAdapter(
-        child: SizedBox(
-          height: 250,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(emptyIcon, size: 64, color: Colors.white.withOpacity(0.6)),
-              const SizedBox(height: 16),
-              Text(
-                emptyTitle,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: Colors.white.withOpacity(0.8)),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                emptySubtitle,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: Colors.white.withOpacity(0.6)),
-                textAlign: TextAlign.center,
-              ),
-              if (_selectedTabIndex == 1) ...[
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: _refreshLikedVideos,
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Refresh Liked Videos', style: TextStyle(color: Colors.black)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      );
+      return _buildEmptySection();
     }
 
     const int videosPerRow = 3;
@@ -670,6 +622,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       children.add(
         GridView.builder(
           shrinkWrap: true,
+          padding: EdgeInsets.zero,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: videosChunk.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -689,8 +642,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       );
 
       children.add(const SizedBox(height: 8));
-      if (AppLovinAdManager.isNativeAdLoaded) {
-        children.add(AppLovinAdManager.nativeAdSmall(height: 110));
+      if (AppLovinAdManager.isMrecAdLoaded) {
+        children.add(AppLovinAdManager.mrecAd());
         children.add(const SizedBox(height: 8));
       }
     }
@@ -726,6 +679,57 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         }
       });
     });
+  }
+
+  Widget _buildEmptySection() {
+    final emptyTitle = _selectedTabIndex == 0 ? 'No videos yet' : 'No liked videos';
+    final emptySubtitle = _selectedTabIndex == 0
+        ? 'Create your first video using the + button!'
+        : 'Like some videos to see them here!';
+    final emptyIcon = _selectedTabIndex == 0 ? Icons.video_library_outlined : Icons.favorite_outline;
+    return SliverToBoxAdapter(
+      child: SizedBox(
+        height: 250,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(emptyIcon, size: 64, color: Colors.white.withOpacity(0.6)),
+            const SizedBox(height: 16),
+            Text(
+              emptyTitle,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(color: Colors.white.withOpacity(0.8)),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              emptySubtitle,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.white.withOpacity(0.6)),
+              textAlign: TextAlign.center,
+            ),
+            if (_selectedTabIndex == 1) ...[
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _refreshLikedVideos,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Refresh Liked Videos', style: TextStyle(color: Colors.black)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
 }

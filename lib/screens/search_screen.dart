@@ -267,16 +267,17 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     if (_videos.isEmpty) return _buildEmptyVideosState();
 
     const int videosPerRow = 3;
-    const int rowsBeforeAd = 2;
+    const int rowsBeforeAd = 3;
     final int videosPerChunk = videosPerRow * rowsBeforeAd;
 
     final List<Widget> children = [];
 
     for (int i = 0; i < _videos.length; i += videosPerChunk) {
-      final end = (i + videosPerChunk < _videos.length) ? i + videosPerChunk : _videos.length;
+      final end = (i + videosPerChunk < _videos.length)
+          ? i + videosPerChunk
+          : _videos.length;
       final videosChunk = _videos.sublist(i, end);
 
-      // Add Grid for this chunk
       children.add(
         GridView.builder(
           shrinkWrap: true,
@@ -298,11 +299,18 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
         ),
       );
 
-      children.add(const SizedBox(height: 8));
-      if (AppLovinAdManager.isNativeAdLoaded) {
-        children.add(AppLovinAdManager.nativeAdSmall(height: 110));
+      if (AppLovinAdManager.isMrecAdLoaded && end < _videos.length) {
+        children.add(const SizedBox(height: 8));
+        children.add(AppLovinAdManager.mrecAd());
         children.add(const SizedBox(height: 8));
       }
+    }
+
+    if (AppLovinAdManager.isMrecAdLoaded && (_videos.length < videosPerChunk ||
+        _videos.length % videosPerChunk != 0)) {
+      children.add(const SizedBox(height: 8));
+      children.add(AppLovinAdManager.mrecAd());
+      children.add(const SizedBox(height: 8));
     }
 
     return Column(
@@ -322,9 +330,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ListView(
-              children: children,
-            ),
+            child: ListView(children: children),
           ),
         ),
       ],
@@ -346,7 +352,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     return Column(
       children: [
         if (!_hasSearched)
-          Container(
+        Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -362,10 +368,10 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
             itemCount: totalItems,
             itemBuilder: (context, index) {
               if (Utils.isAdIndex(index, _users.length, adInterval, totalItems)) {
-                if (AppLovinAdManager.isNativeAdLoaded) {
+                if (AppLovinAdManager.isMrecAdLoaded) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: AppLovinAdManager.nativeAdSmall(height: 90),
+                    child: AppLovinAdManager.mrecAd(),
                   );
                 } else {
                   // Skip ad, don't reserve space

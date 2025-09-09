@@ -115,10 +115,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
             itemCount: totalItems,
             itemBuilder: (context, index) {
               if (Utils.isAdIndex(index, conversations.length, adInterval, totalItems)) {
-                if (AppLovinAdManager.isNativeAdLoaded) {
+                if (AppLovinAdManager.isMrecAdLoaded) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: AppLovinAdManager.nativeAdSmall(height: 90),
+                    child: AppLovinAdManager.mrecAd(),
                   );
                 } else {
                   return const SizedBox.shrink();
