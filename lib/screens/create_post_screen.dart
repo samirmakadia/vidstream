@@ -560,7 +560,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
                   child: Text(
                     '#$tag',
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.white,
+                      color: isSelected ? Colors.black : Colors.white,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
