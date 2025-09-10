@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:vidstream/screens/setting/bottomsheet/legal_document_viewer.dart';
-import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/screens/main_app_screen.dart';
+import 'package:vidmeet/screens/setting/bottomsheet/legal_document_viewer.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
+import 'package:vidmeet/screens/main_app_screen.dart';
 import 'package:flutter/gestures.dart';
 import '../utils/graphics.dart';
 

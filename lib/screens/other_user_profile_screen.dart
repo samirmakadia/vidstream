@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/services/follow_service.dart';
-import 'package:vidstream/services/block_service.dart';
-import 'package:vidstream/screens/follower_following_list_screen.dart';
-import 'package:vidstream/screens/video_player_screen.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/services/follow_service.dart';
+import 'package:vidmeet/services/block_service.dart';
+import 'package:vidmeet/screens/follower_following_list_screen.dart';
+import 'package:vidmeet/screens/video_player_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';

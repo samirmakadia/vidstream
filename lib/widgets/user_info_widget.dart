@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/screens/other_user_profile_screen.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/screens/other_user_profile_screen.dart';
 
 import '../helper/navigation_helper.dart';
 

@@ -1,7 +1,7 @@
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/services/auth_service.dart';
-import 'package:vidstream/storage/conversation_storage_drift.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
+import 'package:vidmeet/services/auth_service.dart';
+import 'package:vidmeet/storage/conversation_storage_drift.dart';
 import 'api_service.dart';
 
 class ChatService {

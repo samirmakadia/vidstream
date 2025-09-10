@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:vidstream/storage/message_storage_drift.dart';
+import 'package:vidmeet/storage/message_storage_drift.dart';
 import '../models/api_models.dart';
 import '../services/chat_service.dart';
 import 'dart:io';

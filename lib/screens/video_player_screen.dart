@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vidstream/models/api_models.dart';
+import 'package:vidmeet/models/api_models.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../utils/utils.dart';
 import 'home/widget/video_feed_item_widget.dart';

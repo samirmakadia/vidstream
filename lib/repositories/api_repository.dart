@@ -1,13 +1,13 @@
-import 'package:vidstream/services/auth_service.dart';
-import 'package:vidstream/services/video_service.dart';
-import 'package:vidstream/services/comment_service.dart';
-import 'package:vidstream/services/like_service.dart';
-import 'package:vidstream/services/follow_service.dart';
-import 'package:vidstream/services/report_service.dart';
-import 'package:vidstream/services/block_service.dart';
-import 'package:vidstream/services/search_service.dart';
-import 'package:vidstream/services/api_service.dart';
-// import 'package:vidstream/services/chat_service.dart';
+import 'package:vidmeet/services/auth_service.dart';
+import 'package:vidmeet/services/video_service.dart';
+import 'package:vidmeet/services/comment_service.dart';
+import 'package:vidmeet/services/like_service.dart';
+import 'package:vidmeet/services/follow_service.dart';
+import 'package:vidmeet/services/report_service.dart';
+import 'package:vidmeet/services/block_service.dart';
+import 'package:vidmeet/services/search_service.dart';
+import 'package:vidmeet/services/api_service.dart';
+// import 'package:vidmeet/services/chat_service.dart';
 
 class ApiRepository {
   static final ApiRepository _instance = ApiRepository._internal();

@@ -5,10 +5,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/screens/other_user_profile_screen.dart';
-import 'package:vidstream/utils/utils.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
+import 'package:vidmeet/screens/other_user_profile_screen.dart';
+import 'package:vidmeet/utils/utils.dart';
 
 import '../main.dart';
 import '../screens/chat_screen.dart';

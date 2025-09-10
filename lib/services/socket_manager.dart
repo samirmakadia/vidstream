@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:event_bus/event_bus.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:vidstream/storage/conversation_storage_drift.dart';
+import 'package:vidmeet/storage/conversation_storage_drift.dart';
 import '../models/api_models.dart';
 import '../storage/message_storage_drift.dart';
 import 'package:flutter/foundation.dart';

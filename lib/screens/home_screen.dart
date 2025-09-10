@@ -1,10 +1,10 @@
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
-import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/screens/search_screen.dart';
-import 'package:vidstream/utils/utils.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/screens/search_screen.dart';
+import 'package:vidmeet/utils/utils.dart';
 import 'dart:async';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';

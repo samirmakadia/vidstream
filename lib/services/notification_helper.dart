@@ -1,4 +1,4 @@
-import 'package:vidstream/services/notification_service.dart';
+import 'package:vidmeet/services/notification_service.dart';
 
 class NotificationHelper {
   static final NotificationService _notificationService = NotificationService();

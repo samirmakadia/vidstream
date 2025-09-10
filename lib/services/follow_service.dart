@@ -1,7 +1,7 @@
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/services/block_service.dart';
-import 'package:vidstream/services/notification_helper.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
+import 'package:vidmeet/services/block_service.dart';
+import 'package:vidmeet/services/notification_helper.dart';
 
 class FollowService {
   ApiRepository get _apiRepository => ApiRepository.instance;

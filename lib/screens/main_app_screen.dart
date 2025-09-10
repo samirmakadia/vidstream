@@ -4,11 +4,11 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vidstream/screens/home_screen.dart';
-import 'package:vidstream/screens/profile_screen.dart';
-import 'package:vidstream/screens/create_post_screen.dart';
-import 'package:vidstream/screens/meet_screen.dart';
-import 'package:vidstream/screens/chat_list_screen.dart';
+import 'package:vidmeet/screens/home_screen.dart';
+import 'package:vidmeet/screens/profile_screen.dart';
+import 'package:vidmeet/screens/create_post_screen.dart';
+import 'package:vidmeet/screens/meet_screen.dart';
+import 'package:vidmeet/screens/chat_list_screen.dart';
 
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';

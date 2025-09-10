@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vidstream/models/api_models.dart';
+import 'package:vidmeet/models/api_models.dart';
 import 'package:flutter/services.dart';
-import 'package:vidstream/repositories/api_repository.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
 import '../../../helper/navigation_helper.dart';
 import '../../../services/socket_manager.dart';
 import '../bottomsheet/comments_bottom_sheet.dart';

@@ -1,7 +1,7 @@
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/repositories/api_repository.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
 
 class MeetService {
   final ApiRepository _apiRepository = ApiRepository.instance;

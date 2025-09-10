@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vidstream/widgets/rate_us_dialog.dart';
-import 'package:vidstream/widgets/app_update_dialog.dart';
+import 'package:vidmeet/widgets/rate_us_dialog.dart';
+import 'package:vidmeet/widgets/app_update_dialog.dart';
 
 class DialogManagerService {
   static final DialogManagerService _instance = DialogManagerService._internal();

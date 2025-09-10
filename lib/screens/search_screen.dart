@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/services/search_service.dart';
-import 'package:vidstream/screens/video_player_screen.dart';
-import 'package:vidstream/screens/other_user_profile_screen.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/services/search_service.dart';
+import 'package:vidmeet/screens/video_player_screen.dart';
+import 'package:vidmeet/screens/other_user_profile_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../utils/utils.dart';

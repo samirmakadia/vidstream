@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vidstream/services/report_service.dart';
-import 'package:vidstream/models/api_models.dart';
+import 'package:vidmeet/services/report_service.dart';
+import 'package:vidmeet/models/api_models.dart';
 
 import '../manager/app_open_ad_manager.dart';
 import '../utils/graphics.dart';

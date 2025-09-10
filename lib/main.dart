@@ -6,15 +6,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vidstream/theme.dart';
-import 'package:vidstream/screens/auth_screen.dart';
-import 'package:vidstream/screens/main_app_screen.dart';
-import 'package:vidstream/screens/onboarding_screen.dart';
-import 'package:vidstream/services/notification_service.dart';
-import 'package:vidstream/services/dialog_manager_service.dart';
-import 'package:vidstream/services/service_locator.dart';
-import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/models/api_models.dart';
+import 'package:vidmeet/theme.dart';
+import 'package:vidmeet/screens/auth_screen.dart';
+import 'package:vidmeet/screens/main_app_screen.dart';
+import 'package:vidmeet/screens/onboarding_screen.dart';
+import 'package:vidmeet/services/notification_service.dart';
+import 'package:vidmeet/services/dialog_manager_service.dart';
+import 'package:vidmeet/services/service_locator.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
+import 'package:vidmeet/models/api_models.dart';
 import 'manager/app_open_ad_manager.dart';
 
 void main() async {

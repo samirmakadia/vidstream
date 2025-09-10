@@ -1,5 +1,5 @@
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/repositories/api_repository.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
 
 import '../models/response_model.dart';
 

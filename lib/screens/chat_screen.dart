@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:vidstream/services/auth_service.dart';
-import 'package:vidstream/models/api_models.dart';
+import 'package:vidmeet/services/auth_service.dart';
+import 'package:vidmeet/models/api_models.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
-import 'package:vidstream/storage/message_storage_drift.dart';
-import 'package:vidstream/utils/utils.dart';
+import 'package:vidmeet/storage/message_storage_drift.dart';
+import 'package:vidmeet/utils/utils.dart';
 import '../helper/navigation_helper.dart';
 import '../repositories/api_repository.dart';
 import '../services/chat_service.dart';

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:vidstream/services/meet_service.dart';
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/screens/chat_screen.dart';
+import 'package:vidmeet/services/meet_service.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/screens/chat_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';

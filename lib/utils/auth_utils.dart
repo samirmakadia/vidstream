@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:vidstream/repositories/api_repository.dart';
-import 'package:vidstream/models/api_models.dart';
+import 'package:vidmeet/repositories/api_repository.dart';
+import 'package:vidmeet/models/api_models.dart';
 
 class AuthUtils {
   /// Check if user is properly authenticated

@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/models/response_model.dart' as response_models;
-import 'package:vidstream/services/api_service.dart';
-import 'package:vidstream/services/notification_service.dart';
-import 'package:vidstream/utils/auth_utils.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/models/response_model.dart' as response_models;
+import 'package:vidmeet/services/api_service.dart';
+import 'package:vidmeet/services/notification_service.dart';
+import 'package:vidmeet/utils/auth_utils.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();

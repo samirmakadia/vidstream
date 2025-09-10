@@ -1,6 +1,6 @@
-import 'package:vidstream/models/api_models.dart';
-import 'package:vidstream/services/api_service.dart';
-import 'package:vidstream/services/auth_service.dart';
+import 'package:vidmeet/models/api_models.dart';
+import 'package:vidmeet/services/api_service.dart';
+import 'package:vidmeet/services/auth_service.dart';
 import 'dart:async';
 
 class LikeService {

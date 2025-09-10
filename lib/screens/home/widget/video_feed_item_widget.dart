@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:vidstream/screens/home/widget/video_player_widget.dart';
+import 'package:vidmeet/screens/home/widget/video_player_widget.dart';
 import '../../../models/api_models.dart';
 import '../../../repositories/api_repository.dart';
 import '../../../services/socket_manager.dart';
