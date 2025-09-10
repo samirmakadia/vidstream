@@ -252,22 +252,6 @@ Instagram: @VidMeetOfficial''',
     }
   }
 
-  Future<void> _resetOnboarding() async {
-    try {
-      AppSnackBar.showLoading(context, "Resetting onboarding...");
-      
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('onboarding_completed', false);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        Graphics.showTopDialog(context, "Success", "Onboarding reset! Restart the app to see onboarding.");
-      }
-    } catch (e) {
-        Graphics.showTopDialog(context, "Error", "Failed to reset onboarding: $e", type: ToastType.error);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(

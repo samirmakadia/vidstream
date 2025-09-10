@@ -10,6 +10,7 @@ import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
+import '../widgets/empty_section.dart';
 import 'home/bottomsheet/filter_bottom_sheet.dart';
 import 'home/widget/video_feed_item_widget.dart';
 
@@ -354,65 +355,17 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   Widget _buildEmptyState() {
+    final hasTags = _selectedTags.isNotEmpty;
+
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-             _selectedTags.isNotEmpty
-                ? Icons.search_off
-                : Icons.video_library_outlined,
-            size: 80,
-            color: Colors.white.withValues(alpha: 0.6),
-          ),
-          const SizedBox(height: 16),
-          Text(
-             _selectedTags.isNotEmpty
-                ? 'No videos found'
-                : 'No videos yet',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-             _selectedTags.isNotEmpty
-                ? 'Try different keywords or filters'
-                : 'Be the first to share a video!',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(height: 24),
-          if (_selectedTags.isNotEmpty)
-            ElevatedButton.icon(
-              onPressed: () {
-                _clearFilters();
-              },
-              icon: const Icon(Icons.clear),
-              label: Text('Clear Search',style: TextStyle(color: Colors.black),),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-              ),
-            )
-          else
-            ElevatedButton.icon(
-              onPressed: _refreshVideos,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Refresh',style: TextStyle(color: Colors.black)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-              ),
-            ),
-        ],
+      child: EmptySection(
+        icon: hasTags ? Icons.search_off : Icons.video_library_outlined,
+        title: hasTags ? 'No videos found' : 'No videos yet',
+        subtitle: hasTags
+            ? 'Try different keywords or filters'
+            : 'Be the first to share a video!',
+        onRefresh: hasTags ? _clearFilters : _refreshVideos,
+        refreshText: hasTags ? 'Clear Search' : 'Refresh',
       ),
     );
   }

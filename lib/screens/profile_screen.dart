@@ -10,6 +10,7 @@ import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/empty_section.dart';
 import '../widgets/image_preview_screen.dart';
 import '../widgets/professional_bottom_ad.dart';
 import '../widgets/video_grid_item_widget.dart';
@@ -682,54 +683,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _buildEmptySection() {
-    final emptyTitle = _selectedTabIndex == 0 ? 'No videos yet' : 'No liked videos';
-    final emptySubtitle = _selectedTabIndex == 0
-        ? 'Create your first video using the + button!'
-        : 'Like some videos to see them here!';
-    final emptyIcon = _selectedTabIndex == 0 ? Icons.video_library_outlined : Icons.favorite_outline;
     return SliverToBoxAdapter(
       child: SizedBox(
         height: 250,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(emptyIcon, size: 64, color: Colors.white.withOpacity(0.6)),
-            const SizedBox(height: 16),
-            Text(
-              emptyTitle,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(color: Colors.white.withOpacity(0.8)),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              emptySubtitle,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Colors.white.withOpacity(0.6)),
-              textAlign: TextAlign.center,
-            ),
-            if (_selectedTabIndex == 1) ...[
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _refreshLikedVideos,
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Refresh Liked Videos', style: TextStyle(color: Colors.black)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
+        child: _selectedTabIndex == 0
+            ? EmptySection(
+          icon: Icons.video_library_outlined,
+          title: 'No videos yet',
+          subtitle: 'Create your first video using the + button!',
+        )
+            : EmptySection(
+          icon: Icons.favorite_outline,
+          title: 'No liked videos',
+          subtitle: 'Like some videos to see them here!',
+          refreshText: 'Refresh Liked Videos',
+          onRefresh: _refreshLikedVideos, ),
       ),
     );
   }
-
 }

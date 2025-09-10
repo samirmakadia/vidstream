@@ -8,6 +8,7 @@ import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/empty_section.dart';
 import '../widgets/professional_bottom_ad.dart';
 
 class MeetScreen extends StatefulWidget {
@@ -308,23 +309,10 @@ class _MeetScreenState extends State<MeetScreen> {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
 
     if (_onlineUsers.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.people_outline,
-                size: 64,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
-            const SizedBox(height: 16),
-            Text('No users online',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
-            const SizedBox(height: 8),
-            Text('Check back later to see online users',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
-          ],
-        ),
+      return const EmptySection(
+        icon: Icons.people_outline,
+        title: 'No users online',
+        subtitle: 'Check back later to see online users',
       );
     }
 
