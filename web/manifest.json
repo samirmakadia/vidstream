@@ -1,6 +1,6 @@
 {
-    "name": "vidstream",
-    "short_name": "vidstream",
+    "name": "vidmeet",
+    "short_name": "vidmeet",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

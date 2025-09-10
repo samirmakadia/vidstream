@@ -102,7 +102,7 @@ class NotificationHelper {
   }) async {
     await _notificationService.sendNotificationToUser(
       userId: userId,
-      title: 'VidStream Update Available! 🚀',
+      title: 'VidMeet Update Available! 🚀',
       body: 'Version $version is now available with exciting new features!',
       data: {
         'type': 'app_update',
@@ -119,7 +119,7 @@ class NotificationHelper {
   }) async {
     await _notificationService.sendNotificationToUser(
       userId: userId,
-      title: 'Welcome to VidStream! 🎬',
+      title: 'Welcome to VidMeet! 🎬',
       body: 'Hi $userName! Start creating amazing videos and connect with the community.',
       data: {
         'type': 'welcome',
