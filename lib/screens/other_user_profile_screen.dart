@@ -13,6 +13,7 @@ import '../utils/graphics.dart';
 import '../utils/utils.dart';
 import '../widgets/banner_ad_with_loader.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/empty_section.dart';
 import '../widgets/image_preview_screen.dart';
 import '../widgets/video_grid_item_widget.dart';
 
@@ -822,30 +823,13 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
     return SliverToBoxAdapter(
       child: SizedBox(
         height: 250,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.video_library_outlined,
-              size: 64,
-              color: Colors.white.withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No videos yet',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.8),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${_user?.displayName ?? 'This user'} hasn\'t posted any videos yet.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.6),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+        child: Center(
+          child: EmptySection(
+            icon: Icons.video_library_outlined,
+            title: 'No videos yet',
+            subtitle:
+            '${_user?.displayName ?? 'This user'} hasn\'t posted any videos yet.',
+          ),
         ),
       ),
     );

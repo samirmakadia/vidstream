@@ -8,6 +8,7 @@ import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../storage/message_storage_drift.dart';
 import '../utils/utils.dart';
+import '../widgets/empty_section.dart';
 import '../widgets/professional_bottom_ad.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -136,32 +137,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No conversations yet',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Start chatting with users from the Meet tab',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return const EmptySection(
+      icon: Icons.chat_bubble_outline,
+      title: 'No conversations yet',
+      subtitle: 'Start chatting with users from the Meet tab',
     );
   }
 

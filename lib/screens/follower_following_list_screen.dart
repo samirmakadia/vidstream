@@ -8,6 +8,7 @@ import '../manager/app_open_ad_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/empty_section.dart';
 import '../widgets/professional_bottom_ad.dart';
 
 class FollowerFollowingListScreen extends StatefulWidget {
@@ -103,11 +104,17 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
         _isFirstLoadFollowers = false;
 
         if (snapshot.hasError) {
-          return _buildErrorWidget('Failed to load followers: ${snapshot.error}');
+          return EmptySection(
+            icon: Icons.people_outline,
+            title: 'Something went wrong',
+            subtitle: 'Failed to load followers: ${snapshot.error}',
+            refreshText: 'Retry',
+            onRefresh: () => setState(() {}),
+          );
         }
 
         if (followers.isEmpty) {
-          return _buildEmptyWidget(
+          return EmptySection(
             icon: Icons.people_outline,
             title: 'No followers yet',
             subtitle: 'When people follow this account, they\'ll show up here.',
@@ -161,11 +168,17 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
         _isFirstLoadFollowing = false;
 
         if (snapshot.hasError) {
-          return _buildErrorWidget('Failed to load following: ${snapshot.error}');
+          return EmptySection(
+            icon: Icons.people_outline,
+            title: 'Something went wrong',
+            subtitle: 'Failed to load followers: ${snapshot.error}',
+            refreshText: 'Retry',
+            onRefresh: () => setState(() {}),
+          );
         }
 
         if (following.isEmpty) {
-          return _buildEmptyWidget(
+          return EmptySection(
             icon: Icons.person_add_outlined,
             title: 'Not following anyone yet',
             subtitle: 'When this account follows people, they\'ll show up here.',
@@ -423,86 +436,4 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
     }
   }
 
-
-  Widget _buildEmptyWidget({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 80,
-              color: Colors.white.withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white.withValues(alpha: 0.8),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.6),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorWidget(String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 80,
-              color: Colors.red.withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Something went wrong',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white.withValues(alpha: 0.8),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.6),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => setState(() {}), // Trigger rebuild
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry',style: TextStyle(color: Colors.black)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -10,6 +10,7 @@ import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../utils/utils.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/empty_section.dart';
 import '../widgets/professional_bottom_ad.dart';
 import '../widgets/video_grid_item_widget.dart';
 
@@ -407,66 +408,29 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
 
   Widget _buildEmptyUsersState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            _hasSearched ? Icons.person_search : Icons.star,
-            size: 64,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _hasSearched
-                ? 'No users found for "$_currentQuery"'
-                : 'No popular users available',
-            style: Theme.of(context).textTheme.titleMedium,
-            textAlign: TextAlign.center,
-          ),
-          if (_hasSearched) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Try different keywords or check your spelling',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
+      child: EmptySection(
+        icon: _hasSearched ? Icons.person_search : Icons.star,
+        title: _hasSearched
+            ? 'No users found for "$_currentQuery"'
+            : 'No popular users available',
+        subtitle: _hasSearched
+            ? 'Try different keywords or check your spelling'
+            : '',
       ),
     );
   }
 
+
   Widget _buildEmptyVideosState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            _hasSearched ? Icons.search_off : Icons.trending_up,
-            size: 64,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _hasSearched
-                ? 'No videos found for "$_currentQuery"'
-                : 'No trending videos available',
-            style: Theme.of(context).textTheme.titleMedium,
-            textAlign: TextAlign.center,
-          ),
-          if (_hasSearched) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Try different keywords or check your spelling',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
+      child: EmptySection(
+        icon: _hasSearched ? Icons.search_off : Icons.trending_up,
+        title: _hasSearched
+            ? 'No videos found for "$_currentQuery"'
+            : 'No trending videos available',
+        subtitle: _hasSearched
+            ? 'Try different keywords or check your spelling'
+            : '',
       ),
     );
   }

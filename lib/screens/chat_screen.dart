@@ -16,6 +16,7 @@ import '../utils/app_toaster.dart';
 import '../utils/graphics.dart';
 import '../widgets/banner_ad_with_loader.dart';
 import '../widgets/custom_image_widget.dart';
+import '../widgets/empty_section.dart';
 import '../widgets/image_preview_screen.dart';
 import 'home/bottomsheet/report_dialog.dart';
 import 'other_user_profile_screen.dart';
@@ -456,30 +457,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Start the conversation',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Send your first message to ${_otherUser?.displayName ?? 'this user'}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+      child: EmptySection(
+        icon: Icons.chat_bubble_outline,
+        title: 'Start the conversation',
+        subtitle: 'Send your first message to ${_otherUser?.displayName ?? 'this user'}',
       ),
     );
   }
@@ -515,9 +496,6 @@ class _ChatScreenState extends State<ChatScreen> {
             if (!isMe && message.status != MessageStatus.read) {
               SocketManager().sendSeenEvent(message,_authService.currentUser?.uid ?? '');
             }
-            print("Message seen: ${message.content.text}, Status: ${message.status}, id : ${message.id}");
-            print("Message createdAt:  ${message.createdAt}");
-            print("Message mediaUrl:  ${message.content.mediaUrl}");
             return _buildMessageBubble(message, isMe);
           },
         );

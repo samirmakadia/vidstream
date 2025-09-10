@@ -8,6 +8,7 @@ import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
 import '../utils/graphics.dart';
 import '../utils/utils.dart';
+import '../widgets/empty_section.dart';
 import '../widgets/professional_bottom_ad.dart';
 
 class BlockedUsersScreen extends StatefulWidget {
@@ -201,30 +202,10 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.block,
-            size: 64,
-            color: Colors.white.withValues(alpha: 0.6),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No Blocked Users',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'You haven\'t blocked any users yet.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.7),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+      child: EmptySection(
+        icon: Icons.block,
+        title: 'No Blocked Users',
+        subtitle: 'You haven\'t blocked any users yet.',
       ),
     );
   }
