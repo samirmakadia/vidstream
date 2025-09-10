@@ -82,8 +82,6 @@ class AppLovinAdManager {
 
   static void handleScreenOpen(VoidCallback onNavigate) {
     _showAdEvery = SettingManager().fullscreenFrequency ?? 3;
-    print("Screen open count: ${SettingManager().fullscreenFrequency}");
-    print("Screen open count: $_showAdEvery");
     _screenOpenCount++;
     try {
       if (_screenOpenCount >= _showAdEvery && _isInterstitialAvailable) {

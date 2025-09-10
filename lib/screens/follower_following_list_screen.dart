@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vidmeet/manager/setting_manager.dart';
 import 'package:vidmeet/services/follow_service.dart';
 import 'package:vidmeet/models/api_models.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
@@ -121,13 +122,12 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           );
         }
 
-        const adInterval = 4;
         final List<Widget> items = [];
 
         for (int i = 0; i < followers.length; i++) {
           items.add(_buildUserListItem(followers[i]));
 
-          if ((i + 1) % adInterval == 0 && AppLovinAdManager.isMrecAdLoaded) {
+          if ((i + 1) % SettingManager().nativeFrequency == 0 && AppLovinAdManager.isMrecAdLoaded) {
             items.add(Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: AppLovinAdManager.mrecAd(),
@@ -135,9 +135,9 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           }
         }
 
-        final remainder = followers.length % adInterval;
+        final remainder = followers.length % SettingManager().nativeFrequency;
         if (AppLovinAdManager.isMrecAdLoaded) {
-          if (followers.length < adInterval || remainder > 1) {
+          if (followers.length < SettingManager().nativeFrequency || remainder > 1) {
             items.add(Padding(
               padding: const EdgeInsets.only(top: 8),
               child: AppLovinAdManager.mrecAd(),
@@ -185,7 +185,7 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           );
         }
 
-        const adInterval = 4;
+        var adInterval = SettingManager().nativeFrequency;
         final List<Widget> items = [];
 
         for (int i = 0; i < following.length; i++) {

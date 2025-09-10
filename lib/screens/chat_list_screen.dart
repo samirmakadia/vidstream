@@ -6,6 +6,7 @@ import 'package:vidmeet/services/chat_service.dart';
 import 'package:vidmeet/storage/conversation_storage_drift.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
+import '../manager/setting_manager.dart';
 import '../storage/message_storage_drift.dart';
 import '../utils/utils.dart';
 import '../widgets/empty_section.dart';
@@ -85,7 +86,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Widget _buildChatList() {
     final currentUserId = _authService.currentUser?.id ?? '';
-    final adInterval = 4;
+    int adInterval = SettingManager().nativeFrequency;
 
     return StreamBuilder<List<Conversation>>(
       stream: db.watchAllConversations(currentUserId),

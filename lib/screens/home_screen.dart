@@ -8,6 +8,7 @@ import 'package:vidmeet/utils/utils.dart';
 import 'dart:async';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
+import '../manager/setting_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
 import '../widgets/empty_section.dart';
@@ -283,7 +284,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   Widget _buildFeedView() {
-    const int videosPerAd = 4;
+    int videosPerAd = SettingManager().nativeFrequency;
     final showAds = AppLovinAdManager.isMrecAdLoaded;
     final loadedVideos = _videos;
 

@@ -13,8 +13,8 @@ class SettingManager {
   String get fullscreenKey => _fullscreenKey;
   String get nativeKey => _nativeKey;
 
-  int? fullscreenFrequency;
-  int? nativeFrequency;
+  int fullscreenFrequency = 3;
+  int nativeFrequency = 5;
 
   Future<void> setFullscreenAdFrequency(int frequency) async {
     fullscreenFrequency = frequency;
@@ -29,17 +29,17 @@ class SettingManager {
   }
 
   Future<int> getFullscreenAdFrequencyOrDefault({int defaultValue = 4}) async {
-    if (fullscreenFrequency != null) return fullscreenFrequency!;
+    if (fullscreenFrequency != 0) return fullscreenFrequency;
     final prefs = await SharedPreferences.getInstance();
     fullscreenFrequency = prefs.getInt(_fullscreenKey) ?? defaultValue;
-    return fullscreenFrequency!;
+    return fullscreenFrequency;
   }
 
   Future<int> getNativeAdFrequencyOrDefault({int defaultValue = 5}) async {
-    if (nativeFrequency != null) return nativeFrequency!;
+    if (nativeFrequency != 0) return nativeFrequency;
     final prefs = await SharedPreferences.getInstance();
     nativeFrequency = prefs.getInt(_nativeKey) ?? defaultValue;
-    return nativeFrequency!;
+    return nativeFrequency;
   }
 
   Future<void> fetchAndStoreAdFrequencies() async {

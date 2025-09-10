@@ -3,6 +3,7 @@ import 'package:vidmeet/services/report_service.dart';
 import 'package:vidmeet/models/api_models.dart';
 
 import '../manager/app_open_ad_manager.dart';
+import '../manager/setting_manager.dart';
 import '../utils/graphics.dart';
 import '../utils/utils.dart';
 import '../widgets/empty_section.dart';
@@ -25,7 +26,6 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   List<Report> _reports = [];
   bool _isLoading = true;
   final Set<String> _deletingReports = {};
-  final int _adInterval = 2;
 
   @override
   void initState() {
@@ -362,15 +362,16 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   }
 
   Widget _buildReportList() {
+    int adInterval = SettingManager().nativeFrequency;
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: _fetchReports,
         child: ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: Utils.getTotalItems(_reports.length, _adInterval),
+          itemCount: Utils.getTotalItems(_reports.length, adInterval),
           itemBuilder: (context, index) {
-            if (Utils.isAdIndex(index, _reports.length, _adInterval,
-                Utils.getTotalItems(_reports.length, _adInterval))) {
+            if (Utils.isAdIndex(index, _reports.length, adInterval,
+                Utils.getTotalItems(_reports.length, adInterval))) {
               if (AppLovinAdManager.isMrecAdLoaded) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
@@ -381,7 +382,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
               }
             }
 
-            final reportIndex = Utils.getUserIndex(index, _reports.length, _adInterval);
+            final reportIndex = Utils.getUserIndex(index, _reports.length, adInterval);
             final report = _reports[reportIndex];
 
             return _buildReportItem(report);

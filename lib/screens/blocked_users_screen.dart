@@ -6,6 +6,7 @@ import 'package:vidmeet/screens/other_user_profile_screen.dart';
 
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
+import '../manager/setting_manager.dart';
 import '../utils/graphics.dart';
 import '../utils/utils.dart';
 import '../widgets/empty_section.dart';
@@ -22,7 +23,6 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   final BlockService _blockService = BlockService();
   List<ApiUser> _blockedUsers = [];
   bool _isLoading = true;
-  final int _adInterval = 4;
 
   @override
   void initState() {
@@ -155,6 +155,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    int adInterval = SettingManager().nativeFrequency;
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -173,11 +174,11 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
             onRefresh: _loadBlockedUsers,
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: Utils.getTotalItems(_blockedUsers.length, _adInterval),
+              itemCount: Utils.getTotalItems(_blockedUsers.length, adInterval),
               itemBuilder: (context, index) {
                 // Insert ad
-                if (Utils.isAdIndex(index, _blockedUsers.length, _adInterval,
-                    Utils.getTotalItems(_blockedUsers.length, _adInterval))) {
+                if (Utils.isAdIndex(index, _blockedUsers.length, adInterval,
+                    Utils.getTotalItems(_blockedUsers.length, adInterval))) {
                   if (AppLovinAdManager.isMrecAdLoaded) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -188,7 +189,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   }
                 }
 
-                final userIndex = Utils.getUserIndex(index, _blockedUsers.length, _adInterval);
+                final userIndex = Utils.getUserIndex(index, _blockedUsers.length, adInterval);
                 final user = _blockedUsers[userIndex];
                 return _buildBlockedUserCard(user);
               },

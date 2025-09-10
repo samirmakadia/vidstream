@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vidmeet/models/api_models.dart';
 import '../manager/app_open_ad_manager.dart';
+import '../manager/setting_manager.dart';
 import '../utils/utils.dart';
 import 'home/widget/video_feed_item_widget.dart';
 
@@ -102,7 +103,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
   }
 
   Widget _buildVideo() {
-    const int videosPerAd = 4;
+    int videosPerAd = SettingManager().nativeFrequency;
     final loadedVideos = _videos;
     final showAds = AppLovinAdManager.isMrecAdLoaded;
 

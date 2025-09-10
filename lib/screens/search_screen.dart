@@ -349,7 +349,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       return _buildEmptyUsersState();
     }
 
-    final adInterval = 4;
+    int adInterval = SettingManager().nativeFrequency;
     final totalItems = Utils.getTotalItems(_users.length, adInterval);
 
     return Column(
