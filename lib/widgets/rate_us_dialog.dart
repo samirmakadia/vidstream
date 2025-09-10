@@ -79,8 +79,8 @@ class _RateUsDialogState extends State<RateUsDialog> with TickerProviderStateMix
 
   Future<void> _openAppStore() async {
     // Replace with your actual app store URLs
-    const androidUrl = 'https://play.google.com/store/apps/details?id=com.vidstream.app';
-    const iosUrl = 'https://apps.apple.com/app/vidstream/id123456789';
+    const androidUrl = 'https://play.google.com/store/apps/details?id=com.vidmeet.app';
+    const iosUrl = 'https://apps.apple.com/app/vidmeet/id123456789';
     
     try {
       final Uri url;

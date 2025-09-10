@@ -11,7 +11,7 @@ class ChatStorage {
   ChatStorage._internal();
 
   Database? _database;
-  static const String _dbName = 'vidstream_chat.db';
+  static const String _dbName = 'vidmeet_chat.db';
   static const int _dbVersion = 1;
 
   Future<Database> get database async {
