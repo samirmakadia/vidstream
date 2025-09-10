@@ -123,7 +123,7 @@ class ErrorHandler {
         message = e.message;
     }
 
-    if ([500, 502, 503, 504, 403].contains(e.statusCode)) {
+    if ([500, 502, 503, 504, 403, 429].contains(e.statusCode)) {
       _showErrorMessageOnce(message);
     } else {
       _showErrorMessage(message);

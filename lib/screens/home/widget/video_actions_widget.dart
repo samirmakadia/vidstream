@@ -64,7 +64,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
   }
 
   void _shareVideo(BuildContext context) {
-    Clipboard.setData(ClipboardData(text: 'Check out this video on VidStream!'));
+    Clipboard.setData(ClipboardData(text: 'Check out this video on VidMeet!'));
     Graphics.showTopDialog(
       context,
       "Success!",

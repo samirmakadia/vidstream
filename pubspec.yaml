@@ -1,5 +1,5 @@
-name: vidstream
-description: "VidStream - A modern video social media app"
+name: vidmeet
+description: "VidMeet - A modern video social media app"
 publish_to: "none"
 
 version: 1.0.0+1

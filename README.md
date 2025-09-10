@@ -1,4 +1,4 @@
-# vidstream
+# vidmeet
 
 A new Flutter project.
 

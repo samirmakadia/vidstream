@@ -1,4 +1,4 @@
-// API Data Models for VidStream App (adapted for REST API)
+// API Data Models for VidMeet App (adapted for REST API)
 
 // User Model - adapted for API
 import 'package:flutter/cupertino.dart';
