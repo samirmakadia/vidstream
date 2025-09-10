@@ -48,16 +48,16 @@ class SettingManager {
 
       final fullscreenSetting = settings.firstWhere(
             (s) => s.key == _fullscreenKey,
-        orElse: () => AppSetting(id: '', key: _fullscreenKey, value: '4'),
+        orElse: () => AppSetting(id: '', key: _fullscreenKey, value: '3'),
       );
 
       final nativeSetting = settings.firstWhere(
             (s) => s.key == _nativeKey,
-        orElse: () => AppSetting(id: '', key: _nativeKey, value: '5'),
+        orElse: () => AppSetting(id: '', key: _nativeKey, value: '3'),
       );
 
-      await setFullscreenAdFrequency(int.tryParse(fullscreenSetting.value) ?? 4);
-      await setNativeAdFrequency(int.tryParse(nativeSetting.value) ?? 5);
+      await setFullscreenAdFrequency(int.tryParse(fullscreenSetting.value) ?? 3);
+      await setNativeAdFrequency(int.tryParse(nativeSetting.value) ?? 3);
 
       print('Ad frequencies stored successfully!');
     } catch (e) {

@@ -5,6 +5,7 @@ import 'package:vidmeet/models/api_models.dart';
 import 'package:vidmeet/screens/chat_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
+import '../manager/setting_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';
@@ -317,7 +318,7 @@ class _MeetScreenState extends State<MeetScreen> {
     }
 
     const int crossAxisCount = 2;
-    const int rowsBeforeAd = 2;
+    int rowsBeforeAd = SettingManager().nativeFrequency;
     final int usersPerChunk = crossAxisCount * rowsBeforeAd;
 
     final List<Widget> children = [];

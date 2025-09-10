@@ -36,6 +36,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
   @override
   void initState() {
     super.initState();
+    SettingManager().fetchAndStoreAdFrequencies();
     _requestPermissions();
     _updateUserLocation();
     NotificationService().initialize();

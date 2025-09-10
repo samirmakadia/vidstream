@@ -8,6 +8,7 @@ import 'package:vidmeet/screens/follower_following_list_screen.dart';
 import 'package:vidmeet/screens/video_player_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
+import '../manager/setting_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
 import '../utils/utils.dart';
@@ -769,7 +770,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
     }
 
     const int videosPerRow = 3;
-    const int rowsBeforeAd = 2;
+    int rowsBeforeAd = SettingManager().nativeFrequency;
     final int videosPerChunk = videosPerRow * rowsBeforeAd;
 
     final List<Widget> children = [];

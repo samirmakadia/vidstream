@@ -39,7 +39,6 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    print('Search screen initialized ${SettingManager().fullscreenFrequency}');
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (_isSearching) {
@@ -270,7 +269,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     if (_videos.isEmpty) return _buildEmptyVideosState();
 
     const int videosPerRow = 3;
-    const int rowsBeforeAd = 3;
+    int rowsBeforeAd = SettingManager().nativeFrequency;
     final int videosPerChunk = videosPerRow * rowsBeforeAd;
 
     final List<Widget> children = [];

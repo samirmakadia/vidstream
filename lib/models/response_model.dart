@@ -17,15 +17,22 @@ class ApiResponse<T> {
   });
 
   factory ApiResponse.fromJson(
-    Map<String, dynamic> json,
-    T Function(Object? json)? fromJsonT,
-  ) {
+      Map<String, dynamic> json,
+      T Function(dynamic json)? fromJsonT,
+      ) {
+    final rawData = json['data'];
+
+    T? parsedData;
+    if (fromJsonT != null) {
+      parsedData = fromJsonT(rawData); // just pass it as-is
+    } else {
+      parsedData = rawData as T?;
+    }
+
     return ApiResponse<T>(
       success: json['success'] ?? false,
       message: json['message'] ?? '',
-      data: json['data'] != null && fromJsonT != null 
-        ? fromJsonT(json['data']) 
-        : json['data'],
+      data: parsedData,
       meta: json['meta'],
       statusCode: json['statusCode'],
     );

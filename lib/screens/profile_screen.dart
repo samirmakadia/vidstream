@@ -8,6 +8,7 @@ import 'package:vidmeet/screens/video_player_screen.dart';
 import 'package:vidmeet/services/socket_manager.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/app_open_ad_manager.dart';
+import '../manager/setting_manager.dart';
 import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/empty_section.dart';
@@ -611,7 +612,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
 
     const int videosPerRow = 3;
-    const int rowsBeforeAd = 2;
+    int rowsBeforeAd = SettingManager().nativeFrequency;
     final int videosPerChunk = videosPerRow * rowsBeforeAd;
 
     final List<Widget> children = [];
