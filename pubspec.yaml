@@ -46,7 +46,6 @@ dependencies:
   applovin_max: ^4.5.2
   flutter_svg: ^2.2.0
 
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -54,6 +53,7 @@ dev_dependencies:
   drift_dev: ^2.18.0
   build_runner: ^2.4.9
   flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.4
 
 flutter:
   uses-material-design: true
@@ -66,3 +66,19 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icon/vidmeet_icon.png"
   min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#D1F244"
+  color_dark: "#D1F244"
+  image: "assets/icon/vidmeet_icon.png"
+  android: true
+  ios: true
+  android_gravity: center
+  ios_content_mode: center
+
+  android_12:
+    image: "assets/icon/vidmeet_icon.png"
+    icon_background_color: "#D1F244"
+    image_dark: "assets/icon/vidmeet_icon.png"
+    icon_background_color_dark: "#D1F244"
+    color: "#D1F244"
