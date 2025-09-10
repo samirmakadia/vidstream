@@ -137,6 +137,26 @@ class NearbyUsersResponse {
   }
 }
 
+class AppSetting {
+  final String id;
+  final String key;
+  final String value;
+
+  AppSetting({
+    required this.id,
+    required this.key,
+    required this.value,
+  });
+
+  factory AppSetting.fromJson(Map<String, dynamic> json) {
+    return AppSetting(
+      id: json['_id'] as String,
+      key: json['key'] as String,
+      value: json['value'] as String,
+    );
+  }
+}
+
 class Filters {
   final int? maxDistance;
   final String? genderFilter;

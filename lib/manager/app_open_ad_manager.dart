@@ -1,6 +1,7 @@
 import 'package:applovin_max/applovin_max.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vidmeet/manager/setting_manager.dart';
 import '../helper/ad_helper.dart';
 import '../widgets/fancy_swipe_arrow.dart';
 
@@ -21,7 +22,7 @@ class AppLovinAdManager {
   static bool isBannerLoaded = false;
 
   static int _screenOpenCount = 0;
-  static const int _showAdEvery = 3;
+  static int _showAdEvery = 3;
   static bool isNativeAdLoaded = false;
 
   static bool get isAppOpenAvailable => _isAppOpenAvailable;
@@ -80,8 +81,10 @@ class AppLovinAdManager {
   // -------------------- Screen Open Handler --------------------
 
   static void handleScreenOpen(VoidCallback onNavigate) {
+    _showAdEvery = SettingManager().fullscreenFrequency ?? 3;
+    print("Screen open count: ${SettingManager().fullscreenFrequency}");
+    print("Screen open count: $_showAdEvery");
     _screenOpenCount++;
-
     try {
       if (_screenOpenCount >= _showAdEvery && _isInterstitialAvailable) {
         _enterFullscreen();

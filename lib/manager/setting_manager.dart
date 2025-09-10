@@ -1,30 +1,67 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/response_model.dart';
+import '../services/api_service.dart';
 
 class SettingManager {
   static final SettingManager _instance = SettingManager._internal();
   factory SettingManager() => _instance;
-
   SettingManager._internal();
 
-  static const String _frequencyKey = "ad_frequency";
+  static const String _fullscreenKey = "fullscreen_ads_frequency";
+  static const String _nativeKey = "native_ads_frequency";
 
-  Future<void> setAdFrequency(int frequency) async {
+  String get fullscreenKey => _fullscreenKey;
+  String get nativeKey => _nativeKey;
+
+  int? fullscreenFrequency;
+  int? nativeFrequency;
+
+  Future<void> setFullscreenAdFrequency(int frequency) async {
+    fullscreenFrequency = frequency;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_frequencyKey, frequency);
+    await prefs.setInt(_fullscreenKey, frequency);
   }
 
-  Future<int?> getAdFrequency() async {
+  Future<void> setNativeAdFrequency(int frequency) async {
+    nativeFrequency = frequency;
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_frequencyKey);
+    await prefs.setInt(_nativeKey, frequency);
   }
 
-  Future<int> getAdFrequencyOrDefault({int defaultValue = 4}) async {
+  Future<int> getFullscreenAdFrequencyOrDefault({int defaultValue = 4}) async {
+    if (fullscreenFrequency != null) return fullscreenFrequency!;
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_frequencyKey) ?? defaultValue;
+    fullscreenFrequency = prefs.getInt(_fullscreenKey) ?? defaultValue;
+    return fullscreenFrequency!;
   }
 
-  Future<void> clearAdFrequency() async {
+  Future<int> getNativeAdFrequencyOrDefault({int defaultValue = 5}) async {
+    if (nativeFrequency != null) return nativeFrequency!;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_frequencyKey);
+    nativeFrequency = prefs.getInt(_nativeKey) ?? defaultValue;
+    return nativeFrequency!;
+  }
+
+  Future<void> fetchAndStoreAdFrequencies() async {
+    try {
+      final List<AppSetting> settings = await ApiService().getAppSettings();
+
+      final fullscreenSetting = settings.firstWhere(
+            (s) => s.key == _fullscreenKey,
+        orElse: () => AppSetting(id: '', key: _fullscreenKey, value: '4'),
+      );
+
+      final nativeSetting = settings.firstWhere(
+            (s) => s.key == _nativeKey,
+        orElse: () => AppSetting(id: '', key: _nativeKey, value: '5'),
+      );
+
+      await setFullscreenAdFrequency(int.tryParse(fullscreenSetting.value) ?? 4);
+      await setNativeAdFrequency(int.tryParse(nativeSetting.value) ?? 5);
+
+      print('Ad frequencies stored successfully!');
+    } catch (e) {
+      print('Failed to fetch/store ad frequencies: $e');
+    }
   }
 }

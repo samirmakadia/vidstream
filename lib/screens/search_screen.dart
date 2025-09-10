@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:vidmeet/manager/setting_manager.dart';
 import 'package:vidmeet/models/api_models.dart';
 import 'package:vidmeet/services/search_service.dart';
 import 'package:vidmeet/screens/video_player_screen.dart';
@@ -38,6 +39,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    print('Search screen initialized ${SettingManager().fullscreenFrequency}');
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (_isSearching) {

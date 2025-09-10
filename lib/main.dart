@@ -16,6 +16,7 @@ import 'package:vidmeet/services/service_locator.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
 import 'package:vidmeet/models/api_models.dart';
 import 'manager/app_open_ad_manager.dart';
+import 'manager/setting_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +45,7 @@ Future<void> _initializeServices() async {
     await DialogManagerService().initialize();
     // await ChatService().initialize();
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    SettingManager().fetchAndStoreAdFrequencies();
     print('✅ All services initialized successfully');
   } catch (e) {
     print('❌ Service initialization error: $e');

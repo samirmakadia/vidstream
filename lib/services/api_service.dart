@@ -148,6 +148,26 @@ class ApiService {
     });
   }
 
+  Future<List<response_models.AppSetting>> getAppSettings() async {
+    final result = await ErrorHandler.safeApiCall<List<response_models.AppSetting>>(() async {
+      final response = await _httpClient.get<List<response_models.AppSetting>>(
+        '/common/setting/all',
+        fromJson: (json) {
+          final data = (json['data'] as List<dynamic>?) ?? [];
+          return data
+              .map((e) => response_models.AppSetting.fromJson(e as Map<String, dynamic>))
+              .toList();
+        },
+      );
+
+      return response.data ?? <response_models.AppSetting>[];
+    });
+
+    return result ?? <response_models.AppSetting>[];
+  }
+
+
+
   // User endpoints
   Future<ApiUser?> getCurrentUser() async {
     return ErrorHandler.safeApiCall(() async {
