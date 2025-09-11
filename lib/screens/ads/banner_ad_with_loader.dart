@@ -31,17 +31,14 @@ class _BannerAdWithLoaderState extends State<BannerAdWithLoader> {
     _loadAppLovin();
   }
 
-  /// 🔹 Load AppLovin Banner
   void _loadAppLovin() {
     setState(() {
       _isAppLovinLoaded = false;
       _isAppLovinFailed = false;
     });
-    // AppLovin banner is handled by MaxAdView directly in build
-    // We'll just rely on callbacks to update states
+
   }
 
-  /// 🔹 Load AdMob Banner
   void _loadAdMob() {
     debugPrint("🔄 Loading AdMob Banner...");
     _adMobBanner = BannerAd(
@@ -74,7 +71,6 @@ class _BannerAdWithLoaderState extends State<BannerAdWithLoader> {
 
   @override
   Widget build(BuildContext context) {
-    // 🔄 Show AppLovin first
     if (!_isAppLovinFailed) {
       return Container(
         width: double.infinity,
@@ -118,7 +114,6 @@ class _BannerAdWithLoaderState extends State<BannerAdWithLoader> {
       );
     }
 
-    // 🔄 If AppLovin failed, show AdMob
     if (_isAppLovinFailed && !_isAdMobFailed && _isAdMobLoaded) {
       return Container(
         width: MediaQuery.of(context).size.width,
@@ -128,7 +123,6 @@ class _BannerAdWithLoaderState extends State<BannerAdWithLoader> {
       );
     }
 
-    // ⏳ If AdMob is loading
     if (_isAppLovinFailed && !_isAdMobFailed && !_isAdMobLoaded) {
       return SizedBox(
         height: widget.height,
@@ -138,13 +132,11 @@ class _BannerAdWithLoaderState extends State<BannerAdWithLoader> {
       );
     }
 
-    // ⚠️ Both failed → Skip
     if (_isAdMobFailed) {
       return const SizedBox.shrink();
     }
 
-    // Default placeholder while waiting
-    return SizedBox(
+     return SizedBox(
       height: widget.height,
       child: const Center(
         child: CircularProgressIndicator(strokeWidth: 1.5),

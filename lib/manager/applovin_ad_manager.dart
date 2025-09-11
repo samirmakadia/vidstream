@@ -1,15 +1,14 @@
 import 'package:applovin_max/applovin_max.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:vidmeet/manager/setting_manager.dart';
 import '../helper/ad_helper.dart';
 import '../screens/ads/common_mrec_ad.dart';
-import '../widgets/fancy_swipe_arrow.dart';
 
 class AppLovinAdManager {
   static final String _appOpenAdUnitId = AdHelper.appOpen;
   static final String _interstitialAdUnitId = AdHelper.interstitial;
-  static final String _nativeAdUnitId = AdHelper.native;
 
   static bool _isShowingAppOpen = false;
   static bool _isAppOpenAvailable = false;
@@ -25,9 +24,11 @@ class AppLovinAdManager {
 
   static bool get isAppOpenAvailable => _isAppOpenAvailable;
   static VoidCallback? _appOpenOnDismissed;
+  static InterstitialAd? _admobInterstitial;
+  static bool _admobLoaded = false;
 
   static Future<void> initialize() async {
-    await AppLovinMAX.initialize("1RJL6Ot743MAvgfG8BeGvetoyp6DS_TTQsqXFgeJk_Tdf8upJX3DAx_7l6KB5tfWkT2z8gHtgmULuN8CvCP48P",);
+    await AppLovinMAX.initialize(AdHelper.sdkId);
 
     _setupAppOpenListener();
     _setupInterstitialListener();
@@ -36,6 +37,7 @@ class AppLovinAdManager {
     loadInterstitialAd();
     loadMrecAd();
     loadBanner();
+    loadAdmobInterstitial();
   }
 
   // -------------------- Interstitial Listener --------------------
@@ -74,38 +76,82 @@ class AppLovinAdManager {
     );
   }
 
+  static void loadAdmobInterstitial() {
+    InterstitialAd.load(
+      adUnitId: AdHelper.interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _admobInterstitial = ad;
+          _admobLoaded = true;
+          debugPrint("✅ AdMob Interstitial loaded");
+          _admobInterstitial?.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _admobLoaded = false;
+              loadAdmobInterstitial(); // Preload next
+            },
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              debugPrint("❌ AdMob failed to show: $error");
+              ad.dispose();
+              _admobLoaded = false;
+              loadAdmobInterstitial();
+            },
+          );
+        },
+        onAdFailedToLoad: (error) {
+          debugPrint("❌ AdMob interstitial failed: $error");
+          _admobLoaded = false;
+          Future.delayed(const Duration(seconds: 5), loadAdmobInterstitial);
+        },
+      ),
+    );
+  }
+
   // -------------------- Screen Open Handler --------------------
 
   static void handleScreenOpen(VoidCallback onNavigate) {
     _showAdEvery = SettingManager().fullscreenFrequency ?? 3;
     _screenOpenCount++;
-    try {
-      if (_screenOpenCount >= _showAdEvery && _isInterstitialAvailable) {
+
+    if (_screenOpenCount >= _showAdEvery) {
+      if (_isInterstitialAvailable) {
         _enterFullscreen();
         AppLovinMAX.showInterstitial(_interstitialAdUnitId);
-
         _isInterstitialAvailable = false;
         _screenOpenCount = 0;
-
         Future.delayed(const Duration(milliseconds: 300), () {
           _exitFullscreen();
           onNavigate();
         });
-        return;
+      } else if (_admobLoaded && _admobInterstitial != null) {
+        _admobInterstitial?.fullScreenContentCallback = FullScreenContentCallback(
+          onAdDismissedFullScreenContent: (ad) {
+            ad.dispose();
+            loadAdmobInterstitial();
+            onNavigate();
+          },
+          onAdFailedToShowFullScreenContent: (ad, error) {
+            debugPrint("❌ AdMob failed: $error");
+            ad.dispose();
+            loadAdmobInterstitial();
+            onNavigate();
+          },
+        );
+        _admobInterstitial?.show();
+        _admobInterstitial = null;
+        _admobLoaded = false;
+        _screenOpenCount = 0;
+      } else {
+        debugPrint("⚠️ No interstitial available → Skipping ad");
+        loadAdmobInterstitial();
+        loadInterstitialAd();
+        _screenOpenCount = 0;
+        onNavigate();
       }
-    } catch (e, stackTrace) {
-      debugPrint("❌ Error showing interstitial: $e\n$stackTrace");
+    } else {
+      onNavigate();
     }
-
-    onNavigate();
-  }
-
-  static void _enterFullscreen() {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  }
-
-  static void _exitFullscreen() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
   // -------------------- Other existing code remains untouched --------------------
@@ -164,14 +210,6 @@ class AppLovinAdManager {
     AppLovinMAX.showAppOpenAd(_appOpenAdUnitId);
   }
 
-  static void showInterstitialAd({VoidCallback? onDismissed}) {
-    if (!_isInterstitialAvailable) {
-      onDismissed?.call();
-      return;
-    }
-    AppLovinMAX.showInterstitial(_interstitialAdUnitId);
-  }
-
   static Widget mrecAd({double height = 250, double width = 300}) {
     return CommonMrecAd(
       onAdLoadChanged: (isLoaded) {
@@ -196,166 +234,13 @@ class AppLovinAdManager {
     );
   }
 
-
-  static Widget nativeAdLarge({double height = 300}) {
-    final MaxNativeAdViewController controller = MaxNativeAdViewController();
-    double mediaViewAspectRatio = 1.91; // default fallback
-
-    return SizedBox(
-      height: height,
-      child: MaxNativeAdView(
-        adUnitId: _nativeAdUnitId,
-        controller: controller,
-        listener: NativeAdListener(
-          onAdLoadedCallback: (ad) {
-            debugPrint("✅ Native large loaded from ${ad.networkName}");
-            isNativeAdLoaded = true;
-            if (ad.nativeAd?.mediaContentAspectRatio != null) {
-              mediaViewAspectRatio = ad.nativeAd!.mediaContentAspectRatio!;
-            }
-          },
-          onAdLoadFailedCallback: (adUnitId, error) {
-            debugPrint("❌ Native large failed: ${error.message}");
-            isNativeAdLoaded = false;
-          },
-          onAdClickedCallback: (ad) => debugPrint("👆 Native clicked: ${ad.adUnitId}"),
-          onAdRevenuePaidCallback: (ad) => debugPrint("💰 Native revenue: ${ad.revenue}"),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xffefefef),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const MaxNativeAdIconView(width: 48, height: 48),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        MaxNativeAdTitleView(
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        MaxNativeAdAdvertiserView(
-                          maxLines: 1,
-                          style: TextStyle(fontSize: 10),
-                        ),
-                        MaxNativeAdStarRatingView(size: 10),
-                      ],
-                    ),
-                  ),
-                  const MaxNativeAdOptionsView(width: 20, height: 20),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Body text
-              const MaxNativeAdBodyView(
-                maxLines: 3,
-                style: TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 8),
-              // Media View
-              Expanded(
-                child: AspectRatio(
-                  aspectRatio: mediaViewAspectRatio,
-                  child: const MaxNativeAdMediaView(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // CTA Button
-              SizedBox(
-                width: double.infinity,
-                child: const MaxNativeAdCallToActionView(
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStatePropertyAll(Color(0xff2d545e)),
-                    textStyle: MaterialStatePropertyAll(
-                      TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  static void _enterFullscreen() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
-  static Widget nativeAdSmall({double height = 110, double width = double.infinity}) {
-    final MaxNativeAdViewController controller = MaxNativeAdViewController();
-
-    return SizedBox(
-      height: height,
-      width: width,
-      child: MaxNativeAdView(
-        adUnitId: _nativeAdUnitId,
-        controller: controller,
-        listener: NativeAdListener(
-          onAdLoadedCallback: (ad) {
-            debugPrint("✅ Native small loaded from ${ad.networkName}");
-          },
-          onAdLoadFailedCallback: (adUnitId, error) {
-            debugPrint("❌ Native small load failed: ${error.message}");
-          },
-          onAdClickedCallback: (ad) => debugPrint("👆 Native small clicked"),
-          onAdRevenuePaidCallback: (ad) => debugPrint("💰 Native revenue: ${ad.revenue}"),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF333333)),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const MaxNativeAdIconView(width: 40, height: 40),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    MaxNativeAdTitleView(
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: Colors.white,
-                      ),
-                    ),
-                    MaxNativeAdBodyView(
-                      maxLines: 1,
-                      style: TextStyle(fontSize: 12, color: Colors.white70),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              MaxNativeAdCallToActionView(
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(width: 6),
-              const MaxNativeAdOptionsView(width: 16, height: 16),
-            ],
-          ),
-        ),
-      ),
-    );
+  static void _exitFullscreen() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
+
 
 }

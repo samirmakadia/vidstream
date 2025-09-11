@@ -2,6 +2,8 @@ import 'dart:io';
 
 class AdHelper {
 
+  static const String sdkId = '1RJL6Ot743MAvgfG8BeGvetoyp6DS_TTQsqXFgeJk_Tdf8upJX3DAx_7l6KB5tfWkT2z8gHtgmULuN8CvCP48P';
+
   // -------------------- BANNER --------------------
   static String get banner {
     if (Platform.isAndroid) return "e68afcdc201fa981";
