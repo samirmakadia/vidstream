@@ -50,8 +50,27 @@
 			<string>fetch</string>
 			<string>remote-notification</string>
 		</array>
+		<key>GADApplicationIdentifier</key>
+        	<string>ca-app-pub-3940256099942544~1458002511</string>
+        	<key>NSUserTrackingUsageDescription</key>
+        	<string>This identifier will be used to deliver personalized ads and improve your experience.</string>
 		<key>FirebaseAppDelegateProxyEnabled</key>
 		<true/>
+		<key>CFBundleURLTypes</key>
+            <array>
+              <dict>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                  <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+                </array>
+              </dict>
+              <dict>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                  <string>com.googleusercontent.apps.628359371114-oip3f0cmf6gcnt59g1e8l2os0u5j7e4r</string>
+                </array>
+              </dict>
+            </array>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app needs location permission to show nearby users in Meet.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
