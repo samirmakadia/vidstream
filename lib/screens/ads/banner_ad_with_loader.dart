@@ -36,7 +36,6 @@ class _BannerAdWithLoaderState extends State<BannerAdWithLoader> {
       _isAppLovinLoaded = false;
       _isAppLovinFailed = false;
     });
-
   }
 
   void _loadAdMob() {
@@ -124,10 +123,14 @@ class _BannerAdWithLoaderState extends State<BannerAdWithLoader> {
     }
 
     if (_isAppLovinFailed && !_isAdMobFailed && !_isAdMobLoaded) {
-      return SizedBox(
-        height: widget.height,
-        child: const Center(
-          child: CircularProgressIndicator(strokeWidth: 1.5),
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 1.5),
+          ),
         ),
       );
     }
@@ -136,10 +139,14 @@ class _BannerAdWithLoaderState extends State<BannerAdWithLoader> {
       return const SizedBox.shrink();
     }
 
-     return SizedBox(
-      height: widget.height,
-      child: const Center(
-        child: CircularProgressIndicator(strokeWidth: 1.5),
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: SizedBox(
+        width: 20,
+        height: 20,
+        child: const Center(
+          child: CircularProgressIndicator(strokeWidth: 1.5),
+        ),
       ),
     );
   }

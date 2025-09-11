@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 import 'graphics.dart';
+import 'package:path/path.dart' as path;
 
 class Utils{
 
@@ -95,6 +96,38 @@ class Utils{
       return Colors.white;
     }
     return Color(int.parse('0xFF$hexColor'));
+  }
+
+  static Future<String?> generateThumbnail(String videoPath) async {
+    if (!File(videoPath).existsSync()) {
+      debugPrint("Video file does not exist: $videoPath");
+      return null;
+    }
+
+    try {
+      final tempDir = await Directory.systemTemp.createTemp();
+      final fileName = path.basenameWithoutExtension(videoPath) + '_thumb.png';
+      final thumbPath = path.join(tempDir.path, fileName);
+
+      final thumb = await VideoThumbnail.thumbnailFile(
+        video: videoPath,
+        thumbnailPath: thumbPath,
+        imageFormat: ImageFormat.PNG,
+        maxHeight: 400,  // increase for better quality
+        maxWidth: 400,   // maintain aspect ratio
+        quality: 100,    // max quality
+        timeMs: 1000,    // capture thumbnail at 1s into the video
+      );
+
+      if (thumb == null) {
+        debugPrint("Thumbnail generation returned null");
+      }
+
+      return thumb;
+    } catch (e) {
+      debugPrint("Failed to generate thumbnail: $e");
+      return null;
+    }
   }
 
   static Future<void> openWebinarLink(BuildContext context, String actionData) async {

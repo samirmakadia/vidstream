@@ -6,6 +6,7 @@ import '../models/api_models.dart';
 import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../utils/graphics.dart';
+import '../utils/utils.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
 import 'full_screen_video_player.dart';
@@ -31,6 +32,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   ApiCommonFile? _uploadedFile;
+  String? _videoThumbnailPath;
 
   @override
   void initState() {
@@ -64,18 +66,25 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? video = await picker.pickVideo(source: ImageSource.camera);
+
       if (video != null) {
         setState(() {
-          _selectedVideo = File(video.path);
           _isUploadingVideo = true;
         });
 
-        // Immediately upload the selected video
-        await _uploadCommonFile(_selectedVideo!.path);
+        final videoFile = File(video.path);
+
+        // Generate thumbnail
+        final thumbPath = await Utils.generateThumbnail(videoFile.path);
+
+        setState(() {
+          _selectedVideo = videoFile;
+          _videoThumbnailPath = thumbPath;
+          _isUploadingVideo = false;
+        });
       }
     } catch (e) {
       _showErrorSnackBar('Failed to capture video: $e');
-    } finally {
       setState(() => _isUploadingVideo = false);
     }
   }
@@ -84,17 +93,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
+
       if (video != null) {
         setState(() {
-          _selectedVideo = File(video.path);
           _isUploadingVideo = true;
         });
 
-        await _uploadCommonFile(_selectedVideo!.path);
+        final videoFile = File(video.path);
+
+        // Generate thumbnail
+        final thumbPath = await Utils.generateThumbnail(videoFile.path);
+
+        setState(() {
+          _selectedVideo = videoFile;
+          _videoThumbnailPath = thumbPath;
+          print('Video thumbnail path: $_videoThumbnailPath');
+          _isUploadingVideo = false;
+        });
       }
     } catch (e) {
       _showErrorSnackBar('Failed to pick video: $e');
-    } finally {
       setState(() => _isUploadingVideo = false);
     }
   }
@@ -108,20 +126,28 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
 
       if (result != null) {
         setState(() {
-          _selectedVideo = File(result.files.single.path!);
           _isUploadingVideo = true;
         });
 
-        await _uploadCommonFile(_selectedVideo!.path);
+        // Pick the file
+        final videoFile = File(result.files.single.path!);
+
+        // Generate thumbnail
+        final thumbPath = await Utils.generateThumbnail(videoFile.path);
+
+        setState(() {
+          _selectedVideo = videoFile;
+          _videoThumbnailPath = thumbPath;
+          _isUploadingVideo = false;
+        });
       }
     } catch (e) {
       _showErrorSnackBar('Failed to pick video file: $e');
-    } finally {
       setState(() => _isUploadingVideo = false);
     }
   }
 
-  Future<void> _uploadCommonFile(String filePath) async {
+  Future<ApiCommonFile?> _uploadCommonFile(String filePath) async {
     try {
       final videoService = VideoService();
 
@@ -132,15 +158,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
 
       if (uploadedFile == null) {
         _showErrorSnackBar("Failed to upload video to server");
-        return;
+        return null;
       }
 
       setState(() {
         _uploadedFile = uploadedFile;
         print('Uploaded file object: $_uploadedFile');
       });
+
+      return uploadedFile; // ✅ Return the uploaded file
     } catch (e) {
       _showErrorSnackBar('Failed to upload video: $e');
+      return null;
     }
   }
 
@@ -155,7 +184,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   }
 
   Future<void> _uploadVideo() async {
-    if (_uploadedFile == null) {
+    if (_selectedVideo == null) {
       _showErrorSnackBar('Please select a video first');
       return;
     }
@@ -168,6 +197,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     setState(() => _isUploading = true);
 
     try {
+      print('Uploading video...${_selectedVideo!.path}');
+      final uploadedFile = await _uploadCommonFile(_selectedVideo!.path);
+      if (uploadedFile == null) {
+        _showErrorSnackBar("Failed to upload video to server");
+        return;
+      }
+
       final videoService = VideoService();
 
       final uploadedVideo = await videoService.uploadVideo(
@@ -222,12 +258,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.black,
       appBar:_buildAppBar(context),
-      body: ProfessionalBottomAd( 
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: _selectedVideo == null ? _buildVideoSelectionView() : _buildVideoEditView(),
+      body: SafeArea(
+        child: ProfessionalBottomAd(
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: _selectedVideo == null ? _buildVideoSelectionView() : _buildVideoEditView(),
+          ),
         ),
       ),
     );
@@ -413,12 +452,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
         children: [
           GestureDetector(
             onTap: () {
-              if (_uploadedFile != null) {
+              if (_selectedVideo != null) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => FullScreenVideoPlayer(
-                      videoUrl: _uploadedFile!.url,
+                      videoUrl: _selectedVideo!.path,
+                      isLocal: true,
                     ),
                   ),
                 );
@@ -433,9 +473,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
               ),
               child: Stack(
                 children: [
-                  if(_uploadedFile != null)
+                  if(_videoThumbnailPath != null)
                   CustomImageWidget(
-                    imageUrl: _uploadedFile!.thumbnailUrl ?? '',
+                    imageUrl: _videoThumbnailPath ?? "",
                     height: double.infinity,
                     width:double.infinity,
                     cornerRadius: 12,
