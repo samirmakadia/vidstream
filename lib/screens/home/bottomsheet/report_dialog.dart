@@ -92,8 +92,6 @@ class _ReportDialogState extends State<ReportDialog> {
                     description: description,
                   );
 
-                  print('Report submitted: $message');
-
                   if (mounted) Navigator.pop(context, message);
                 } catch (e) {
                   if (mounted) Navigator.pop(context, 'Failed to submit report: $e');
