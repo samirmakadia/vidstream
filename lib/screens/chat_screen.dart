@@ -450,6 +450,7 @@ class _ChatScreenState extends State<ChatScreen> {
         Expanded(
           child: _buildMessagesList(),
         ),
+        Divider(color: Colors.grey.shade800, height: 1, thickness: 0.6,),
         _buildMessageInput(),
       ],
     );
@@ -519,14 +520,14 @@ class _ChatScreenState extends State<ChatScreen> {
             crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: message.messageType == 'image' ? 5 : 16, vertical: message.messageType == 'image' ? 5 : 12),
+                padding: EdgeInsets.symmetric(horizontal: message.messageType == 'image' ? 5 : 12, vertical: message.messageType == 'image' ? 5 : 8),
                 decoration: BoxDecoration(
                   color: isMe
                       ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(18).copyWith(
-                    bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(18),
-                    bottomLeft: isMe ? const Radius.circular(18) : const Radius.circular(0),
+                      : Colors.white10,
+                  borderRadius: BorderRadius.circular(12).copyWith(
+                    bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(12),
+                    bottomLeft: isMe ? const Radius.circular(12) : const Radius.circular(0),
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -561,7 +562,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     if (message.message.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.only(top: 1),
                         child: Text(
                           message.message,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -600,9 +601,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildMessageInput() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        // color: Theme.of(context).scaffoldBackgroundColor,
+        // color: Colors.orange,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -619,39 +621,57 @@ class _ChatScreenState extends State<ChatScreen> {
               onPressed: _pickAndPreviewImage,
               icon: const Icon(Icons.image),
               color: Theme.of(context).colorScheme.primary,
+              iconSize: 24,
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(Colors.grey.shade900),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                ),
+                padding: WidgetStateProperty.all(const EdgeInsets.all(3)),
+                overlayColor: WidgetStateProperty.all(
+                  Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                ),
+              ),
             ),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
+                  // color: Theme.of(context).cardColor,
+                  color: Colors.grey.shade900,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: TextField(
                   controller: _messageController,
                   enabled: true,
                   decoration: InputDecoration(
+                    isDense: true,
                     hintText: 'Type a message...',
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 12,
+                      vertical: 8,
                     ),
                   ),
-                  maxLines: null,
+                  minLines: 1,
+                  maxLines: 3,
+                  keyboardType: TextInputType.multiline,
                   textInputAction: TextInputAction.newline,
                   //onSubmitted: (_) => _sendMessage(),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             // Send button
             ValueListenableBuilder<TextEditingValue>(
               valueListenable: _messageController,
                 builder: (context, value, _) {
                 final _canSendMessage = value.text.trim().isNotEmpty;
                 return Container(
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: _canSendMessage ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                    color: _canSendMessage ? Theme.of(context).colorScheme.primary : Colors.grey.shade900,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
@@ -664,7 +684,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         }
                       }
                     },
-                    icon: const Icon(Icons.send, color: Colors.white),
+                    icon: Icon(Icons.send, color: _canSendMessage ? Colors.black : Colors.grey, size: 22,),
                   ),
                 );
               }
