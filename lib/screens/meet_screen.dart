@@ -4,7 +4,7 @@ import 'package:vidmeet/services/meet_service.dart';
 import 'package:vidmeet/models/api_models.dart';
 import 'package:vidmeet/screens/chat_screen.dart';
 import '../helper/navigation_helper.dart';
-import '../manager/app_open_ad_manager.dart';
+import '../manager/applovin_ad_manager.dart';
 import '../manager/setting_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
@@ -352,7 +352,7 @@ class _MeetScreenState extends State<MeetScreen> {
 
       children.add(const SizedBox(height: 16));
       if (AppLovinAdManager.isMrecAdLoaded) {
-        children.add(AppLovinAdManager.mrecAd(height: 120));
+        children.add(AppLovinAdManager.mrecAd());
         children.add(const SizedBox(height: 16));
       }
     }

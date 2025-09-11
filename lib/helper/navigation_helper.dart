@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../manager/app_open_ad_manager.dart';
+import '../manager/applovin_ad_manager.dart';
 
 class NavigationHelper {
   static void navigateWithAd<T>({

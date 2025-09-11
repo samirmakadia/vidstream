@@ -7,7 +7,7 @@ import 'package:vidmeet/screens/settings_screen.dart';
 import 'package:vidmeet/screens/video_player_screen.dart';
 import 'package:vidmeet/services/socket_manager.dart';
 import '../helper/navigation_helper.dart';
-import '../manager/app_open_ad_manager.dart';
+import '../manager/applovin_ad_manager.dart';
 import '../manager/setting_manager.dart';
 import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';

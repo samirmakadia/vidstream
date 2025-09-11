@@ -3,20 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vidmeet/manager/setting_manager.dart';
 import '../helper/ad_helper.dart';
+import '../screens/ads/common_mrec_ad.dart';
 import '../widgets/fancy_swipe_arrow.dart';
 
 class AppLovinAdManager {
-  static final String _appOpenAdUnitId = AdUnitIds.appOpen;
-  static final String _bannerAdUnitId = AdUnitIds.banner;
-  static final String _interstitialAdUnitId = AdUnitIds.interstitial;
-  static final String _rewardedAdUnitId = AdUnitIds.rewarded;
-  static final String _nativeAdUnitId = AdUnitIds.native;
+  static final String _appOpenAdUnitId = AdHelper.appOpen;
+  static final String _interstitialAdUnitId = AdHelper.interstitial;
+  static final String _nativeAdUnitId = AdHelper.native;
 
   static bool _isShowingAppOpen = false;
   static bool _isAppOpenAvailable = false;
 
   static bool _isInterstitialAvailable = false;
-  static bool _isRewardedAvailable = false;
   static bool isMrecAdLoaded = true;
 
   static bool isBannerLoaded = false;
@@ -33,11 +31,9 @@ class AppLovinAdManager {
 
     _setupAppOpenListener();
     _setupInterstitialListener();
-    _setupRewardedListener();
 
     loadAppOpenAd();
     loadInterstitialAd();
-    loadRewardedAd();
     loadMrecAd();
     loadBanner();
   }
@@ -112,69 +108,7 @@ class AppLovinAdManager {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
-  // -------------------- Banner --------------------
-
-  static Widget bannerAdWidget({AdFormat format = AdFormat.banner}) {
-    return MaxAdView(
-      adUnitId: _bannerAdUnitId,
-      adFormat: format,
-      listener: AdViewAdListener(
-        onAdLoadedCallback: (ad) {
-          isBannerLoaded = true;
-          debugPrint("✅ Banner loaded from network: ${ad.networkName}");
-        },
-        onAdLoadFailedCallback: (adUnitId, error) {
-          isBannerLoaded = false;
-          debugPrint("❌ Banner load failed: ${error.message}");
-        },
-        onAdClickedCallback: (ad) =>
-            debugPrint("👆 Banner clicked: ${ad.adUnitId}"),
-        onAdExpandedCallback: (ad) =>
-            debugPrint("🔼 Banner expanded (fullscreen)"),
-        onAdCollapsedCallback: (ad) =>
-            debugPrint("🔽 Banner collapsed (returned to normal)"),
-      ),
-    );
-  }
-
   // -------------------- Other existing code remains untouched --------------------
-
-  static void _setupRewardedListener() {
-    AppLovinMAX.setRewardedAdListener(
-      RewardedAdListener(
-        onAdLoadedCallback: (ad) {
-          _isRewardedAvailable = true;
-          debugPrint("✅ Rewarded loaded");
-        },
-        onAdLoadFailedCallback: (adUnitId, error) {
-          _isRewardedAvailable = false;
-          debugPrint("❌ Rewarded load failed: ${error.message}");
-        },
-        onAdDisplayedCallback: (ad) {
-          debugPrint("📢 Rewarded shown");
-        },
-        onAdDisplayFailedCallback: (ad, error) {
-          _isRewardedAvailable = false;
-          debugPrint("❌ Rewarded show failed: ${error.message}");
-          loadRewardedAd();
-        },
-        onAdHiddenCallback: (ad) {
-          _isRewardedAvailable = false;
-          debugPrint("ℹ️ Rewarded dismissed");
-          loadRewardedAd();
-        },
-        onAdReceivedRewardCallback: (ad, reward) {
-          debugPrint("🎁 User earned reward: ${reward.amount} ${reward.label}");
-        },
-        onAdClickedCallback: (ad) {
-          debugPrint("👆 Rewarded clicked: ${ad.adUnitId}");
-        },
-        onAdRevenuePaidCallback: (ad) {
-          debugPrint("💰 Revenue paid for Rewarded: ${ad.adUnitId}");
-        },
-      ),
-    );
-  }
 
   static void _setupAppOpenListener() {
     AppLovinMAX.setAppOpenAdListener(
@@ -217,9 +151,8 @@ class AppLovinAdManager {
 
   static void loadAppOpenAd() => AppLovinMAX.loadAppOpenAd(_appOpenAdUnitId);
   static void loadInterstitialAd() => AppLovinMAX.loadInterstitial(_interstitialAdUnitId);
-  static void loadRewardedAd() => AppLovinMAX.loadRewardedAd(_rewardedAdUnitId);
-  static void loadMrecAd() => AppLovinMAX.loadMRec(AdUnitIds.mrecAdUnitId);
-  static void loadBanner() => AppLovinMAX.loadBanner(AdUnitIds.banner);
+  static void loadMrecAd() => AppLovinMAX.loadMRec(AdHelper.mrecAdUnitId);
+  static void loadBanner() => AppLovinMAX.loadBanner(AdHelper.banner);
 
   static void showAppOpenAd({VoidCallback? onDismissed}) {
     if (!_isAppOpenAvailable || _isShowingAppOpen) {
@@ -237,14 +170,6 @@ class AppLovinAdManager {
       return;
     }
     AppLovinMAX.showInterstitial(_interstitialAdUnitId);
-  }
-
-  static void showRewardedAd({VoidCallback? onDismissed}) {
-    if (!_isRewardedAvailable) {
-      onDismissed?.call();
-      return;
-    }
-    AppLovinMAX.showRewardedAd(_rewardedAdUnitId);
   }
 
   static Widget nativeAdLarge({double height = 300}) {
@@ -340,7 +265,6 @@ class AppLovinAdManager {
     );
   }
 
-
   static Widget nativeAdSmall({double height = 110, double width = double.infinity}) {
     final MaxNativeAdViewController controller = MaxNativeAdViewController();
 
@@ -410,84 +334,26 @@ class AppLovinAdManager {
   }
 
   static Widget mrecAd({double height = 250, double width = 300}) {
-    return MaxAdView(
-      adUnitId: AdUnitIds.mrecAdUnitId,
-      adFormat: AdFormat.mrec,
-      listener: AdViewAdListener(
-        onAdLoadedCallback: (ad) {
-          isMrecAdLoaded = true;
-          debugPrint("✅ MREC loaded");
-        },
-        onAdLoadFailedCallback: (adUnitId, error) {
-          isMrecAdLoaded = false;
-          debugPrint("❌ MREC load failed: ${error.message}");
-        },
-        onAdClickedCallback: (ad) =>
-            debugPrint("👆 MREC clicked: ${ad.adUnitId}"),
-        onAdRevenuePaidCallback: (ad) =>
-            debugPrint("💰 MREC revenue: ${ad.revenue}"),
-        onAdExpandedCallback: (ad) => debugPrint("🔼 MREC expanded"),
-        onAdCollapsedCallback: (ad) => debugPrint("🔽 MREC collapsed"),
-      ),
+    return CommonMrecAd(
+      onAdLoadChanged: (isLoaded) {
+        isMrecAdLoaded = isLoaded;
+        debugPrint("MREC Loaded: $isLoaded");
+      },
+      height: height,
+      width: width,
+      showSwipeHint: false,
     );
   }
 
   static Widget largeMrecAd({double height = 300, double width = 300}) {
-    return Center(
-      child: SizedBox(
-        height: height,
-        width: width,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            MaxAdView(
-              adUnitId: AdUnitIds.mrecAdUnitId,
-              adFormat: AdFormat.mrec,
-              listener: AdViewAdListener(
-                onAdLoadedCallback: (ad) {
-                  isMrecAdLoaded = true;
-                  debugPrint("✅ Large MREC loaded");
-                },
-                onAdLoadFailedCallback: (adUnitId, error) {
-                  isMrecAdLoaded = false;
-                  debugPrint("❌ Large MREC load failed: ${error.message}");
-                },
-                onAdClickedCallback: (ad) =>
-                    debugPrint("👆 Large MREC clicked: ${ad.adUnitId}"),
-                onAdRevenuePaidCallback: (ad) =>
-                    debugPrint("💰 Large MREC revenue: ${ad.revenue}"),
-                onAdExpandedCallback: (MaxAd ad) {},
-                onAdCollapsedCallback: (MaxAd ad) {},
-              ),
-            ),
-            Positioned(
-              bottom: 8,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Text(
-                    "Swipe to next",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 4,
-                          color: Colors.black45,
-                          offset: Offset(1, 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  FancySwipeArrow(size: 50, color: Colors.white),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return CommonMrecAd(
+      onAdLoadChanged: (isLoaded) {
+        isMrecAdLoaded = isLoaded;
+        debugPrint("MREC Loaded: $isLoaded");
+      },
+      height: height,
+      width: width,
+      showSwipeHint: true,
     );
   }
 

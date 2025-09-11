@@ -11,7 +11,7 @@ import 'package:vidmeet/screens/meet_screen.dart';
 import 'package:vidmeet/screens/chat_list_screen.dart';
 
 import '../helper/navigation_helper.dart';
-import '../manager/app_open_ad_manager.dart';
+import '../manager/applovin_ad_manager.dart';
 import '../manager/firebase_manager.dart';
 import '../manager/session_manager.dart';
 import '../manager/setting_manager.dart';

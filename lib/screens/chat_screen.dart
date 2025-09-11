@@ -14,7 +14,7 @@ import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../utils/app_toaster.dart';
 import '../utils/graphics.dart';
-import '../widgets/banner_ad_with_loader.dart';
+import 'ads/banner_ad_with_loader.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/empty_section.dart';
 import '../widgets/image_preview_screen.dart';

@@ -5,7 +5,7 @@ import 'package:vidmeet/repositories/api_repository.dart';
 import 'package:vidmeet/screens/other_user_profile_screen.dart';
 
 import '../helper/navigation_helper.dart';
-import '../manager/app_open_ad_manager.dart';
+import '../manager/applovin_ad_manager.dart';
 import '../manager/setting_manager.dart';
 import '../utils/graphics.dart';
 import '../utils/utils.dart';

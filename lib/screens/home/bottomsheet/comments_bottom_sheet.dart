@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:vidmeet/screens/home/bottomsheet/report_dialog.dart';
 import '../../../helper/navigation_helper.dart';
-import '../../../manager/app_open_ad_manager.dart';
+import '../../../manager/applovin_ad_manager.dart';
 import '../../../manager/setting_manager.dart';
 import '../../../models/api_models.dart';
 import '../../../repositories/api_repository.dart';

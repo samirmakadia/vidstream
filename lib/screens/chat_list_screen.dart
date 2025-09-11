@@ -5,7 +5,7 @@ import 'package:vidmeet/screens/chat_screen.dart';
 import 'package:vidmeet/services/chat_service.dart';
 import 'package:vidmeet/storage/conversation_storage_drift.dart';
 import '../helper/navigation_helper.dart';
-import '../manager/app_open_ad_manager.dart';
+import '../manager/applovin_ad_manager.dart';
 import '../manager/setting_manager.dart';
 import '../storage/message_storage_drift.dart';
 import '../utils/utils.dart';

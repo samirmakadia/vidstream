@@ -1,6 +1,6 @@
 import 'dart:io';
 
-class AdUnitIds {
+class AdHelper {
 
   // -------------------- BANNER --------------------
   static String get banner {
@@ -42,5 +42,39 @@ class AdUnitIds {
     if (Platform.isAndroid) return "6143938bf3c8cc37";
     if (Platform.isIOS) return "45d926b7c85fa773";
     throw UnsupportedError("Unsupported platform");
+  }
+
+  // -------------------- ADMOB --------------------
+
+  static String get bannerAdUnitId {
+    final id = Platform.isAndroid
+        ? 'ca-app-pub-3940256099942544/6300978111'
+        : 'ca-app-pub-3940256099942544/2934735716';
+    print('🔍 Banner Ad Unit ID: $id (${Platform.isIOS ? "iOS" : "Android"})');
+    return id;
+  }
+
+  static String get interstitialAdUnitId {
+    final id = Platform.isAndroid
+        ? 'ca-app-pub-3940256099942544/1033173712'
+        : 'ca-app-pub-3940256099942544/4411468910';
+    print('🔍 Interstitial Ad Unit ID: $id (${Platform.isIOS ? "iOS" : "Android"})');
+    return id;
+  }
+
+  static String get appOpenAdUnitId {
+    final id = Platform.isAndroid
+        ? 'ca-app-pub-3940256099942544/3419835294'
+        : 'ca-app-pub-3940256099942544/5662855259';
+    print('🔍 App Open Ad Unit ID: $id (${Platform.isIOS ? "iOS" : "Android"})');
+    return id;
+  }
+
+  static String get nativeAdUnitId {
+    final id = Platform.isAndroid
+        ? 'ca-app-pub-3940256099942544/2247696110'
+        : 'ca-app-pub-3940256099942544/3986624511';
+    print('🔍 App Open Ad Unit ID: $id (${Platform.isIOS ? "iOS" : "Android"})');
+    return id;
   }
 }

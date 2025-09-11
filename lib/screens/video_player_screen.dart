@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vidmeet/models/api_models.dart';
-import '../manager/app_open_ad_manager.dart';
+import '../manager/applovin_ad_manager.dart';
 import '../manager/setting_manager.dart';
 import '../utils/utils.dart';
 import 'home/widget/video_feed_item_widget.dart';
@@ -126,6 +126,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
           return SizedBox.expand(
             child: AppLovinAdManager.largeMrecAd(
               height: Utils(context).screenHeight,
+              width: Utils(context).screenWidth,
             ),
           );
         }

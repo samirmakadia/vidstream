@@ -55,7 +55,6 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
     super.dispose();
   }
 
-
   Future<void> _pickAndUploadImage(String type) async {
     try {
       final XFile? image = await _picker.pickImage(

@@ -7,7 +7,7 @@ import 'package:vidmeet/screens/search_screen.dart';
 import 'package:vidmeet/utils/utils.dart';
 import 'dart:async';
 import '../helper/navigation_helper.dart';
-import '../manager/app_open_ad_manager.dart';
+import '../manager/applovin_ad_manager.dart';
 import '../manager/setting_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';

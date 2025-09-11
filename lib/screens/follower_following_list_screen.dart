@@ -5,7 +5,7 @@ import 'package:vidmeet/models/api_models.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
 import 'package:vidmeet/screens/other_user_profile_screen.dart';
 import '../helper/navigation_helper.dart';
-import '../manager/app_open_ad_manager.dart';
+import '../manager/applovin_ad_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
 import '../widgets/custom_image_widget.dart';
@@ -193,7 +193,7 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           if ((i + 1) % adInterval == 0 && AppLovinAdManager.isMrecAdLoaded) {
             items.add(Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: AppLovinAdManager.mrecAd(height: 70),
+              child: AppLovinAdManager.mrecAd(),
             ));
           }
         }
@@ -203,7 +203,7 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
           if (following.length < adInterval || remainder > 1) {
             items.add(Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: AppLovinAdManager.mrecAd(height: 70),
+              child: AppLovinAdManager.mrecAd(),
             ));
           }
         }
