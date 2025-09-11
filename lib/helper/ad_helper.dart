@@ -70,7 +70,7 @@ class AdHelper {
     return id;
   }
 
-  static String get nativeAdUnitId {
+  static String get admobNativeUnitId {
     final id = Platform.isAndroid
         ? 'ca-app-pub-3940256099942544/2247696110'
         : 'ca-app-pub-3940256099942544/3986624511';

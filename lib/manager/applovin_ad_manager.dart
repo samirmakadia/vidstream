@@ -172,6 +172,31 @@ class AppLovinAdManager {
     AppLovinMAX.showInterstitial(_interstitialAdUnitId);
   }
 
+  static Widget mrecAd({double height = 250, double width = 300}) {
+    return CommonMrecAd(
+      onAdLoadChanged: (isLoaded) {
+        isMrecAdLoaded = isLoaded;
+        debugPrint("MREC Loaded: $isLoaded");
+      },
+      height: height,
+      width: width,
+      showSwipeHint: false,
+    );
+  }
+
+  static Widget largeMrecAd({double height = 300, double width = 300}) {
+    return CommonMrecAd(
+      onAdLoadChanged: (isLoaded) {
+        isMrecAdLoaded = isLoaded;
+        debugPrint("MREC Loaded: $isLoaded");
+      },
+      height: height,
+      width: width,
+      showSwipeHint: true,
+    );
+  }
+
+
   static Widget nativeAdLarge({double height = 300}) {
     final MaxNativeAdViewController controller = MaxNativeAdViewController();
     double mediaViewAspectRatio = 1.91; // default fallback
@@ -330,30 +355,6 @@ class AppLovinAdManager {
           ),
         ),
       ),
-    );
-  }
-
-  static Widget mrecAd({double height = 250, double width = 300}) {
-    return CommonMrecAd(
-      onAdLoadChanged: (isLoaded) {
-        isMrecAdLoaded = isLoaded;
-        debugPrint("MREC Loaded: $isLoaded");
-      },
-      height: height,
-      width: width,
-      showSwipeHint: false,
-    );
-  }
-
-  static Widget largeMrecAd({double height = 300, double width = 300}) {
-    return CommonMrecAd(
-      onAdLoadChanged: (isLoaded) {
-        isMrecAdLoaded = isLoaded;
-        debugPrint("MREC Loaded: $isLoaded");
-      },
-      height: height,
-      width: width,
-      showSwipeHint: true,
     );
   }
 
