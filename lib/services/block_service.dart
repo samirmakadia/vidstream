@@ -46,9 +46,9 @@ class BlockService {
   }
 
   // Get list of blocked users for a user
-  Stream<List<ApiUser>> getBlockedUsers(String userId) async* {
+  Stream<List<ApiUser>> getBlockedUsers(String userId, {int page = 1, int limit = 20}) async* {
     try {
-      final response = await _apiRepository.api.getBlockedUsers();
+      final response = await _apiRepository.api.getBlockedUsers(page: page, limit: limit);
       yield response?.data ?? [];
     } catch (e) {
       print('Error getting blocked users: $e');

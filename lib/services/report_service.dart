@@ -87,9 +87,9 @@ class ReportService {
   }
 
   // Get user's reports
-  Future<List<Report>> getUserReports(String userId) async {
+  Future<List<Report>> getUserReports(String userId, {int page = 1, int limit = 30}) async {
     try {
-      final response = await _apiRepository.api.getUserReports();
+      final response = await _apiRepository.api.getUserReports(page: page, limit: limit);
       return response?.data ?? [];
     } catch (e) {
       print('Error getting user reports: $e');

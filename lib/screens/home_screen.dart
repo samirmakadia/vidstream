@@ -35,6 +35,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
   late BetterPlayerController _precacheController;
   final Set<String> _precaching = {};
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+  int _page = 1;
+  final int _pageSize = 20;
 
   @override
   bool get wantKeepAlive => true;
@@ -130,38 +134,50 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     }
   }
 
-  Future<void> _loadVideos({bool isLoadingShow = true}) async {
-    if(isLoadingShow) {
-      setState(() => _isLoading = true);
-    }
+  Future<void> _loadVideos({bool isLoadingShow = true, bool isRefresh = false}) async {
+    if (_isFetchingMore) return;
+    _isFetchingMore = true;
+
+    if (isLoadingShow && isRefresh) setState(() => _isLoading = true);
     try {
-      final videos = await ApiRepository.instance.videos.getVideosOnce();
-      setState(() {
-        _videos = videos;
-        _allVideos = videos;
-        _isLoading = false;
-      });
-      if (_videos.isNotEmpty) {
-        _preloadWindow(0);
+      if (isRefresh) {
+        _page = 1;
+        _hasMore = true;
       }
 
-    } catch (e) {
-      if(mounted) {
-        setState(() => _isLoading = false);
-      }
+      final videos = await ApiRepository.instance.videos
+          .getVideosOnce(limit: _pageSize, page: _page);
+
       if (mounted) {
-        Graphics.showTopDialog(
-          context,
-          "Error!",
-          'Failed to load videos: $e',
-          type: ToastType.error,
-        );
+        setState(() {
+          if (isRefresh) {
+            _videos = videos;
+            _allVideos = videos;
+          } else {
+            _videos.addAll(videos);
+            _allVideos.addAll(videos);
+          }
+          _isLoading = false;
+          _hasMore = videos.length == _pageSize;
+          if (_videos.isNotEmpty) {
+            _preloadWindow(0);
+          }
+        });
       }
+      _page++;
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Graphics.showTopDialog(context, "Error!", 'Failed to load videos: $e',
+            type: ToastType.error);
+      }
+    } finally {
+      _isFetchingMore = false;
     }
   }
 
   Future<void> _refreshVideos() async {
-    await _loadVideos();
+    await _loadVideos(isLoadingShow: true, isRefresh: true);
   }
 
   void _openSearchScreen() {
@@ -377,6 +393,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               : index;
           if (videoIndex >= 0 && videoIndex < _videos.length) {
             _preloadWindow(videoIndex);
+          }
+
+          if (_hasMore && videoIndex >= _videos.length - 3) {
+            _loadVideos(isLoadingShow: false);
           }
         },
         itemBuilder: (context, index) {

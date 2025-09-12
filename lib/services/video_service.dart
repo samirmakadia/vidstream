@@ -45,9 +45,9 @@ class VideoService {
   }
 
   // Get all videos as Future for one-time fetch
-  Future<List<ApiVideo>> getVideosOnce({int limit = 20}) async {
+  Future<List<ApiVideo>> getVideosOnce({int limit = 20, int page = 1}) async {
     try {
-      final response = await _apiService.getVideos(limit: limit);
+      final response = await _apiService.getVideos(limit: limit,page: page);
       final videos = response?.data ?? [];
       return videos;
     } catch (e) {

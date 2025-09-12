@@ -26,26 +26,71 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   List<Report> _reports = [];
   bool _isLoading = true;
   final Set<String> _deletingReports = {};
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+  int _page = 1;
+  final int _pageSize = 20;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _fetchReports();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200 &&
+          !_isFetchingMore &&
+          _hasMore) {
+        _fetchReports();
+      }
+    });
   }
 
-  Future<void> _fetchReports({bool isLoadingShow = true} ) async {
-    if(isLoadingShow){
-      setState(() => _isLoading = true);
-    }
-    try {
-      final fetchedReports =
-      await _reportService.getUserReports(widget.currentUserId);
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchReports({bool isLoadingShow = true, bool refresh = false}) async {
+    if (refresh) {
       setState(() {
-        _reports = fetchedReports;
+        _reports.clear();
+        _page = 1;
+        _hasMore = true;
+      });
+    }
+
+    if (!_hasMore) return;
+
+    if (isLoadingShow && _reports.isEmpty) {
+      setState(() => _isLoading = true);
+    } else {
+      setState(() => _isFetchingMore = true);
+    }
+
+    try {
+      final fetchedReports = await _reportService.getUserReports(
+        widget.currentUserId,
+        page: _page,
+        limit: _pageSize,
+      );
+
+      setState(() {
+        _reports.addAll(fetchedReports);
+        _hasMore = fetchedReports.length == _pageSize;
+        if (_hasMore) _page++;
         _isLoading = false;
+        _isFetchingMore = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _isFetchingMore = false;
+      });
+      if (mounted) {
+        Graphics.showTopDialog(context, "Error", 'Failed to load reports: $e', type: ToastType.error);
+      }
     }
   }
 
@@ -367,11 +412,19 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
       child: RefreshIndicator(
         onRefresh: _fetchReports,
         child: ListView.builder(
+          controller: _scrollController,
           padding: const EdgeInsets.all(16),
-          itemCount: Utils.getTotalItems(_reports.length, adInterval),
+          itemCount: Utils.getTotalItems(_reports.length, SettingManager().nativeFrequency) + (_isFetchingMore ? 1 : 0),
           itemBuilder: (context, index) {
-            if (Utils.isAdIndex(index, _reports.length, adInterval,
-                Utils.getTotalItems(_reports.length, adInterval))) {
+            if (_isFetchingMore && index == Utils.getTotalItems(_reports.length, SettingManager().nativeFrequency)) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: CircularProgressIndicator(color: Colors.white)),
+              );
+            }
+
+            if (Utils.isAdIndex(index, _reports.length, SettingManager().nativeFrequency,
+                Utils.getTotalItems(_reports.length, SettingManager().nativeFrequency))) {
               if (AppLovinAdManager.isMrecAdLoaded) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
@@ -382,12 +435,12 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
               }
             }
 
-            final reportIndex = Utils.getUserIndex(index, _reports.length, adInterval);
+            final reportIndex = Utils.getUserIndex(index, _reports.length, SettingManager().nativeFrequency);
             final report = _reports[reportIndex];
 
             return _buildReportItem(report);
           },
-        ),
+        )
       ),
     );
   }

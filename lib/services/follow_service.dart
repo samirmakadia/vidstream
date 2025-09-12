@@ -69,9 +69,9 @@ class FollowService {
   }
 
   // Get followers for a user
-  Future<List<ApiUser>> getFollowers(String userId) async {
+  Future<List<ApiUser>> getFollowers(String userId, {int page = 1, int limit = 20}) async {
     try {
-      final response = await _apiRepository.api.getUserFollowers(userId: userId);
+      final response = await _apiRepository.api.getUserFollowers(userId: userId, limit: limit,page: page);
       return response?.data ?? [];
     } catch (e) {
       print('Error getting followers: $e');
@@ -80,9 +80,9 @@ class FollowService {
   }
 
   // Get following for a user  
-  Future<List<ApiUser>> getFollowing(String userId) async {
+  Future<List<ApiUser>> getFollowing(String userId, {int page = 1, int limit = 20}) async {
     try {
-      final response = await _apiRepository.api.getUserFollowing(userId: userId);
+      final response = await _apiRepository.api.getUserFollowing(userId: userId, limit: limit,page: page);
       return response?.data ?? [];
     } catch (e) {
       print('Error getting following: $e');

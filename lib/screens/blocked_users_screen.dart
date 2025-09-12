@@ -23,51 +23,75 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   final BlockService _blockService = BlockService();
   List<ApiUser> _blockedUsers = [];
   bool _isLoading = true;
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+  int _page = 1;
+  final int _pageSize = 20;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _loadBlockedUsers();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200 &&
+          !_isFetchingMore &&
+          _hasMore) {
+        _loadBlockedUsers();
+      }
+    });
   }
 
-  Future<void> _loadBlockedUsers() async {
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadBlockedUsers({bool refresh = false}) async {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
     if (currentUserId == null) return;
 
     try {
-      setState(() => _isLoading = true);
-      
-      // Get blocked users as a stream and take the first value
-      final stream = _blockService.getBlockedUsers(currentUserId);
-      final blockedUsers = await stream.first;
-      
+      if (refresh) {
+        setState(() {
+          _blockedUsers.clear();
+          _page = 1;
+          _hasMore = true;
+        });
+      }
+
+      if (!_hasMore) return;
+
+      setState(() {
+        if (!refresh) _isFetchingMore = true;
+        else _isLoading = true;
+      });
+
+      final newUsersStream = _blockService.getBlockedUsers(
+        currentUserId,
+        page: _page,
+        limit: _pageSize,
+      );
+
+      final newUsers = await newUsersStream.first;
+
       if (mounted) {
         setState(() {
-          _blockedUsers = blockedUsers.map((user) => ApiUser(
-            id: user.uid ?? '',
-            userId: user.uid ?? '',
-            email: user.email ?? '',
-            displayName: user.displayName ?? '',
-            profileImageUrl: user.profileImageUrl,
-            photoURL: user.photoURL,
-            bannerImageUrl: user.bannerImageUrl,
-            bio: user.bio,
-            dateOfBirth: user.dateOfBirth,
-            gender: user.gender,
-            createdAt: user.createdAt ?? DateTime.now(),
-            updatedAt: user.updatedAt ?? DateTime.now(),
-            following: user.following ?? [],
-            followers: user.followers ?? [],
-            videosCount: user.videosCount ?? 0,
-            isGuest: user.isGuest ?? false,
-            isFollow: user.isFollow ?? false,
-          )).toList();
+          _blockedUsers.addAll(newUsers);
+          _hasMore = newUsers.length == _pageSize;
+          if (_hasMore) _page++;
           _isLoading = false;
+          _isFetchingMore = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _isFetchingMore = false;
+        });
         Graphics.showTopDialog(
           context,
           "Error",
@@ -171,14 +195,21 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
               : _blockedUsers.isEmpty
               ? _buildEmptyState()
               : RefreshIndicator(
-            onRefresh: _loadBlockedUsers,
+            onRefresh: () => _loadBlockedUsers(refresh: true),
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16),
-              itemCount: Utils.getTotalItems(_blockedUsers.length, adInterval),
+              itemCount: Utils.getTotalItems(_blockedUsers.length, SettingManager().nativeFrequency) + (_isFetchingMore ? 1 : 0),
               itemBuilder: (context, index) {
-                // Insert ad
-                if (Utils.isAdIndex(index, _blockedUsers.length, adInterval,
-                    Utils.getTotalItems(_blockedUsers.length, adInterval))) {
+                if (_isFetchingMore && index == Utils.getTotalItems(_blockedUsers.length, SettingManager().nativeFrequency)) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CircularProgressIndicator(color: Colors.white)),
+                  );
+                }
+
+                if (Utils.isAdIndex(index, _blockedUsers.length, SettingManager().nativeFrequency,
+                    Utils.getTotalItems(_blockedUsers.length, SettingManager().nativeFrequency))) {
                   if (AppLovinAdManager.isMrecAdLoaded) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -189,12 +220,12 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   }
                 }
 
-                final userIndex = Utils.getUserIndex(index, _blockedUsers.length, adInterval);
+                final userIndex = Utils.getUserIndex(index, _blockedUsers.length, SettingManager().nativeFrequency);
                 final user = _blockedUsers[userIndex];
                 return _buildBlockedUserCard(user);
               },
             ),
-          ),
+          )
         ),
       ),
     );
