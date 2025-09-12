@@ -230,6 +230,7 @@ class AppLovinAdManager {
       },
       height: height,
       width: width,
+      isMedium: true,
       showSwipeHint: true,
     );
   }

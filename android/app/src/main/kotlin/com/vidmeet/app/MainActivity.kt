@@ -4,6 +4,8 @@ import android.app.NotificationManager
 import android.os.Build
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.plugins.googlemobileads.GoogleMobileAdsPlugin
+import io.flutter.embedding.engine.FlutterEngine
 
 class MainActivity: FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,5 +25,29 @@ class MainActivity: FlutterActivity() {
                 getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
         }
+
+        // ✅ Register ListTileNativeAdFactory for small native ads
+        GoogleMobileAdsPlugin.registerNativeAdFactory(
+            flutterEngine,
+            "listTile",
+            ListTileNativeAdFactory(context)
+        )
+
+        // ✅ Register MediumTileNativeAdFactory for medium native ads
+        GoogleMobileAdsPlugin.registerNativeAdFactory(
+            flutterEngine,
+            "mediumTile",
+            MediumTileNativeAdFactory(context)
+        )
+
     }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        super.cleanUpFlutterEngine(flutterEngine)
+
+        // ✅ Unregister factories to prevent memory leaks
+        GoogleMobileAdsPlugin.unregisterNativeAdFactory(flutterEngine, "listTile")
+        GoogleMobileAdsPlugin.unregisterNativeAdFactory(flutterEngine, "mediumTile")
+    }
+
 }

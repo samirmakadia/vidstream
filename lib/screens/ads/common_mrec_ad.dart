@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:applovin_max/applovin_max.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart' as admob; // <-- ALIASED
+import 'package:google_mobile_ads/google_mobile_ads.dart' as admob;  
 import '../../helper/ad_helper.dart';
 import '../../widgets/fancy_swipe_arrow.dart';
 
@@ -9,6 +9,7 @@ class CommonMrecAd extends StatefulWidget {
   final double width;
   final bool showSwipeHint;
   final ValueChanged<bool>? onAdLoadChanged;
+  final bool isMedium;
 
   const CommonMrecAd({
     Key? key,
@@ -16,6 +17,7 @@ class CommonMrecAd extends StatefulWidget {
     this.width = 300,
     this.showSwipeHint = true,
     this.onAdLoadChanged,
+    this.isMedium = false,
   }) : super(key: key);
 
   @override
@@ -37,7 +39,7 @@ class _CommonMrecAdState extends State<CommonMrecAd> {
     final adUnitId = AdHelper.admobNativeUnitId;
     _adMobNativeAd = admob.NativeAd(
       adUnitId: adUnitId,
-      factoryId: 'listTile',
+      factoryId: widget.isMedium ? 'mediumTile' : 'listTile',
       request: const admob.AdRequest(),
       listener: admob.NativeAdListener(
         onAdLoaded: (ad) {
@@ -70,15 +72,17 @@ class _CommonMrecAdState extends State<CommonMrecAd> {
   Widget build(BuildContext context) {
     if (_showAdMob) {
       if (_adMobLoaded && _adMobNativeAd != null) {
-        return SizedBox(
-          height: widget.height,
-          width: widget.width,
-          child: Stack(
-            children: [
-              admob.AdWidget(ad: _adMobNativeAd!),
-              if (widget.showSwipeHint)
-                _buildSwipeHint(),
-            ],
+        return Center(
+          child: SizedBox(
+            height: widget.isMedium ? 320 : 80,
+            width: widget.width,
+            child: Stack(
+              children: [
+                admob.AdWidget(ad: _adMobNativeAd!),
+                if (widget.showSwipeHint)
+                  _buildSwipeHint(),
+              ],
+            ),
           ),
         );
       }

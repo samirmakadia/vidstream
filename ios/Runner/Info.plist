@@ -77,5 +77,7 @@
 		<string>This app needs location permission to show nearby users in Meet.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>GADNativeAdValidatorEnabled</key>
+        <false/>
 	</dict>
 </plist>
