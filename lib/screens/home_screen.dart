@@ -14,6 +14,7 @@ import '../utils/graphics.dart';
 import '../widgets/empty_section.dart';
 import 'home/bottomsheet/filter_bottom_sheet.dart';
 import 'home/widget/video_feed_item_widget.dart';
+import 'package:better_player_plus/better_player_plus.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,6 +33,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   bool _isScreenVisible = true;
   late StreamSubscription _videoUploadedSubscription;
 
+  late BetterPlayerController _precacheController;
+  final Set<String> _precaching = {};
+
   @override
   bool get wantKeepAlive => true;
 
@@ -48,6 +52,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadVideos();
+    // init dummy controller for preCache API
+    _precacheController = BetterPlayerController(
+      const BetterPlayerConfiguration(autoPlay: false),
+    );
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'updatedVideo') {
         _loadVideos(isLoadingShow: false);
@@ -58,8 +66,68 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // stop all precache tasks
+    for (var url in _precaching.toList()) {
+      _stopPrecache(url);
+    }
+    _precacheController.dispose();
     _pageController.dispose();
     super.dispose();
+  }
+
+  BetterPlayerDataSource _makeDS(String url) {
+    return BetterPlayerDataSource(
+      BetterPlayerDataSourceType.network,
+      url,
+      cacheConfiguration: const BetterPlayerCacheConfiguration(
+        useCache: true,
+        preCacheSize: 5 * 1024 * 1024,   // 5 MB
+        maxCacheSize: 500 * 1024 * 1024, // 500 MB
+        maxCacheFileSize: 50 * 1024 * 1024,
+      ),
+    );
+  }
+
+  Future<void> _startPrecache(String url) async {
+    if (_precaching.contains(url)) return;
+    try {
+      _precaching.add(url);
+      await _precacheController.preCache(_makeDS(url));
+      debugPrint("✅ precached $url");
+    } catch (e) {
+      debugPrint("⚠️ precache failed $url: $e");
+      _precaching.remove(url);
+    }
+  }
+
+  Future<void> _stopPrecache(String url) async {
+    if (!_precaching.contains(url)) return;
+    try {
+      await _precacheController.stopPreCache(_makeDS(url));
+    } catch (_) {}
+    _precaching.remove(url);
+  }
+
+  void _preloadWindow(int center) {
+    if (_videos.isEmpty) return;
+    final wanted = <String>{};
+
+    // preload prev 1 and next 2
+    if (center - 1 >= 0) wanted.add(_videos[center - 1].videoUrl);
+    if (center + 1 < _videos.length) wanted.add(_videos[center + 1].videoUrl);
+    if (center + 2 < _videos.length) wanted.add(_videos[center + 2].videoUrl);
+
+    // start wanted
+    for (var url in wanted) {
+      _startPrecache(url);
+    }
+
+    // stop unwanted
+    for (var url in _precaching.toList()) {
+      if (!wanted.contains(url)) {
+        _stopPrecache(url);
+      }
+    }
   }
 
   Future<void> _loadVideos({bool isLoadingShow = true}) async {
@@ -73,6 +141,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         _allVideos = videos;
         _isLoading = false;
       });
+      if (_videos.isNotEmpty) {
+        _preloadWindow(0);
+      }
 
     } catch (e) {
       if(mounted) {
@@ -297,7 +368,17 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         controller: _pageController,
         scrollDirection: Axis.vertical,
         itemCount: totalItems,
-        onPageChanged: (index) => setState(() => _currentIndex = index),
+        onPageChanged: (index) {
+          setState(() => _currentIndex = index);
+
+          // trigger preloading of next 2–3 videos
+          final videoIndex = showAds
+              ? index - (index ~/ (videosPerAd + 1))
+              : index;
+          if (videoIndex >= 0 && videoIndex < _videos.length) {
+            _preloadWindow(videoIndex);
+          }
+        },
         itemBuilder: (context, index) {
           final isAdIndex = showAds && (index + 1) % (videosPerAd + 1) == 0;
 
