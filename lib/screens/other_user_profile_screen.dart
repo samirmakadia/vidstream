@@ -12,7 +12,7 @@ import '../manager/setting_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
 import '../utils/utils.dart';
-import 'ads/banner_ad_with_loader.dart';
+import 'ads/banner_ad_widget.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/empty_section.dart';
 import '../widgets/image_preview_screen.dart';
@@ -434,7 +434,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
       bottom: 0,
       left: 0,
       right: 0,
-      child: const SafeArea(child: BannerAdWithLoader()),
+      child: const SafeArea(child: BannerAdWidget()),
     );
   }
 

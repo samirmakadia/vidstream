@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/ads/banner_ad_with_loader.dart';
+import '../screens/ads/banner_ad_widget.dart';
 
 class ProfessionalBottomAd extends StatefulWidget {
   final Widget child;
@@ -20,7 +20,7 @@ class _ProfessionalBottomAdState extends State<ProfessionalBottomAd> {
     return Column(
       children: [
         Expanded(child: widget.child),
-        BannerAdWithLoader(),
+        BannerAdWidget(),
       ],
     );
   }

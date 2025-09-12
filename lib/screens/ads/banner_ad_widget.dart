@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../helper/ad_helper.dart';
 
-class BannerAdWithLoader extends StatefulWidget {
+class BannerAdWidget extends StatefulWidget {
   final double height;
   final Color? backgroundColor;
 
-  const BannerAdWithLoader({
+  const BannerAdWidget({
     super.key,
     this.height = 60,
     this.backgroundColor,
   });
 
   @override
-  State<BannerAdWithLoader> createState() => _BannerAdWithLoaderState();
+  State<BannerAdWidget> createState() => _BannerAdWidgetState();
 }
 
-class _BannerAdWithLoaderState extends State<BannerAdWithLoader> {
+class _BannerAdWidgetState extends State<BannerAdWidget> {
   bool _isAppLovinLoaded = false;
   bool _isAppLovinFailed = false;
 

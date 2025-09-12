@@ -4,14 +4,14 @@ import 'package:google_mobile_ads/google_mobile_ads.dart' as admob;
 import '../../helper/ad_helper.dart';
 import '../../widgets/fancy_swipe_arrow.dart';
 
-class CommonMrecAd extends StatefulWidget {
+class NativeAdsWidget extends StatefulWidget {
   final double height;
   final double width;
   final bool showSwipeHint;
   final ValueChanged<bool>? onAdLoadChanged;
   final bool isMedium;
 
-  const CommonMrecAd({
+  const NativeAdsWidget({
     Key? key,
     this.height = 300,
     this.width = 300,
@@ -21,10 +21,10 @@ class CommonMrecAd extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<CommonMrecAd> createState() => _CommonMrecAdState();
+  State<NativeAdsWidget> createState() => _NativeAdsWidgetState();
 }
 
-class _CommonMrecAdState extends State<CommonMrecAd> {
+class _NativeAdsWidgetState extends State<NativeAdsWidget> {
   bool _showAdMob = false;
   admob.NativeAd? _adMobNativeAd;
   bool _adMobLoaded = false;

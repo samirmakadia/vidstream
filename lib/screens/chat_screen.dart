@@ -14,7 +14,7 @@ import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../utils/app_toaster.dart';
 import '../utils/graphics.dart';
-import 'ads/banner_ad_with_loader.dart';
+import 'ads/banner_ad_widget.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/empty_section.dart';
 import '../widgets/image_preview_screen.dart';
@@ -382,7 +382,7 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: buildChatAppBar(context),
       body: Column(
         children: [
-          BannerAdWithLoader(),
+          BannerAdWidget(),
           Expanded(child: _isLoading ? _buildLoadingState() : _buildChatBody()),
         ],
       ),

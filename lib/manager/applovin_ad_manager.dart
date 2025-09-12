@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:vidmeet/manager/setting_manager.dart';
 import '../helper/ad_helper.dart';
-import '../screens/ads/common_mrec_ad.dart';
+import '../screens/ads/native_ads_widget.dart';
 
 class AppLovinAdManager {
   static final String _appOpenAdUnitId = AdHelper.appOpen;
@@ -211,7 +211,7 @@ class AppLovinAdManager {
   }
 
   static Widget mrecAd({double height = 250, double width = 300}) {
-    return CommonMrecAd(
+    return NativeAdsWidget(
       onAdLoadChanged: (isLoaded) {
         isMrecAdLoaded = isLoaded;
         debugPrint("MREC Loaded: $isLoaded");
@@ -223,7 +223,7 @@ class AppLovinAdManager {
   }
 
   static Widget largeMrecAd({double height = 300, double width = 300}) {
-    return CommonMrecAd(
+    return NativeAdsWidget(
       onAdLoadChanged: (isLoaded) {
         isMrecAdLoaded = isLoaded;
         debugPrint("MREC Loaded: $isLoaded");
