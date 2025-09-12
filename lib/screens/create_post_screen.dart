@@ -402,7 +402,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
                   ),
                   child: Icon(
                     icon,
-                    color: Colors.white,
+                    color: Colors.black,
                     size: 24,
                   ),
                 ),

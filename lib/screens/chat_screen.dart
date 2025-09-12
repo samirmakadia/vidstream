@@ -236,6 +236,8 @@ class _ChatScreenState extends State<ChatScreen> {
         Rect.fromLTWH(tapPosition.dx, tapPosition.dy, 0, 0),
         Offset.zero & overlay.size,
       ),
+      menuPadding: EdgeInsets.zero,
+      color: Colors.grey.shade800,
       items: [
         if (isOwner)
           const PopupMenuItem<String>(
@@ -429,10 +431,18 @@ class _ChatScreenState extends State<ChatScreen> {
               _deleteConversation();
             }
           },
+          menuPadding: EdgeInsets.zero,
+          color: Colors.grey.shade800,
           itemBuilder: (BuildContext context) => [
             const PopupMenuItem<String>(
               value: 'delete',
-              child: Text('Delete Conversation'),
+              child: Row(
+                children: [
+                  Icon(Icons.delete, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text("Delete Conversation"),
+                ],
+              ),
             ),
           ],
         ),

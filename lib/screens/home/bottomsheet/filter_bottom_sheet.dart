@@ -148,14 +148,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isSelected) ...[
-                      const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                      const Icon(Icons.check_circle, color: Colors.black, size: 18),
                       const SizedBox(width: 8),
                     ],
                     Expanded(
                       child: Text(
                         '#$tag',
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                          color: isSelected ? Colors.black : Colors.white.withValues(alpha: 0.9),
                           fontSize: 14,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                         ),
