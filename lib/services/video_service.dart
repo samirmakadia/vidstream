@@ -68,9 +68,9 @@ class VideoService {
     }
   }
 
-  Future<List<ApiVideo>> getUserPostedVideos(String userId) async {
+  Future<List<ApiVideo>> getUserPostedVideos(String userId, {int limit = 20, int page = 1}) async {
     try {
-      final response = await _apiService.getPostedVideos(userId: userId);
+      final response = await _apiService.getPostedVideos(userId: userId, limit: limit, page: page);
       return response?.data ?? [];
     } catch (e) {
       print('Failed to get user videos: $e');
@@ -315,9 +315,9 @@ class VideoService {
   }
 
   // Get videos that user has liked
-  Future<List<ApiVideo>> getUserLikedVideos(String userId) async {
+  Future<List<ApiVideo>> getUserLikedVideos(String userId, {int limit = 20, int page = 1}) async {
     try {
-      final response = await _apiService.getUserLikedVideos(userId: userId);
+      final response = await _apiService.getUserLikedVideos(userId: userId, limit: limit, page: page);
       return response?.data ?? [];
     } catch (e) {
       print('Failed to get liked videos: $e');

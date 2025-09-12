@@ -9,9 +9,9 @@ class CommentService {
   final AuthService _authService = AuthService();
 
   // Get comments for a video
-  Future<List<ApiComment>> getVideoComments(String videoId, {int limit = 20}) async {
+  Future<List<ApiComment>> getVideoComments(String videoId, {int limit = 20, int page = 1}) async {
     try {
-      final response = await _apiService.getComments(videoId: videoId, limit: limit);
+      final response = await _apiService.getComments(videoId: videoId, limit: limit, page: page);
       return response?.data ?? [];
     } catch (e) {
       print('Failed to get video comments: $e');
@@ -20,15 +20,15 @@ class CommentService {
   }
 
   // Get comments stream for a video
-  Stream<List<ApiComment>> getComments(String videoId, {int limit = 20}) {
+  Stream<List<ApiComment>> getComments(String videoId, {int limit = 20, int page = 1}) {
     final controller = StreamController<List<ApiComment>>();
-    _loadCommentsForVideo(videoId, limit, controller);
+    _loadCommentsForVideo(videoId, limit, controller,page: page);
     return controller.stream;
   }
 
-  Future<void> _loadCommentsForVideo(String videoId, int limit, StreamController<List<ApiComment>> controller) async {
+  Future<void> _loadCommentsForVideo(String videoId, int limit, StreamController<List<ApiComment>> controller, {required int page}) async {
     try {
-      final comments = await getVideoComments(videoId, limit: limit);
+      final comments = await getVideoComments(videoId, limit: limit, page: page);
       final organized = _organizeComments(comments);
       controller.add(organized);
     } catch (e) {

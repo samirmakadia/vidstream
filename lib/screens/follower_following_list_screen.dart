@@ -35,12 +35,109 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
   final Set<String> _loadingFollowUsers = {};
   bool _isFirstLoadFollowers = true;
   bool _isFirstLoadFollowing = true;
+  final ScrollController _followersController = ScrollController();
+  final ScrollController _followingController = ScrollController();
+  bool _hasMoreFollowers = true;
+  bool _hasMoreFollowing = true;
+
+  int _followersPage = 1;
+  int _followingPage = 1;
+  final int _pageSize = 20;
+  final List<ApiUser> _followers = [];
+  final List<ApiUser> _following = [];
+  bool _isFetchingFollowers = false;
+  bool _isFetchingFollowing = false;
+  bool _isFetchingFollowersPagination = false;
+  bool _isFetchingFollowingPagination = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex);
     _currentUserId = ApiRepository.instance.auth.currentUser?.id;
+
+    _fetchFollowers();
+    _fetchFollowing();
+
+    _followersController.addListener(() {
+      if (_followersController.position.pixels >=
+          _followersController.position.maxScrollExtent - 200 &&
+          !_isFetchingFollowers &&
+          _hasMoreFollowers) {
+        _fetchFollowers();
+      }
+    });
+
+    _followingController.addListener(() {
+      if (_followingController.position.pixels >=
+          _followingController.position.maxScrollExtent - 200 &&
+          !_isFetchingFollowing &&
+          _hasMoreFollowing) {
+        _fetchFollowing();
+      }
+    });
+  }
+
+  Future<void> _fetchFollowers({bool refresh = false}) async {
+    if (refresh) {
+      _followersPage = 1;
+      _hasMoreFollowers = true;
+    } else {
+      if (!_hasMoreFollowers || _isFetchingFollowersPagination) return;
+      setState(() => _isFetchingFollowersPagination = true);
+    }
+
+    if (refresh) setState(() => _isFetchingFollowers = true);
+
+    final newData = await _followService.getFollowers(
+      widget.userId,
+      page: _followersPage,
+      limit: _pageSize,
+    );
+
+    setState(() {
+      if (refresh) _followers.clear();
+      _followers.addAll(newData);
+
+      _hasMoreFollowers = newData.length == _pageSize;
+      if (_hasMoreFollowers) _followersPage++;
+
+      if (refresh) _isFetchingFollowers = false;
+      else _isFetchingFollowersPagination = false;
+
+      _isFirstLoadFollowers = false;
+    });
+  }
+
+  Future<void> _fetchFollowing({bool refresh = false}) async {
+    if (refresh) {
+      _followingPage = 1;
+      _hasMoreFollowing = true;
+    } else {
+      if (!_hasMoreFollowing || _isFetchingFollowingPagination) return;
+      setState(() => _isFetchingFollowingPagination = true);
+    }
+
+    if (refresh) setState(() => _isFetchingFollowing = true);
+
+    final newData = await _followService.getFollowing(
+      widget.userId,
+      page: _followingPage,
+      limit: _pageSize,
+    );
+
+    setState(() {
+      if (refresh) _following.clear();
+      _following.addAll(newData);
+
+      _hasMoreFollowing = newData.length == _pageSize;
+      if (_hasMoreFollowing) _followingPage++;
+
+      if (refresh) _isFetchingFollowing = false;
+      else _isFetchingFollowingPagination = false;
+
+      _isFirstLoadFollowing = false;
+    });
   }
 
   @override
@@ -93,126 +190,107 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
   }
 
   Widget _buildFollowersList() {
-    return FutureBuilder<List<ApiUser>>(
-      future: _followService.getFollowers(widget.userId),
-      builder: (context, snapshot) {
-        final followers = snapshot.data ?? [];
+    if (_isFirstLoadFollowers && _followers.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: Colors.white));
+    }
+    if (_followers.isEmpty) {
+      return EmptySection(
+        icon: Icons.people_outline,
+        title: 'No followers yet',
+        subtitle: 'When people follow this account, they\'ll show up here.',
+      );
+    }
 
-        if (snapshot.connectionState == ConnectionState.waiting && _isFirstLoadFollowers) {
-          return const Center(child: CircularProgressIndicator(color: Colors.white));
-        }
+    final List<Widget> items = [];
+    final int frequency = SettingManager().nativeFrequency;
 
-        _isFirstLoadFollowers = false;
+    for (int i = 0; i < _followers.length; i++) {
+      items.add(_buildUserListItem(_followers[i]));
 
-        if (snapshot.hasError) {
-          return EmptySection(
-            icon: Icons.people_outline,
-            title: 'Something went wrong',
-            subtitle: 'Failed to load followers: ${snapshot.error}',
-            refreshText: 'Retry',
-            onRefresh: () => setState(() {}),
-          );
-        }
+      // Regular ads at intervals
+      if ((i + 1) % frequency == 0 && AppLovinAdManager.isMrecAdLoaded) {
+        items.add(Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: AppLovinAdManager.mrecAd(),
+        ));
+      }
+    }
 
-        if (followers.isEmpty) {
-          return EmptySection(
-            icon: Icons.people_outline,
-            title: 'No followers yet',
-            subtitle: 'When people follow this account, they\'ll show up here.',
-          );
-        }
+    // If list is shorter than frequency, show ad at end
+    if (_followers.length < frequency && AppLovinAdManager.isMrecAdLoaded) {
+      items.add(Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: AppLovinAdManager.mrecAd(),
+      ));
+    }
 
-        final List<Widget> items = [];
+    if (_isFetchingFollowersPagination) {
+      items.add(const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: CircularProgressIndicator(color: Colors.white)),
+      ));
+    }
 
-        for (int i = 0; i < followers.length; i++) {
-          items.add(_buildUserListItem(followers[i]));
-
-          if ((i + 1) % SettingManager().nativeFrequency == 0 && AppLovinAdManager.isMrecAdLoaded) {
-            items.add(Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: AppLovinAdManager.mrecAd(),
-            ));
-          }
-        }
-
-        final remainder = followers.length % SettingManager().nativeFrequency;
-        if (AppLovinAdManager.isMrecAdLoaded) {
-          if (followers.length < SettingManager().nativeFrequency || remainder > 1) {
-            items.add(Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: AppLovinAdManager.mrecAd(),
-            ));
-          }
-        }
-
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: items,
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: () => _fetchFollowers(refresh: true),
+      child: ListView(
+        controller: _followersController,
+        padding: const EdgeInsets.all(16),
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: items,
+      ),
     );
   }
 
   Widget _buildFollowingList() {
-    return FutureBuilder<List<ApiUser>>(
-      future: _followService.getFollowing(widget.userId),
-      builder: (context, snapshot) {
-        final following = snapshot.data ?? [];
+    if (_isFirstLoadFollowing && _following.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: Colors.white));
+    }
+    if (_following.isEmpty) {
+      return EmptySection(
+        icon: Icons.person_add_outlined,
+        title: 'Not following anyone yet',
+        subtitle: 'When this account follows people, they\'ll show up here.',
+      );
+    }
 
-        if (snapshot.connectionState == ConnectionState.waiting && _isFirstLoadFollowing) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          );
-        }
+    final List<Widget> items = [];
+    final int frequency = SettingManager().nativeFrequency;
 
-        _isFirstLoadFollowing = false;
+    for (int i = 0; i < _following.length; i++) {
+      items.add(_buildUserListItem(_following[i]));
 
-        if (snapshot.hasError) {
-          return EmptySection(
-            icon: Icons.people_outline,
-            title: 'Something went wrong',
-            subtitle: 'Failed to load followers: ${snapshot.error}',
-            refreshText: 'Retry',
-            onRefresh: () => setState(() {}),
-          );
-        }
+      // Regular ads at intervals
+      if ((i + 1) % frequency == 0 && AppLovinAdManager.isMrecAdLoaded) {
+        items.add(Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: AppLovinAdManager.mrecAd(),
+        ));
+      }
+    }
 
-        if (following.isEmpty) {
-          return EmptySection(
-            icon: Icons.person_add_outlined,
-            title: 'Not following anyone yet',
-            subtitle: 'When this account follows people, they\'ll show up here.',
-          );
-        }
+    if (_following.length < frequency && AppLovinAdManager.isMrecAdLoaded) {
+      items.add(Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: AppLovinAdManager.mrecAd(),
+      ));
+    }
 
-        var adInterval = SettingManager().nativeFrequency;
-        final List<Widget> items = [];
+    if (_isFetchingFollowingPagination) {
+      items.add(const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: CircularProgressIndicator(color: Colors.white)),
+      ));
+    }
 
-        for (int i = 0; i < following.length; i++) {
-          items.add(_buildUserListItem(following[i]));
-          if ((i + 1) % adInterval == 0 && AppLovinAdManager.isMrecAdLoaded) {
-            items.add(Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: AppLovinAdManager.mrecAd(),
-            ));
-          }
-        }
-
-        final remainder = following.length % adInterval;
-        if (AppLovinAdManager.isMrecAdLoaded) {
-          if (following.length < adInterval || remainder > 1) {
-            items.add(Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: AppLovinAdManager.mrecAd(),
-            ));
-          }
-        }
-
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: items,
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: () => _fetchFollowing(refresh: true),
+      child: ListView(
+        controller: _followingController,
+        padding: const EdgeInsets.all(16),
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: items,
+      ),
     );
   }
 
@@ -418,6 +496,8 @@ class _FollowerFollowingListScreenState extends State<FollowerFollowingListScree
         "userId": targetUserId,
         "isFollow": newIsFollow,
       });
+      _fetchFollowers(refresh: true);
+      _fetchFollowing(refresh: true);
     } catch (e) {
       if (mounted) {
         Graphics.showTopDialog(

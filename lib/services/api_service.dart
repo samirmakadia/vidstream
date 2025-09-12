@@ -322,7 +322,7 @@ class ApiService {
   Future<response_models.PaginatedResponse<ApiVideo>?> getPostedVideos({
     required String? userId,
     int page = 1,
-    int limit = 30,
+    int limit = 20,
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.get<response_models.PaginatedResponse<ApiVideo>>(

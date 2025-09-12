@@ -28,6 +28,7 @@ class _NativeAdsWidgetState extends State<NativeAdsWidget> {
   bool _showAdMob = false;
   admob.NativeAd? _adMobNativeAd;
   bool _adMobLoaded = false;
+  bool _appLovinLoaded = false;
 
   @override
   void dispose() {
@@ -79,6 +80,13 @@ class _NativeAdsWidgetState extends State<NativeAdsWidget> {
             child: Stack(
               children: [
                 admob.AdWidget(ad: _adMobNativeAd!),
+                if (!_adMobLoaded)
+                  const Center(
+                    child: Text(
+                      'Loading Ads...',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 if (widget.showSwipeHint)
                   _buildSwipeHint(),
               ],
@@ -101,6 +109,7 @@ class _NativeAdsWidgetState extends State<NativeAdsWidget> {
               adFormat: AdFormat.mrec,
               listener: AdViewAdListener(
                 onAdLoadedCallback: (ad) {
+                  if (mounted) setState(() => _appLovinLoaded = true);
                   debugPrint("✅ AppLovin MREC loaded");
                   widget.onAdLoadChanged?.call(true);
                 },
@@ -109,7 +118,10 @@ class _NativeAdsWidgetState extends State<NativeAdsWidget> {
                   widget.onAdLoadChanged?.call(false);
                   // fallback to AdMob
                   if (mounted) {
-                    setState(() => _showAdMob = true);
+                    setState(() {
+                      _showAdMob = true;
+                      _appLovinLoaded = false;
+                    });
                     _loadAdMobAd();
                   }
                 },
@@ -119,6 +131,13 @@ class _NativeAdsWidgetState extends State<NativeAdsWidget> {
                     debugPrint("💰 AppLovin revenue: ${ad.revenue}"),
                 onAdExpandedCallback: (ad) {},
                 onAdCollapsedCallback: (ad) {},
+              ),
+            ),
+          if (!_appLovinLoaded)
+            const Center(
+              child: Text(
+                'Loading Ads...',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
             if (widget.showSwipeHint)

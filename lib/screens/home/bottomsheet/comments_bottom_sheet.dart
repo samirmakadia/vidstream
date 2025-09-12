@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:vidmeet/screens/home/bottomsheet/report_dialog.dart';
@@ -35,11 +34,24 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   bool _isPosting = false;
   ApiComment? _replyingTo;
   Set<String> _loadingCommentLikes = {};
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool _isFetchingMore = false;
+  final int _pageSize = 20;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _loadComments();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200 &&
+          !_isFetchingMore &&
+          _hasMore) {
+        _loadComments();
+      }
+    });
   }
 
   @override
@@ -49,18 +61,36 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   }
 
   Future<void> _loadComments() async {
+    if (_isFetchingMore || !_hasMore) return;
+
+    setState(() {
+      _isFetchingMore = true;
+    });
+
     try {
-      _commentService.getComments(widget.videoId).listen((comments) async {
+      final pageToFetch = _currentPage;
+      _commentService
+          .getComments(widget.videoId, limit: _pageSize, page: pageToFetch)
+          .listen((comments) {
         if (mounted) {
           setState(() {
-            _comments = comments;
+            if (pageToFetch == 1) {
+              _comments = comments;
+            } else {
+              _comments.addAll(comments);
+            }
+
+            _hasMore = comments.length == _pageSize;
+            _isFetchingMore = false;
             _isLoading = false;
+            _currentPage++;
           });
         }
       });
     } catch (e) {
       if (mounted) {
         setState(() {
+          _isFetchingMore = false;
           _isLoading = false;
         });
         Graphics.showTopDialog(
@@ -279,33 +309,48 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
   Widget _buildCommentList() {
     int adInterval = SettingManager().nativeFrequency;
+    final showEndAd = _comments.length < adInterval && AppLovinAdManager.isMrecAdLoaded;
+
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _comments.length + (_comments.length / adInterval).ceil(),
+      itemCount: _comments.length +
+          (_comments.length >= adInterval ? (_comments.length / adInterval).ceil() : 0) +
+          (showEndAd ? 1 : 0) +
+          (_isFetchingMore ? 1 : 0),
       itemBuilder: (context, index) {
-        if ((index + 1) % (adInterval + 1) == 0) {
-          // Show MREC ad at every interval
-          if (AppLovinAdManager.isMrecAdLoaded) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: AppLovinAdManager.mrecAd(),
-            );
-          } else {
-            return const SizedBox.shrink();
-          }
+        // Loader at bottom
+        if (_isFetchingMore && index == _comments.length + (_comments.length >= adInterval ? (_comments.length / adInterval).ceil() : 0) + (showEndAd ? 1 : 0) - 1) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        }
+
+        if (_comments.length >= adInterval && (index + 1) % (adInterval + 1) == 0) {
+          return AppLovinAdManager.isMrecAdLoaded
+              ? Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: AppLovinAdManager.mrecAd(),
+          )
+              : const SizedBox.shrink();
+        }
+
+        if (showEndAd && index == _comments.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: AppLovinAdManager.mrecAd(),
+          );
         }
 
         final commentIndex = index - (index ~/ (adInterval + 1));
-        if (commentIndex >= _comments.length) {
-          if (AppLovinAdManager.isMrecAdLoaded) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: AppLovinAdManager.mrecAd(),
-            );
-          } else {
-            return const SizedBox.shrink();
-          }
-        }
+        if (commentIndex >= _comments.length) return const SizedBox.shrink();
 
         final comment = _comments[commentIndex];
         return _buildCommentItem(comment);

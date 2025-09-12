@@ -7,11 +7,12 @@ class SearchService {
   ApiRepository get _apiRepository => ApiRepository.instance;
 
   // Search videos by query
-  Future<List<ApiVideo>> searchVideos(String query, CancelToken? cancelToken, {int limit = 20}) async {
+  Future<List<ApiVideo>> searchVideos(String query, CancelToken? cancelToken, {int limit = 20, int page = 1}) async {
     try {
       final response = await _apiRepository.api.searchVideos(
         query: query,
         limit: limit,
+        page: page,
         cancelToken: cancelToken,
       );
       return response?.data ?? [];
@@ -27,11 +28,12 @@ class SearchService {
 
 
   // Search users by query
-  Future<List<ApiUser>> searchUsers(String query, CancelToken? cancelToken, {int limit = 20}) async {
+  Future<List<ApiUser>> searchUsers(String query, CancelToken? cancelToken, {int limit = 20, int page = 1}) async {
     try {
       final response = await _apiRepository.api.searchUsers(
         query: query,
         limit: limit,
+        page: page,
         cancelToken: cancelToken
       );
       return response?.data ?? [];
@@ -42,9 +44,9 @@ class SearchService {
   }
 
   // Get trending videos
-  Future<List<ApiVideo>> getTrendingVideos({int limit = 20}) async {
+  Future<List<ApiVideo>> getTrendingVideos({int limit = 20, int page = 1}) async {
     try {
-      final response = await _apiRepository.api.getTrendingVideos(limit: limit);
+      final response = await _apiRepository.api.getTrendingVideos(limit: limit,page : page );
       return response?.data ?? [];
     } catch (e) {
       print('Error getting trending videos: $e');
@@ -53,9 +55,9 @@ class SearchService {
   }
 
   // Get popular users
-  Future<List<ApiUser>> getPopularUsers({int limit = 20}) async {
+  Future<List<ApiUser>> getPopularUsers({int limit = 20, int page = 1}) async {
     try {
-      final response = await _apiRepository.api.getPopularUsers(limit: limit);
+      final response = await _apiRepository.api.getPopularUsers(limit: limit,page : page );
       return response?.data ?? [];
     } catch (e) {
       print('Error getting popular users: $e');

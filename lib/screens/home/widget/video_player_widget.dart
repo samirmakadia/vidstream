@@ -52,7 +52,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         looping: false,
         handleLifecycle: true,
         expandToFill: true,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         controlsConfiguration: const BetterPlayerControlsConfiguration(
           showControls: false,
         ),
