@@ -121,7 +121,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         "Success!",
         'Unblocked ${user.displayName}',
       );
-      _loadBlockedUsers();
+      _loadBlockedUsers(refresh: true);
     } catch (e) {
       Graphics.showTopDialog(
         context,

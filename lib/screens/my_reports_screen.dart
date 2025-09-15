@@ -41,7 +41,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           _scrollController.position.maxScrollExtent - 200 &&
           !_isFetchingMore &&
           _hasMore) {
-        _fetchReports();
+        _fetchReports(isLoadingShow: false, refresh: false);
       }
     });
   }
@@ -52,7 +52,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchReports({bool isLoadingShow = true, bool refresh = false}) async {
+  Future<void> _fetchReports({bool isLoadingShow = true, bool refresh = true}) async {
     if (refresh) {
       setState(() {
         _reports.clear();
@@ -98,7 +98,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     setState(() => _deletingReports.add(report.id));
     try {
       await _reportService.deleteReport(report.id);
-      await _fetchReports(isLoadingShow: false);
+       _fetchReports(isLoadingShow: false);
       if (mounted) {
         Graphics.showTopDialog(context, "Success", 'Report deleted successfully');
       }
@@ -167,7 +167,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
       body: SafeArea(
         child: ProfessionalBottomAd(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: Colors.white))
+              ? const Center(child: CircularProgressIndicator())
               : _reports.isEmpty
               ? _buildEmptyState()
               : _buildReportList()
@@ -285,9 +285,9 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Reason
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,7 +311,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                 ),
               ],
             ),
-            
+
             // Description (if available)
             if (report.description != null && report.description!.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -338,9 +338,9 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                 ],
               ),
             ],
-            
+
             const SizedBox(height: 12),
-            
+
             // Target Info
             Container(
               padding: const EdgeInsets.all(8),
@@ -407,11 +407,11 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   }
 
   Widget _buildReportList() {
-    int adInterval = SettingManager().nativeFrequency;
     return SafeArea(
       child: RefreshIndicator(
-        onRefresh: _fetchReports,
+          onRefresh: () => _fetchReports(),
         child: ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
           controller: _scrollController,
           padding: const EdgeInsets.all(16),
           itemCount: Utils.getTotalItems(_reports.length, SettingManager().nativeFrequency) + (_isFetchingMore ? 1 : 0),

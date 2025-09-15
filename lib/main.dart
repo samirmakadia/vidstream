@@ -116,7 +116,7 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(
-          child: CircularProgressIndicator(color: Colors.white),
+          child: CircularProgressIndicator(),
         ),
       );
     }
@@ -139,7 +139,7 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
         return const Scaffold(
           backgroundColor: Colors.black,
           body: Center(
-            child: CircularProgressIndicator(color: Colors.white),
+            child: CircularProgressIndicator(),
           ),
         );
       },
