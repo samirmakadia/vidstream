@@ -63,6 +63,9 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
      if (event == 'updatedUser') {
         _loadUserProfile(isLoadingShow: false);
       }
+     if (event == 'updatedVideo') {
+       _loadPostVideos();
+     }
     });
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
@@ -145,7 +148,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
   }
 
   Future<void> _loadPostVideos({bool reset = false}) async {
-    if (_isFetchingMore || !_hasMoreVideos) return;
+    if (_isFetchingMore || (!_hasMoreVideos && !reset)) return;
 
     setState(() => _isFetchingMore = true);
 
@@ -161,19 +164,17 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
       if (!mounted) return;
 
       setState(() {
-        if (nextPage == 1) {
-          // 🔹 Replace the list on first page load
+        if (reset) {
           _userVideos = videos;
+          _currentPage = 1;
         } else {
-          // 🔹 Append for subsequent pages
           _userVideos.addAll(videos);
+          _currentPage = nextPage;
         }
-
-        _currentPage = nextPage;
         _hasMoreVideos = videos.length == _pageSize;
       });
     } catch (e) {
-      print('Failed to load more videos: $e');
+      print('Failed to load videos: $e');
     } finally {
       if (mounted) setState(() => _isFetchingMore = false);
     }
@@ -351,7 +352,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
                 child: SlideTransition(
                   position: _slideAnimation,
                   child: RefreshIndicator(
-                    onRefresh: _loadUserProfile,
+                    onRefresh: () => _loadUserProfile(isLoadingShow: false),
                     child: CustomScrollView(
                       controller: _scrollController,
                       slivers: [
@@ -890,6 +891,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
           )),
         );
         if (result != null) {
+          print("Returned from video player screen");
           _loadUserProfile(isLoadingShow: false);
         }
       });

@@ -64,7 +64,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
           _videosController.position.maxScrollExtent - 200 &&
           !_isFetchingVideosPagination &&
           _hasMoreVideos) {
-        _fetchVideos(false);
+        _fetchVideos(isLoading: false);
       }
     });
 
@@ -73,7 +73,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
           _usersController.position.maxScrollExtent - 200 &&
           !_isFetchingUsersPagination &&
           _hasMoreUsers) {
-        _fetchUsers(false);
+        _fetchUsers(isLoading: false);
       }
     });
   }
@@ -92,33 +92,42 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  Future<void> _fetchVideos(bool isLoading) async {
-    if(isLoading) {
+  Future<void> _fetchVideos({bool isLoading = true, bool reset = false}) async {
+    if (isLoading) {
       setState(() {
         _isLoading = true;
       });
     }
-    print('Fetching videos pagination ${_videosPage}');
+
     if (!_hasMoreVideos || _isFetchingVideosPagination) return;
 
-    setState(() => _isFetchingVideosPagination = true);
+    if(!reset) {
+      setState(() => _isFetchingVideosPagination = true);
+    }
 
     try {
       final newVideos = _currentQuery.isNotEmpty
-          ? await _searchService.searchVideos(_currentQuery, _cancelToken,
+          ? await _searchService.searchVideos(
+          _currentQuery, _cancelToken,
           page: _videosPage, limit: _pageSize)
-          : await _searchService.getTrendingVideos(limit: _pageSize, page: _videosPage);
+          : await _searchService.getTrendingVideos(
+          limit: _pageSize, page: _videosPage);
 
       if (!mounted) return;
 
       setState(() {
-        _videos.addAll(newVideos);
+        if (reset) {
+          _videos = newVideos;
+          _videosPage = 1;
+        } else {
+          _videos.addAll(newVideos);
+          _videosPage++;
+        }
         _hasMoreVideos = newVideos.length == _pageSize;
-        if (_hasMoreVideos) _videosPage++;
         _isLoading = false;
       });
     } catch (e) {
-       print('Error fetching videos pagination: $e');
+      print('Error fetching videos pagination: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -127,29 +136,39 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     }
   }
 
-  Future<void> _fetchUsers(bool isLoading) async {
-    if(isLoading) {
+  Future<void> _fetchUsers({bool isLoading = true, bool reset = false}) async {
+    if (isLoading) {
       setState(() {
         _isLoading = true;
       });
     }
+
     if (!_hasMoreUsers || _isFetchingUsersPagination) return;
 
-    setState(() => _isFetchingUsersPagination = true);
+    if(!reset) {
+      setState(() => _isFetchingUsersPagination = true);
+    }
 
     try {
       final newUsers = _currentQuery.isNotEmpty
-          ? await _searchService.searchUsers(_currentQuery, _cancelToken,
+          ? await _searchService.searchUsers(
+          _currentQuery, _cancelToken,
           page: _usersPage, limit: _pageSize)
-          : await _searchService.getPopularUsers(limit: _pageSize, page: _usersPage);
+          : await _searchService.getPopularUsers(
+          limit: _pageSize, page: _usersPage);
 
       if (!mounted) return;
 
       setState(() {
-        _users.addAll(newUsers);
+        if (reset) {
+          _users = newUsers;
+          _usersPage = 1;
+        } else {
+          _users.addAll(newUsers);
+          _usersPage++;
+        }
         _hasMoreUsers = newUsers.length == _pageSize;
-        if (_hasMoreUsers) _usersPage++;
-       _isLoading = false;
+        _isLoading = false;
       });
     } catch (e) {
       print('Error fetching users pagination: $e');
@@ -162,8 +181,22 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   }
 
   void _loadDefaultContent(bool isLoading) async {
-    await _fetchVideos(true);
-    await _fetchUsers(true);
+    await _fetchVideos(isLoading: isLoading, reset: true);
+    await _fetchUsers(isLoading: isLoading, reset: true);
+  }
+
+  void _resetAndLoadDefaultContent() {
+    _cancelToken?.cancel('Cancelled previous request');
+    _cancelToken = CancelToken();
+
+    setState(() {
+      _videosPage = 1;
+      _usersPage = 1;
+      _hasMoreVideos = true;
+      _hasMoreUsers = true;
+    });
+
+    _loadDefaultContent(false);
   }
 
   void _performSearch(String query, {bool isLoading = true}) async {
@@ -174,10 +207,10 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
 
     setState(() {
       _isLoading = isLoading;
-      _hasSearched = true;
-      _currentQuery = trimmedQuery;
       _videos.clear();
       _users.clear();
+      _hasSearched = true;
+      _currentQuery = trimmedQuery;
       _videosPage = 1;
       _usersPage = 1;
       _hasMoreVideos = true;
@@ -185,6 +218,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     });
 
     if (trimmedQuery.isEmpty) {
+      setState(() => _hasSearched = false);
       _loadDefaultContent(true);
       return;
     }
@@ -287,6 +321,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       onPressed: () {
         setState(() {
           _isSearching = false;
+          _hasSearched = false;
           _searchController.clear();
         });
         _performSearch('');
@@ -500,9 +535,9 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                     destination: OtherUserProfileScreen(userId: user.id),
                     onReturn: (_) {
                       if (_currentQuery.isNotEmpty) {
-                        _performSearch(_currentQuery, isLoading: false);
+                        _performSearch(_currentQuery);
                       } else {
-                        _loadDefaultContent(false);
+                        _resetAndLoadDefaultContent();
                       }
                     },
                   );
@@ -547,19 +582,18 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   Future<void> _openVideoPlayer(ApiVideo video) async {
     AppLovinAdManager.handleScreenOpen(() {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final  result = await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) =>  VideoPlayerScreen(
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => VideoPlayerScreen(
             video: video,
             allVideos: _videos,
             user: null,
           )),
         );
-        if (result != null) {
-          if (_currentQuery.isNotEmpty) {
-            _performSearch(_currentQuery, isLoading: false);
-          } else {
-            _loadDefaultContent(false);
-          }
+
+        if (_currentQuery.isNotEmpty) {
+          _performSearch(_currentQuery);
+        } else {
+          _resetAndLoadDefaultContent();
         }
       });
     });

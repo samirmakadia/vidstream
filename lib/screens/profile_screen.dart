@@ -62,12 +62,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         _loadUserProfile();
       }
       else if (event == 'updatedUser') {
+        print('updatedUser event 1234');
         _loadUserProfile();
         _refreshFollowCounts();
       }
     });
   }
-
 
   Future<void> _refreshFollowCounts() async {
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
@@ -113,10 +113,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     if (_isFetchingPosts) return;
 
     if (refresh) {
-      // Reset state for a fresh load
       setState(() {
-        _postsPage = 0;          // Start before first page
-        _userVideos.clear();     // Clear old videos
+        _postsPage = 0;
+        _userVideos.clear();
         _hasMorePosts = true;
       });
     }
