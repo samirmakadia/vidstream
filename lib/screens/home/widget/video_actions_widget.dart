@@ -301,8 +301,8 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
               child: GestureDetector(
                 onTap: widget.isFollowLoading ? null : widget.onFollowToggle,
                 child: Container(
-                  width: 15,
-                  height: 15,
+                  width: 18,
+                  height: 18,
                   decoration: BoxDecoration(
                     color: widget.user.isFollow ? Colors.green : Colors.blue,
                     shape: BoxShape.circle,
@@ -310,8 +310,8 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
                   child: Center(
                     child: widget.isFollowLoading
                         ? const SizedBox(
-                      width: 10,
-                      height: 10,
+                      width: 12,
+                      height: 12,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -319,7 +319,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
                     )
                         : Icon(
                       widget.user.isFollow ? Icons.check : Icons.add,
-                      size: 11,
+                      size: 12,
                       color: Colors.white,
                     ),
                   ),
