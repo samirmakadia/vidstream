@@ -25,6 +25,8 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderStateMixin {
   final SearchService _searchService = SearchService();
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _videosController = ScrollController();
+  final ScrollController _usersController = ScrollController();
   late TabController _tabController;
   CancelToken? _cancelToken;
 
@@ -36,16 +38,44 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   bool _isSearching = false;
   Timer? _debounce;
 
+  bool _isFetchingVideosPagination = false;
+  bool _isFetchingUsersPagination = false;
+
+  int _videosPage = 1;
+  int _usersPage = 1;
+  final int _pageSize = 20;
+
+  bool _hasMoreVideos = true;
+  bool _hasMoreUsers = true;
+
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      if (_isSearching) {
-        setState(() {});
+      if (_isSearching) setState(() {});
+    });
+
+    _loadDefaultContent(true);
+
+    _videosController.addListener(() {
+      if (_videosController.position.pixels >=
+          _videosController.position.maxScrollExtent - 200 &&
+          !_isFetchingVideosPagination &&
+          _hasMoreVideos) {
+        _fetchVideos(false);
       }
     });
-    _loadDefaultContent(true);
+
+    _usersController.addListener(() {
+      if (_usersController.position.pixels >=
+          _usersController.position.maxScrollExtent - 200 &&
+          !_isFetchingUsersPagination &&
+          _hasMoreUsers) {
+        _fetchUsers(false);
+      }
+    });
   }
 
   void _onSearchChanged(String query) {
@@ -62,70 +92,130 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  void _loadDefaultContent(bool isLoading) async {
+  Future<void> _fetchVideos(bool isLoading) async {
     if(isLoading) {
       setState(() {
         _isLoading = true;
       });
     }
+    print('Fetching videos pagination ${_videosPage}');
+    if (!_hasMoreVideos || _isFetchingVideosPagination) return;
+
+    setState(() => _isFetchingVideosPagination = true);
 
     try {
-      final trendingVideos = await _searchService.getTrendingVideos(limit: 20);
-      final popularUsers = await _searchService.getPopularUsers(limit: 20);
+      final newVideos = _currentQuery.isNotEmpty
+          ? await _searchService.searchVideos(_currentQuery, _cancelToken,
+          page: _videosPage, limit: _pageSize)
+          : await _searchService.getTrendingVideos(limit: _pageSize, page: _videosPage);
+
+      if (!mounted) return;
 
       setState(() {
-        _videos = trendingVideos;
-        _users = popularUsers;
+        _videos.addAll(newVideos);
+        _hasMoreVideos = newVideos.length == _pageSize;
+        if (_hasMoreVideos) _videosPage++;
         _isLoading = false;
       });
     } catch (e) {
+       print('Error fetching videos pagination: $e');
+    } finally {
       setState(() {
         _isLoading = false;
+        _isFetchingVideosPagination = false;
       });
-      print('Error loading default content: $e');
     }
   }
 
-  void _performSearch(String query, {bool isLoading = true}) async {
-    if (_cancelToken != null && !_cancelToken!.isCancelled) {
-      _cancelToken!.cancel('Cancelled previous request');
-    }
-
-    _cancelToken = CancelToken();
-    if (query.trim().isEmpty) {
+  Future<void> _fetchUsers(bool isLoading) async {
+    if(isLoading) {
       setState(() {
         _isLoading = true;
-        _videos.clear();
-        _users.clear();
-        _hasSearched = false;
-        _currentQuery = '';
       });
+    }
+    if (!_hasMoreUsers || _isFetchingUsersPagination) return;
+
+    setState(() => _isFetchingUsersPagination = true);
+
+    try {
+      final newUsers = _currentQuery.isNotEmpty
+          ? await _searchService.searchUsers(_currentQuery, _cancelToken,
+          page: _usersPage, limit: _pageSize)
+          : await _searchService.getPopularUsers(limit: _pageSize, page: _usersPage);
+
+      if (!mounted) return;
+
+      setState(() {
+        _users.addAll(newUsers);
+        _hasMoreUsers = newUsers.length == _pageSize;
+        if (_hasMoreUsers) _usersPage++;
+       _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching users pagination: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+        _isFetchingUsersPagination = false;
+      });
+    }
+  }
+
+  void _loadDefaultContent(bool isLoading) async {
+    await _fetchVideos(true);
+    await _fetchUsers(true);
+  }
+
+  void _performSearch(String query, {bool isLoading = true}) async {
+    _cancelToken?.cancel('Cancelled previous request');
+    _cancelToken = CancelToken();
+
+    final trimmedQuery = query.trim();
+
+    setState(() {
+      _isLoading = isLoading;
+      _hasSearched = true;
+      _currentQuery = trimmedQuery;
+      _videos.clear();
+      _users.clear();
+      _videosPage = 1;
+      _usersPage = 1;
+      _hasMoreVideos = true;
+      _hasMoreUsers = true;
+    });
+
+    if (trimmedQuery.isEmpty) {
       _loadDefaultContent(true);
       return;
     }
 
-    setState(() {
-      if(isLoading) {
-        _isLoading = true;
-      }
-      _hasSearched = true;
-      _currentQuery = query.trim();
-    });
-
     try {
-      final videos = await _searchService.searchVideos(query.trim(),_cancelToken);
-      final users = await _searchService.searchUsers(query.trim(),_cancelToken);
+      final videos = await _searchService.searchVideos(
+        trimmedQuery,
+        _cancelToken,
+        page: _videosPage,
+        limit: _pageSize,
+      );
+
+      final users = await _searchService.searchUsers(
+        trimmedQuery,
+        _cancelToken,
+        page: _usersPage,
+        limit: _pageSize,
+      );
+
       setState(() {
         _videos = videos;
         _users = users;
+        _videosPage++;
+        _usersPage++;
+        _hasMoreVideos = videos.length == _pageSize;
+        _hasMoreUsers = users.length == _pageSize;
         _isLoading = false;
       });
-
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
       print('Error performing search: $e');
+      setState(() => _isLoading = false);
     }
   }
 
@@ -173,7 +263,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
         decoration: InputDecoration(
           hintText: _getSearchHint(),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
             icon: Icon(Icons.clear, color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -265,54 +355,63 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   }
 
   Widget _buildVideosTab() {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
-    if (_videos.isEmpty) return _buildEmptyVideosState();
+    if (_isLoading && _videos.isEmpty) return const Center(child: CircularProgressIndicator());
+    if (_videos.isEmpty) {
+      return _buildEmptyVideosState();
+    }
 
     const int videosPerRow = 3;
     int rowsBeforeAd = SettingManager().nativeFrequency;
     final int videosPerChunk = videosPerRow * rowsBeforeAd;
 
-    final List<Widget> children = [];
+    final List<Widget> items = [];
 
     for (int i = 0; i < _videos.length; i += videosPerChunk) {
-      final end = (i + videosPerChunk < _videos.length)
-          ? i + videosPerChunk
-          : _videos.length;
-      final videosChunk = _videos.sublist(i, end);
+      final end = (i + videosPerChunk < _videos.length) ? i + videosPerChunk : _videos.length;
+      final chunk = _videos.sublist(i, end);
 
-      children.add(
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: videosChunk.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: videosPerRow,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 0.7,
-          ),
-          itemBuilder: (context, index) {
-            final video = videosChunk[index];
-            return VideoGridItemWidget(
-              video: video,
-              onTap: () => _openVideoPlayer(video),
-            );
-          },
+      items.add(GridView.builder(
+        shrinkWrap: true,
+        padding: EdgeInsets.only(top: 10,bottom: 20),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: chunk.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: videosPerRow,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 0.7,
         ),
-      );
+        itemBuilder: (context, index) {
+          final video = chunk[index];
+          return VideoGridItemWidget(
+            video: video,
+            onTap: () => _openVideoPlayer(video),
+          );
+        },
+      ));
 
+      // Regular ads after each chunk
       if (AppLovinAdManager.isMrecAdLoaded && end < _videos.length) {
-        children.add(const SizedBox(height: 8));
-        children.add(AppLovinAdManager.mrecAd());
-        children.add(const SizedBox(height: 8));
+        items.add(const SizedBox(height: 8));
+        items.add(AppLovinAdManager.mrecAd());
+        items.add(const SizedBox(height: 8));
       }
     }
 
-    if (AppLovinAdManager.isMrecAdLoaded && (_videos.length < videosPerChunk ||
-        _videos.length % videosPerChunk != 0)) {
-      children.add(const SizedBox(height: 8));
-      children.add(AppLovinAdManager.mrecAd());
-      children.add(const SizedBox(height: 8));
+    // Ad at end if list smaller than chunk or remaining items
+    if (AppLovinAdManager.isMrecAdLoaded &&
+        (_videos.length < videosPerChunk || _videos.length % videosPerChunk != 0)) {
+      items.add(const SizedBox(height: 8));
+      items.add(AppLovinAdManager.mrecAd());
+      items.add(const SizedBox(height: 8));
+    }
+
+    // Bottom loader for pagination
+    if (_isFetchingVideosPagination) {
+      items.add(const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: CircularProgressIndicator()),
+      ));
     }
 
     return Column(
@@ -330,9 +429,10 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
             ),
           ),
         Expanded(
-          child: Padding(
+          child: ListView(
+            controller: _videosController,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ListView(children: children),
+            children: items,
           ),
         ),
       ],
@@ -340,11 +440,11 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   }
 
   Widget _buildUsersTab() {
-    if (_isLoading) {
+    if (_isLoading && _users.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_users.isEmpty) {
+    if (!_isLoading && _users.isEmpty) {
       return _buildEmptyUsersState();
     }
 
@@ -367,8 +467,16 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
           ),
         Expanded(
           child: ListView.builder(
-            itemCount: totalItems,
+            controller: _usersController,
+            itemCount: totalItems + (_isFetchingUsersPagination ? 1 : 0),
             itemBuilder: (context, index) {
+              if (_isFetchingUsersPagination && index == totalItems) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
               if (Utils.isAdIndex(index, _users.length, adInterval, totalItems)) {
                 if (AppLovinAdManager.isMrecAdLoaded) {
                   return Padding(

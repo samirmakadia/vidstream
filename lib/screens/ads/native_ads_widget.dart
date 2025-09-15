@@ -3,6 +3,7 @@ import 'package:applovin_max/applovin_max.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart' as admob;  
 import '../../helper/ad_helper.dart';
 import '../../widgets/fancy_swipe_arrow.dart';
+import '../../widgets/loading_ads_text.dart';
 
 class NativeAdsWidget extends StatefulWidget {
   final double height;
@@ -82,10 +83,7 @@ class _NativeAdsWidgetState extends State<NativeAdsWidget> {
                 admob.AdWidget(ad: _adMobNativeAd!),
                 if (!_adMobLoaded)
                   const Center(
-                    child: Text(
-                      'Loading Ads...',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
+                    child: LoadingAdsText(),
                   ),
                 if (widget.showSwipeHint)
                   _buildSwipeHint(),
@@ -133,13 +131,10 @@ class _NativeAdsWidgetState extends State<NativeAdsWidget> {
                 onAdCollapsedCallback: (ad) {},
               ),
             ),
-          if (!_appLovinLoaded)
-            const Center(
-              child: Text(
-                'Loading Ads...',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            if (!_appLovinLoaded)
+              const Center(
+                child: LoadingAdsText(),
               ),
-            ),
             if (widget.showSwipeHint)
               _buildSwipeHint(),
           ],
