@@ -34,6 +34,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   int _followingCount = 0;
   double offsetY = 0;
   late StreamSubscription _videoUploadedSubscription;
+  int _postsPage = 1;
+  bool _isFetchingPosts = false;
+  bool _hasMorePosts = true;
+
+  int _likedPage = 1;
+  bool _isFetchingLiked = false;
+  bool _hasMoreLiked = true;
+
+  final int _pageSize = 20;
 
   @override
   void initState() {
@@ -51,7 +60,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'updatedVideo') {
         _loadUserProfile();
-        _refreshLikedVideos();
       }
       else if (event == 'updatedUser') {
         _loadUserProfile();
@@ -79,70 +87,93 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _videoUploadedSubscription.cancel();
-    super.dispose();
-  }
-
   Future<void> _loadUserProfile() async {
     try {
       final currentUserId = ApiRepository.instance.auth.currentUser?.id;
       if (currentUserId != null) {
         final user = await ApiRepository.instance.auth.getUserProfile(currentUserId);
-
-        List<ApiVideo> videos = [];
-        List<ApiVideo> likedVideos = [];
-
-        try {
-          videos = await ApiRepository.instance.videos.getUserPostedVideos(currentUserId);
-        } catch (videoError) {
-          if (videoError.toString().contains('permission-denied')) {
-            print('Permission denied for videos - this is likely a Firestore rules issue');
-          }
-        }
-
-        try {
-          likedVideos = await ApiRepository.instance.videos.getUserLikedVideos(currentUserId);
-        } catch (likedError) {
-          if (likedError.toString().contains('permission-denied')) {
-            print('Permission denied for liked videos - this is likely a Firestore rules issue');
-          }
-        }
-        _refreshFollowCounts();
-        final updatedVideos = likedVideos.map((video) => video.copyWith(isLiked: true)).toList();
-        if (mounted) {
-          setState(() {
-            _currentUser = user;
-            _userVideos = videos;
-            _likedVideos = updatedVideos;
-            _isLoading = false;
-          });
-        }
+        if (!mounted) return;
+        setState(() {
+          _currentUser = user;
+          _isLoading = false;
+        });
+        _loadPosts(refresh: true);
+        _loadLiked(refresh: true);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     content: Text('Failed to load profile: ${e.toString()}'),
-        //     backgroundColor: Theme.of(context).colorScheme.error,
-        //     action: SnackBarAction(
-        //       label: 'Retry',
-        //       onPressed: _loadUserProfile,
-        //     ),
-        //   ),
-        // );
-        Graphics.showTopDialog(
-          context,
-          "Error",
-          'Failed to load profile: ${e.toString()}',
-          type: ToastType.error,
-          actionLabel: "Retry",
-          onAction: _loadUserProfile,
-        );
+        Graphics.showTopDialog(context, "Error", 'Failed to load profile: ${e.toString()}', type: ToastType.error, actionLabel: "Retry", onAction: _loadUserProfile);
       }
+    }
+  }
+
+  Future<void> _loadPosts({bool refresh = false}) async {
+    if (_isFetchingPosts) return;
+
+    if (refresh) {
+      // Reset state for a fresh load
+      setState(() {
+        _postsPage = 0;          // Start before first page
+        _userVideos.clear();     // Clear old videos
+        _hasMorePosts = true;
+      });
+    }
+
+    if (!_hasMorePosts) return;
+
+    setState(() => _isFetchingPosts = true);
+
+    try {
+      final nextPage = _postsPage + 1;
+      final newVideos = await ApiRepository.instance.videos
+          .getUserPostedVideos(_currentUser!.id, limit: _pageSize, page: nextPage);
+
+      if (!mounted) return;
+
+      setState(() {
+        _userVideos.addAll(newVideos);
+        _postsPage = nextPage;
+        _hasMorePosts = newVideos.length == _pageSize;
+      });
+    } catch (e) {
+      debugPrint('Failed to load posts: $e');
+    } finally {
+      if (mounted) setState(() => _isFetchingPosts = false);
+    }
+  }
+
+  Future<void> _loadLiked({bool refresh = false}) async {
+    if (_isFetchingLiked) return;
+
+    if (refresh) {
+      setState(() {
+        _likedPage = 0;
+        _likedVideos.clear();
+        _hasMoreLiked = true;
+      });
+    }
+
+    if (!_hasMoreLiked) return;
+
+    setState(() => _isFetchingLiked = true);
+
+    try {
+      final nextPage = _likedPage + 1;
+      final newVideos = await ApiRepository.instance.videos
+          .getUserLikedVideos(_currentUser!.id, limit: _pageSize, page: nextPage);
+
+      if (!mounted) return;
+
+      setState(() {
+        _likedVideos.addAll(newVideos.map((v) => v.copyWith(isLiked: true)));
+        _likedPage = nextPage;
+        _hasMoreLiked = newVideos.length == _pageSize;
+      });
+    } catch (e) {
+      debugPrint('Failed to load liked videos: $e');
+    } finally {
+      if (mounted) setState(() => _isFetchingLiked = false);
     }
   }
 
@@ -160,23 +191,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  Future<void> _refreshLikedVideos() async {
-    final currentUserId = ApiRepository.instance.auth.currentUser?.id;
-    if (currentUserId != null) {
-      try {
-        final likedVideos = await ApiRepository.instance.videos.getUserLikedVideos(currentUserId);
-        final updatedVideos = likedVideos.map((video) => video.copyWith(isLiked: true)).toList();
-        if (mounted) {
-          setState(() {
-            _likedVideos = updatedVideos;
-          });
-        }
-      } catch (e) {
-        print('Failed to refresh liked videos: $e');
-      }
-    }
-  }
-
   void _navigateToFollowersList(int initialTabIndex) {
     if (_currentUser == null) return;
     NavigationHelper.navigateWithAd<void>(
@@ -190,6 +204,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         print("Returned from follower/following screen");
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _videoUploadedSubscription.cancel();
+    super.dispose();
   }
 
   @override
@@ -211,6 +232,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             setState(() {
               offsetY = scrollInfo.metrics.pixels;
             });
+            if (scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200) {
+              if (_selectedTabIndex == 0) {
+                _loadPosts();
+              } else {
+                _loadLiked();
+              }
+            }
             return true;
           },
           child: Stack(
@@ -607,16 +635,20 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildTabContent() {
     final videos = _selectedTabIndex == 0 ? _userVideos : _likedVideos;
-    if (videos.isEmpty) {
+    final bool isFetching = _selectedTabIndex == 0 ? _isFetchingPosts : _isFetchingLiked;
+    final bool hasMore = _selectedTabIndex == 0 ? _hasMorePosts : _hasMoreLiked;
+
+    if (videos.isEmpty && !isFetching) {
       return _buildEmptySection();
     }
 
     const int videosPerRow = 3;
-    int rowsBeforeAd = SettingManager().nativeFrequency;
+    final int rowsBeforeAd = SettingManager().nativeFrequency;
     final int videosPerChunk = videosPerRow * rowsBeforeAd;
 
     final List<Widget> children = [];
 
+    // Build chunks of videos with ads in between
     for (int i = 0; i < videos.length; i += videosPerChunk) {
       final end = (i + videosPerChunk < videos.length) ? i + videosPerChunk : videos.length;
       final videosChunk = videos.sublist(i, end);
@@ -644,10 +676,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       );
 
       children.add(const SizedBox(height: 8));
+
       if (AppLovinAdManager.isMrecAdLoaded) {
         children.add(AppLovinAdManager.mrecAd());
         children.add(const SizedBox(height: 8));
       }
+    }
+
+    if (isFetching) {
+      children.add(
+        const Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+        ),
+      );
     }
 
     return SliverToBoxAdapter(
@@ -698,7 +742,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           title: 'No liked videos',
           subtitle: 'Like some videos to see them here!',
           refreshText: 'Refresh Liked Videos',
-          onRefresh: _refreshLikedVideos, ),
+          onRefresh: _loadLiked
+          ),
       ),
     );
   }

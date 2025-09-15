@@ -48,6 +48,11 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
   final BlockService _blockService = BlockService();
   double offsetY = 0;
   late StreamSubscription _videoUploadedSubscription;
+  int _currentPage = 1;
+  bool _isFetchingMore = false;
+  bool _hasMoreVideos = true;
+  final int _pageSize = 20;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -57,6 +62,14 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
     _videoUploadedSubscription = eventBus.on().listen((event) {
      if (event == 'updatedUser') {
         _loadUserProfile(isLoadingShow: false);
+      }
+    });
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200 &&
+          !_isFetchingMore &&
+          _hasMoreVideos) {
+        _loadPostVideos();
       }
     });
   }
@@ -97,13 +110,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
         setState(() => _isLoading = true);
       }
       final user = await ApiRepository.instance.auth.getUserProfile(widget.userId);
-      List<ApiVideo> videos = [];
-      try {
-        videos = await ApiRepository.instance.videos.getUserPostedVideos(widget.userId);
-      } catch (e) {
-        print('Failed to load user videos: $e');
-      }
-
+      await _loadPostVideos(reset: true);
       try {
         final followerCount = await ApiRepository.instance.follows.getFollowerCount(widget.userId);
         final followingCount = await ApiRepository.instance.follows.getFollowingCount(widget.userId);
@@ -126,22 +133,49 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
       if (mounted) {
         setState(() {
           _user = user;
-          _userVideos = videos;
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        Graphics.showTopDialog(
-          context,
-          "Error",
-          'Failed to load profile: ${e.toString()}',
-          type: ToastType.error,
-          actionLabel: "Retry",
-          onAction: _loadUserProfile,
-        );
+        Graphics.showTopDialog(context, "Error", 'Failed to load profile: ${e.toString()}', type: ToastType.error, actionLabel: "Retry", onAction: _loadUserProfile,);
       }
+    }
+  }
+
+  Future<void> _loadPostVideos({bool reset = false}) async {
+    if (_isFetchingMore || !_hasMoreVideos) return;
+
+    setState(() => _isFetchingMore = true);
+
+    try {
+      final nextPage = reset ? 1 : _currentPage + 1;
+
+      final videos = await ApiRepository.instance.videos.getUserPostedVideos(
+        widget.userId,
+        limit: _pageSize,
+        page: nextPage,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        if (nextPage == 1) {
+          // 🔹 Replace the list on first page load
+          _userVideos = videos;
+        } else {
+          // 🔹 Append for subsequent pages
+          _userVideos.addAll(videos);
+        }
+
+        _currentPage = nextPage;
+        _hasMoreVideos = videos.length == _pageSize;
+      });
+    } catch (e) {
+      print('Failed to load more videos: $e');
+    } finally {
+      if (mounted) setState(() => _isFetchingMore = false);
     }
   }
 
@@ -319,12 +353,21 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
                   child: RefreshIndicator(
                     onRefresh: _loadUserProfile,
                     child: CustomScrollView(
+                      controller: _scrollController,
                       slivers: [
                         _buildSliverAppBar(isOwnProfile),
                         _buildProfileInfo(isOwnProfile),
                         _buildStatsSection(),
                         _buildTabBar(context),
                         _buildTabContent(),
+                        if(_isFetchingMore)
+                        SliverToBoxAdapter(
+                          child: const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(child: CircularProgressIndicator()),
+                          )
+
+                        ),
                         SliverToBoxAdapter(
                           child: SizedBox(height: 130),
                         ),
