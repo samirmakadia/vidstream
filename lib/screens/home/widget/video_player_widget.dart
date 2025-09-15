@@ -173,38 +173,43 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     final isBuffering = videoValue?.isBuffering ?? false;
     final isInitialized = controller!.isVideoInitialized() ?? false;
 
-    return GestureDetector(
-      onTap: _togglePlayPause,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox.expand(
-            child: BetterPlayer(controller: controller!),
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        SizedBox.expand(
+          child: BetterPlayer(controller: controller!),
+        ),
+
+        if (!isInitialized || isBuffering)
+          const Center(
+            child: CircularProgressIndicator(
+            ),
           ),
 
-          if (!isInitialized || isBuffering)
-            const Center(
-              child: CircularProgressIndicator(
-              ),
+        if (_showPlayPauseIcon)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.6),
+              shape: BoxShape.circle,
             ),
+            child: Icon(
+              controller!.isPlaying() ?? false
+                  ? Icons.pause
+                  : Icons.play_arrow,
+              size: 48,
+              color: Colors.white,
+            ),
+          ),
 
-          if (_showPlayPauseIcon)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                controller!.isPlaying() ?? false
-                    ? Icons.pause
-                    : Icons.play_arrow,
-                size: 48,
-                color: Colors.white,
-              ),
-            ),
-        ],
-      ),
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _togglePlayPause,
+          ),
+        ),
+      ],
     );
   }
 }
