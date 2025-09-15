@@ -1,4 +1,4 @@
-import 'dart:ffi';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
@@ -24,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
+  bool get _canPrecache => Platform.isAndroid; // Precache is unstable on iOS with BetterPlayer
   final PageController _pageController = PageController();
   List<ApiVideo> _videos = [];
   List<ApiVideo> _allVideos = [];
@@ -57,9 +58,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     WidgetsBinding.instance.addObserver(this);
     _loadVideos();
     // init dummy controller for preCache API
-    _precacheController = BetterPlayerController(
-      const BetterPlayerConfiguration(autoPlay: false),
-    );
+    if (_canPrecache) {
+      _precacheController = BetterPlayerController(
+        const BetterPlayerConfiguration(autoPlay: false),
+      );
+    }
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'updatedVideo') {
         _loadVideos(isLoadingShow: false);
@@ -71,10 +74,12 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     // stop all precache tasks
-    for (var url in _precaching.toList()) {
-      _stopPrecache(url);
+    if (_canPrecache) {
+      for (var url in _precaching.toList()) {
+        _stopPrecache(url);
+      }
+      _precacheController.dispose();
     }
-    _precacheController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -85,14 +90,15 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       url,
       cacheConfiguration: const BetterPlayerCacheConfiguration(
         useCache: true,
-        preCacheSize: 5 * 1024 * 1024,   // 5 MB
-        maxCacheSize: 500 * 1024 * 1024, // 500 MB
+        preCacheSize: 5 * 1024 * 1024,
+        maxCacheSize: 500 * 1024 * 1024,
         maxCacheFileSize: 50 * 1024 * 1024,
       ),
     );
   }
 
   Future<void> _startPrecache(String url) async {
+    if (!_canPrecache) return; // disable on iOS
     if (_precaching.contains(url)) return;
     try {
       _precaching.add(url);
@@ -105,6 +111,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   Future<void> _stopPrecache(String url) async {
+    if (!_canPrecache) return; // disable on iOS
     if (!_precaching.contains(url)) return;
     try {
       await _precacheController.stopPreCache(_makeDS(url));
@@ -114,6 +121,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
   void _preloadWindow(int center) {
     if (_videos.isEmpty) return;
+    if (!_canPrecache) return; // disable on iOS
     final wanted = <String>{};
 
     // preload prev 1 and next 2

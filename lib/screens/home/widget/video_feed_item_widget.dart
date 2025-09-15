@@ -306,30 +306,31 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
 
                 const SizedBox(width: 16),
 
-                // Video Actions
-                VideoActionsWidget(
-                  isFollowLoading: _isFollowLoading,
-                  onFollowToggle: _toggleFollow,
-                  user: widget.video.user!,
-                  video: widget.video,
-                  isLiked: _isLiked,
-                  onLikeToggle: _toggleLike,
-                  likeCount: _localLikeCount,
-                  isLikeLoading: _isLikeLoading,
-                  onVideoDeleted: widget.onVideoDeleted,
-                  onCommentUpdated: (newCount) {
-                    setState(() {
-                      widget.onCommentUpdated?.call(newCount);
-                    });
-                  },
-                  onReported: (reportedVideo) {
-                    setState(() {
-                      widget.onReported?.call(reportedVideo);
-                    });
-                  },
-                  onPauseRequested: () => widget.onPauseRequested?.call(),
-                  onResumeRequested: () => widget.onResumeRequested?.call(),
-                ),
+                // Video Actions (only if user data is available)
+                if (widget.video.user != null)
+                  VideoActionsWidget(
+                    isFollowLoading: _isFollowLoading,
+                    onFollowToggle: _toggleFollow,
+                    user: widget.video.user!,
+                    video: widget.video,
+                    isLiked: _isLiked,
+                    onLikeToggle: _toggleLike,
+                    likeCount: _localLikeCount,
+                    isLikeLoading: _isLikeLoading,
+                    onVideoDeleted: widget.onVideoDeleted,
+                    onCommentUpdated: (newCount) {
+                      setState(() {
+                        widget.onCommentUpdated?.call(newCount);
+                      });
+                    },
+                    onReported: (reportedVideo) {
+                      setState(() {
+                        widget.onReported?.call(reportedVideo);
+                      });
+                    },
+                    onPauseRequested: () => widget.onPauseRequested?.call(),
+                    onResumeRequested: () => widget.onResumeRequested?.call(),
+                  ),
               ],
             ),
           ),

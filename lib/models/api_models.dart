@@ -220,9 +220,30 @@ class ApiVideo {
   });
 
   factory ApiVideo.fromJson(Map<String, dynamic> json) {
+    // Handle userId which could be either a nested object or a plain string
+    final dynamic rawUser = json['userId'] ?? json['user'];
+    String parsedUserId = '';
+    ApiUser? parsedUser;
+
+    if (rawUser is Map<String, dynamic>) {
+      parsedUserId = rawUser['_id']?.toString() ?? rawUser['id']?.toString() ?? '';
+      parsedUser = ApiUser.fromJson(rawUser);
+    } else if (rawUser is String) {
+      parsedUserId = rawUser;
+      // If full user object is available under 'user', prefer it
+      if (json['user'] is Map<String, dynamic>) {
+        parsedUser = ApiUser.fromJson(json['user'] as Map<String, dynamic>);
+      }
+    } else {
+      parsedUserId = json['user_id']?.toString() ?? '';
+      if (json['user'] is Map<String, dynamic>) {
+        parsedUser = ApiUser.fromJson(json['user'] as Map<String, dynamic>);
+      }
+    }
+
     return ApiVideo(
-      id: json['_id'] ?? '', // match API "_id"
-      userId: json['userId']?['_id'] ?? '', // nested userId object
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+      userId: parsedUserId,
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       videoUrl: json['videoUrl'] ?? json['video_url'] ?? '',
@@ -236,7 +257,7 @@ class ApiVideo {
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? json['updated_at'] ?? '') ?? DateTime.now(),
       isPublic: json['isPublic'] ?? json['is_public'] ?? true,
       isLiked: json['isLiked'] ?? json['is_liked'] ?? false,
-      user: json['userId'] != null ? ApiUser.fromJson(json['userId']) : null, // optional user
+      user: parsedUser,
     );
   }
 
