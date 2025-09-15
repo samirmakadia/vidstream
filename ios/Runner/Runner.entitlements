@@ -6,6 +6,10 @@
     <array>
         <string>Default</string>
     </array>
+    <!-- Required for APNs push notifications. For Debug builds this is typically 'development'.
+         For App Store/TestFlight builds, Xcode/Provisioning should set this to 'production'. -->
+    <key>aps-environment</key>
+    <string>development</string>
 </dict>
 </plist>
 

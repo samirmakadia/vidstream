@@ -2,6 +2,7 @@ import UIKit
 import Flutter
 import FirebaseCore
 import FirebaseMessaging
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, MessagingDelegate {
@@ -41,5 +42,20 @@ import FirebaseMessaging
   override func application(_ application: UIApplication,
                             didFailToRegisterForRemoteNotificationsWithError error: Error) {
       print("❌ Failed to register for remote notifications: \(error)")
+  }
+
+  // Ensure notifications are displayed while app is in foreground on iOS
+  // This complements the Dart-side setForegroundNotificationPresentationOptions.
+  @available(iOS 10.0, *)
+  override public func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                     willPresent notification: UNNotification,
+                                     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+      completionHandler([.alert, .badge, .sound])
+  }
+
+  // Firebase Messaging callback for FCM token refresh on iOS
+  public func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+      print("✅ FCM registration token: \(String(describing: fcmToken))")
+      // If needed, forward token to Flutter via NotificationCenter or method channel.
   }
 }

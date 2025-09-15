@@ -31,6 +31,22 @@ class NotificationService {
 
     try {
       await _initializeLocalNotifications();
+      await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        announcement: false,
+        criticalAlert: false,
+        provisional: false,
+        carPlay: false,
+      );
+
+      // On iOS, explicitly allow notifications to be shown when app is in foreground
+      await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
       final fcmToken = await getFcmToken();
       if (fcmToken != null) {
