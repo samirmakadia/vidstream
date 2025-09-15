@@ -60,49 +60,56 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     super.dispose();
   }
 
-  Future<void> _loadComments() async {
-    if (_isFetchingMore || !_hasMore) return;
-
+  Future<void> _refreshComments() async {
     setState(() {
-      _isFetchingMore = true;
+      _currentPage = 1;
+      _hasMore = true;
+      _isFetchingMore = false;
+      _isLoading = false;
     });
+    await _loadComments(reset: true);
+  }
+
+  Future<void> _loadComments({bool reset = false}) async {
+    if (_isFetchingMore || (!_hasMore && !reset)) return;
+
+    if(!reset) {
+      setState(() => _isFetchingMore = true);
+    }
 
     try {
-      final pageToFetch = _currentPage;
+      final pageToFetch = reset ? 1 : _currentPage;
       _commentService
           .getComments(widget.videoId, limit: _pageSize, page: pageToFetch)
           .listen((comments) {
-        if (mounted) {
-          setState(() {
-            if (pageToFetch == 1) {
-              _comments = comments;
-            } else {
-              _comments.addAll(comments);
-            }
-
-            _hasMore = comments.length == _pageSize;
-            _isFetchingMore = false;
-            _isLoading = false;
-            _currentPage++;
-          });
-        }
-      });
-    } catch (e) {
-      if (mounted) {
+        if (!mounted) return;
         setState(() {
+          if (pageToFetch == 1) {
+            _comments = comments;
+          } else {
+            _comments.addAll(comments);
+          }
+
+          _hasMore = comments.length == _pageSize;
           _isFetchingMore = false;
           _isLoading = false;
+          _currentPage = pageToFetch + 1;
         });
-        Graphics.showTopDialog(
-          context,
-          "Error!",
-          'Failed to load comments: $e',
-          type: ToastType.error,
-        );
-      }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isFetchingMore = false;
+        _isLoading = false;
+      });
+      Graphics.showTopDialog(
+        context,
+        "Error!",
+        'Failed to load comments: $e',
+        type: ToastType.error,
+      );
     }
   }
-
 
   Future<void> _addComment() async {
     final text = _commentController.text.trim();
@@ -131,7 +138,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       );
       _commentController.clear();
       FocusScope.of(context).unfocus();
-      _loadComments();
+      _refreshComments();
       // Clear reply state
       if (_replyingTo != null) {
         setState(() {
@@ -174,7 +181,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         comment.isLiked = !comment.isLiked;
         comment.likesCount += comment.isLiked ? 1 : -1;
       });
-      _loadComments();
+      _refreshComments();
     } catch (e) {
       if (mounted) {
         Graphics.showTopDialog(
@@ -319,7 +326,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
           (showEndAd ? 1 : 0) +
           (_isFetchingMore ? 1 : 0),
       itemBuilder: (context, index) {
-        // Loader at bottom
+
         if (_isFetchingMore && index == _comments.length + (_comments.length >= adInterval ? (_comments.length / adInterval).ceil() : 0) + (showEndAd ? 1 : 0) - 1) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -666,49 +673,51 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     );
   }
 
-  Future<void> _deleteComment(ApiComment comment) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Comment'),
-        content: const Text('Are you sure you want to delete this comment?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
+    Future<void> _deleteComment(ApiComment comment) async {
+      FocusManager.instance.primaryFocus?.unfocus();
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Delete Comment'),
+          content: const Text('Are you sure you want to delete this comment?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+      );
 
-    if (confirmed == true) {
-      try {
-        await _commentService.deleteComment(comment.id, widget.videoId);
-        _loadComments();
-        if (mounted) {
-          Graphics.showTopDialog(
-            context,
-            "Success!",
-            'Comment deleted successfully',
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          Graphics.showTopDialog(
-            context,
-            "Error!",
-            'Failed to delete comment: $e',
-            type: ToastType.error,
-          );
+      if (confirmed == true) {
+        FocusManager.instance.primaryFocus?.unfocus();
+        try {
+          await _commentService.deleteComment(comment.id, widget.videoId);
+          _refreshComments();
+          if (mounted) {
+            Graphics.showTopDialog(
+              context,
+              "Success!",
+              'Comment deleted successfully',
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            Graphics.showTopDialog(
+              context,
+              "Error!",
+              'Failed to delete comment: $e',
+              type: ToastType.error,
+            );
+          }
         }
       }
     }
-  }
 
   Future<void> _reportComment(ApiComment comment) async {
     final reasons = {
@@ -733,7 +742,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
             reason: reason,
             description: description,
             onSuccess: () {
-              if (mounted) _loadComments();
+              if (mounted) _refreshComments();
             },
           );
         },
