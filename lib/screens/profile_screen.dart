@@ -59,7 +59,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _refreshFollowCounts();
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'updatedVideo') {
-        _loadUserProfile();
+        _loadPosts(refresh: true);
+        _loadLiked(refresh: true);
       }
       else if (event == 'updatedUser') {
         print('updatedUser event 1234');
@@ -114,8 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
     if (refresh) {
       setState(() {
-        _postsPage = 0;
-        _userVideos.clear();
+        _postsPage = 1;
         _hasMorePosts = true;
       });
     }
@@ -125,15 +125,16 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     setState(() => _isFetchingPosts = true);
 
     try {
-      final nextPage = _postsPage + 1;
-      final newVideos = await ApiRepository.instance.videos
-          .getUserPostedVideos(_currentUser!.id, limit: _pageSize, page: nextPage);
-
-      if (!mounted) return;
+       final newVideos = await ApiRepository.instance.videos
+          .getUserPostedVideos(_currentUser!.id, limit: _pageSize, page: _postsPage);
 
       setState(() {
-        _userVideos.addAll(newVideos);
-        _postsPage = nextPage;
+        if (_postsPage == 1) {
+          _userVideos = newVideos;
+        } else {
+          _userVideos.addAll(newVideos);
+        }
+        _postsPage++;
         _hasMorePosts = newVideos.length == _pageSize;
       });
     } catch (e) {
@@ -148,8 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
     if (refresh) {
       setState(() {
-        _likedPage = 0;
-        _likedVideos.clear();
+        _likedPage = 1;
         _hasMoreLiked = true;
       });
     }
@@ -159,21 +159,27 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     setState(() => _isFetchingLiked = true);
 
     try {
-      final nextPage = _likedPage + 1;
       final newVideos = await ApiRepository.instance.videos
-          .getUserLikedVideos(_currentUser!.id, limit: _pageSize, page: nextPage);
+          .getUserLikedVideos(_currentUser!.id, limit: _pageSize, page: _likedPage);
 
       if (!mounted) return;
 
       setState(() {
-        _likedVideos.addAll(newVideos.map((v) => v.copyWith(isLiked: true)));
-        _likedPage = nextPage;
+        if (_likedPage == 1) {
+          _likedVideos = newVideos.map((v) => v.copyWith(isLiked: true)).toList();
+        } else {
+          _likedVideos.addAll(newVideos.map((v) => v.copyWith(isLiked: true)));
+        }
+
+        _likedPage++;
         _hasMoreLiked = newVideos.length == _pageSize;
       });
     } catch (e) {
       debugPrint('Failed to load liked videos: $e');
     } finally {
-      if (mounted) setState(() => _isFetchingLiked = false);
+      if (mounted) {
+        setState(() => _isFetchingLiked = false);
+      }
     }
   }
 
@@ -219,7 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       return Scaffold(
         backgroundColor: Colors.black,
         body: const Center(
-          child: CircularProgressIndicator(color: Colors.white),
+          child: CircularProgressIndicator(),
         ),
       );
     }
@@ -688,7 +694,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         const Padding(
           padding: EdgeInsets.all(16),
           child: Center(
-            child: CircularProgressIndicator(color: Colors.white),
+            child: CircularProgressIndicator(),
           ),
         ),
       );
@@ -714,6 +720,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           )),
         );
         if (result != null) {
+          print("Returned from video player screen");
           setState(() {
             if (_selectedTabIndex == 0) {
               _userVideos.removeWhere((v) => v.id == result);
@@ -721,7 +728,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               _likedVideos.removeWhere((v) => v.id == result);
             }
           });
-          _loadUserProfile();
+          _loadPosts(refresh: true);
+          _loadLiked(refresh: true);
         }
       });
     });
@@ -742,7 +750,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           title: 'No liked videos',
           subtitle: 'Like some videos to see them here!',
           refreshText: 'Refresh Liked Videos',
-          onRefresh: _loadLiked
+          onRefresh: () => _loadLiked(refresh: true),
           ),
       ),
     );
