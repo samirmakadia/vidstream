@@ -258,14 +258,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.black,
       appBar:_buildAppBar(context),
       body: SafeArea(
-        child: ProfessionalBottomAd(
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: _selectedVideo == null ? _buildVideoSelectionView() : _buildVideoEditView(),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: ProfessionalBottomAd(
+            child: ScaleTransition(
+              scale: _scaleAnimation,
+              child: _selectedVideo == null ? _buildVideoSelectionView() : _buildVideoEditView(),
+            ),
           ),
         ),
       ),
@@ -446,7 +450,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
 
   Widget _buildVideoEditView() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -542,6 +553,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
             controller: _descriptionController,
             style: const TextStyle(color: Colors.white),
             maxLines: 4,
+            onTapOutside: (_) => FocusScope.of(context).unfocus(),
             decoration: InputDecoration(
               hintText: 'Tell us about your video...',
               hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
