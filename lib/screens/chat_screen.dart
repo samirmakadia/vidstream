@@ -230,7 +230,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _deleteConversation() async {
+  Future<bool> _deleteConversation() async {
     try {
       await _chatService.deleteChatConversation(widget.conversation?.id ?? '');
       await MessageDatabase.instance.deleteMessagesByConversationId(widget.conversation?.id ?? '');
@@ -241,9 +241,9 @@ class _ChatScreenState extends State<ChatScreen> {
           "Success!",
           'Conversation deleted successfully',
         );
-
-        Navigator.pop(context);
+        Navigator.of(context).pop();
       }
+      return true;
     } catch (e) {
       if (mounted) {
         Graphics.showTopDialog(
@@ -253,6 +253,7 @@ class _ChatScreenState extends State<ChatScreen> {
           type: ToastType.error,
         );
       }
+      return false;
     }
   }
 
@@ -482,9 +483,12 @@ class _ChatScreenState extends State<ChatScreen> {
       elevation: 0,
       actions: [
         PopupMenuButton<String>(
-          onSelected: (value) {
+          onSelected: (value) async {
             if (value == 'delete') {
-              _deleteConversation();
+              final success = await _deleteConversation();
+              if (success && mounted) {
+                Navigator.of(context).pop(true);
+              }
             }
           },
           menuPadding: EdgeInsets.zero,
