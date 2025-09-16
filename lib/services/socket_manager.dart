@@ -55,6 +55,8 @@ class SocketManager {
 
     _socket?.on('userOnline', _handleUserOnline);
     _socket?.on('userOffline', _handleUserOffline);
+
+    _socket?.on('typing', _handleTypingEvent);
   }
 
   void disconnect() {
@@ -189,6 +191,53 @@ class SocketManager {
     }
   }
 
+  void _handleTypingEvent(dynamic data) {
+    try {
+      print("📤 Received typing event: $data");
+      final jsonData = (data as Map).cast<String, dynamic>();
+
+      final conversationId = jsonData['conversationId'] as String?;
+      final receiverId = jsonData['receiverId'] as String?;
+      _currentUserId = _authService.currentUser?.id ?? "";
+
+      print("📤 _currentUserId: $_currentUserId, receiverId: $receiverId");
+
+      if (conversationId != null && receiverId != null && receiverId == _currentUserId) {
+
+        if (receiverId.isNotEmpty) {
+          eventBus.fire(TypingEvent(
+            receiverId: receiverId,
+            conversationId: conversationId,
+          ));
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ Error handling typing event: $e");
+    }
+  }
+
+  void sendTypingEvent({
+    required String conversationId,
+  }) {
+    _currentUserId = _authService.currentUser?.id ?? "";
+    if (_currentUserId == null || _currentUserId!.isEmpty) return;
+
+    final receiverId = _getReceiverId(
+      conversationId: conversationId,
+      currentUserId: _currentUserId!,
+      senderId: _currentUserId!,
+    );
+
+    final payload = {
+      'senderId': _currentUserId,
+      'receiverId': receiverId,
+      'conversationId': conversationId,
+    };
+
+    print("✍️ Sending typing event: $payload");
+    _socket?.emit('typing', payload);
+  }
+
   Future<void> _syncMessagesSinceLastSync() async {
     try {
       final DateTime sinceDate = (await Utils.getLastSyncDate())?.toUtc() ?? DateTime.now().subtract(const Duration(days: 1)).toUtc();
@@ -292,5 +341,16 @@ class MeetEvent {
   MeetEvent({
     required this.userId,
     required this.type,
+  });
+}
+
+
+class TypingEvent {
+  final String receiverId;
+  final String conversationId;
+
+  TypingEvent({
+    required this.receiverId,
+    required this.conversationId,
   });
 }

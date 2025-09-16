@@ -45,6 +45,9 @@ class _ChatScreenState extends State<ChatScreen> {
   bool initialScroll = false;
   late Stream<List<ChatMessage>> _messagesStream;
   String? otherUserId;
+  late StreamSubscription _typingSubscription;
+  bool _isOtherUserTyping = false;
+  Timer? _typingTimeout;
 
   @override
   void initState() {
@@ -52,12 +55,39 @@ class _ChatScreenState extends State<ChatScreen> {
     final currentUserId = _authService.currentUser?.id;
     final otherUser = Utils.getOtherUserIdFromConversation(widget.conversationId, currentUserId, widget.otherUserId);
     otherUserId = widget.otherUserId ?? otherUser ?? '';
-    final conversationId = widget.conversationId ?? (currentUserId != null && otherUserId != null ? Utils.generateConversationId(currentUserId, otherUserId!) : null);
+    final conversationId = widget.conversationId ??
+        (currentUserId != null && otherUserId != null
+            ? Utils.generateConversationId(currentUserId, otherUserId!)
+            : null);
 
     if (conversationId != null) {
       _messagesStream = db.watchMessagesForConversation(conversationId);
     }
     _loadOtherUser();
+    _typingMethods();
+  }
+
+  void _typingMethods() {
+    _messageController.addListener(() {
+      SocketManager().sendTypingEvent(
+        conversationId: widget.conversationId ?? '',
+      );
+    });
+
+    _typingSubscription = eventBus.on<TypingEvent>().listen((event) {
+      final currentUserId = _authService.currentUser?.id;
+      if (event.conversationId == widget.conversationId && event.receiverId == currentUserId) {
+        _typingTimeout?.cancel();
+
+        setState(() => _isOtherUserTyping = true);
+
+        _typingTimeout = Timer(const Duration(seconds: 5), () {
+          if (mounted) setState(() => _isOtherUserTyping = false);
+        });
+      }
+    });
+
+
   }
 
   MessageModel? _getMessage({String? mediaUrl, int mediaSize = 0, double mediaDuration =0, String messageType = 'text'}) {
@@ -414,9 +444,29 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                _otherUser?.displayName ?? widget.name ?? 'Loading...',
-                style: Theme.of(context).appBarTheme.titleTextStyle,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _otherUser?.displayName ?? widget.name ?? 'Loading...',
+                    style: Theme.of(context).appBarTheme.titleTextStyle,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (_isOtherUserTyping)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        'typing...',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
@@ -722,6 +772,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _typingSubscription.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
