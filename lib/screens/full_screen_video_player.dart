@@ -54,11 +54,27 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final padding = MediaQuery.of(context).padding;
     return Scaffold(
       backgroundColor: Colors.black,
-      body: _chewieController != null
-          ? Chewie(controller: _chewieController!)
-          : const Center(child: CircularProgressIndicator()),
+      body: Stack(
+        children: [
+          Center(
+            child: _chewieController != null
+                ? Chewie(controller: _chewieController!)
+                : const CircularProgressIndicator(),
+          ),
+
+          Positioned(
+            top: padding.top,
+            left: 10,
+            child: IconButton(
+                icon: Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(context, false),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
