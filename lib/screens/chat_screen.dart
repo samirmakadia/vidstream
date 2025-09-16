@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:vidmeet/services/auth_service.dart';
 import 'package:vidmeet/models/api_models.dart';
 import 'package:image_picker/image_picker.dart';
@@ -409,12 +410,17 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: buildChatAppBar(context),
-      body: Column(
-        children: [
-          BannerAdWidget(),
-          Expanded(child: _isLoading ? _buildLoadingState() : _buildChatBody()),
-        ],
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Column(
+          children: [
+            BannerAdWidget(),
+            Expanded(child: _isLoading ? _buildLoadingState() : _buildChatBody()),
+          ],
+        ),
       ),
     );
   }
@@ -546,19 +552,29 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           }
         });
-        return ListView.builder(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(16),
-          itemCount: messages.length,
-          reverse: true,
-          itemBuilder: (context, index) {
-            final message = messages[index];
-            final isMe = message.senderId == _authService.currentUser?.uid;
-            if (!isMe && message.status != MessageStatus.read) {
-              SocketManager().sendSeenEvent(message,_authService.currentUser?.uid ?? '');
+        return NotificationListener<UserScrollNotification>(
+          onNotification: (notification) {
+            if (notification.direction != ScrollDirection.idle) {
+              FocusScope.of(context).unfocus();
             }
-            return _buildMessageBubble(message, isMe);
+            return false;
           },
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            itemCount: messages.length,
+            reverse: true,
+            physics: const BouncingScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            itemBuilder: (context, index) {
+              final message = messages[index];
+              final isMe = message.senderId == _authService.currentUser?.uid;
+              if (!isMe && message.status != MessageStatus.read) {
+                SocketManager().sendSeenEvent(message,_authService.currentUser?.uid ?? '');
+              }
+              return _buildMessageBubble(message, isMe);
+            },
+          ),
         );
       },
     );
@@ -705,6 +721,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: TextField(
                   controller: _messageController,
                   enabled: true,
+                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
                   decoration: InputDecoration(
                     isDense: true,
                     hintText: 'Type a message...',
