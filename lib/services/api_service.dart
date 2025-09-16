@@ -410,6 +410,7 @@ class ApiService {
   Future<ApiCommonFile?> uploadCommonFile({
     required String videoPath,
     String type = "post",
+    CancelToken? cancelToken,
   }) async {
     return ErrorHandler.safeApiCall(() async {
       final response = await _httpClient.uploadFile<ApiCommonFile>(
@@ -417,6 +418,7 @@ class ApiService {
         filePath: videoPath,
         fieldName: 'file',
         fromJson: (json) => ApiCommonFile.fromJson(json as Map<String, dynamic>),
+        cancelToken: cancelToken,
       );
 
       if (response.success && response.data != null) {

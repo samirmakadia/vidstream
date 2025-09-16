@@ -7,7 +7,7 @@ import 'package:vidmeet/services/api_service.dart';
 import 'package:vidmeet/services/auth_service.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
-
+import 'package:dio/dio.dart';
 import '../manager/session_manager.dart';
 
 class VideoService {
@@ -186,11 +186,13 @@ class VideoService {
   Future<ApiCommonFile?> uploadCommonFile({
     required String filePath,
     String type = "post",
+    CancelToken? cancelToken,
   }) async {
     try {
       return await _apiService.uploadCommonFile(
         videoPath: filePath,
         type: type,
+        cancelToken: cancelToken,
       );
     } catch (e) {
       throw 'Failed to upload file: ${e.toString()}';

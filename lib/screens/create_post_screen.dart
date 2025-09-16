@@ -7,9 +7,11 @@ import '../services/socket_manager.dart';
 import '../services/video_service.dart';
 import '../utils/graphics.dart';
 import '../utils/utils.dart';
+import '../widgets/common_app_dialog.dart';
 import '../widgets/custom_image_widget.dart';
 import '../widgets/professional_bottom_ad.dart';
 import 'full_screen_video_player.dart';
+import 'package:dio/dio.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -33,6 +35,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   late Animation<double> _scaleAnimation;
   ApiCommonFile? _uploadedFile;
   String? _videoThumbnailPath;
+
+  bool _isCancelled = false;
+  CancelToken? _uploadCancelToken;
 
   @override
   void initState() {
@@ -58,6 +63,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   @override
   void dispose() {
     _descriptionController.dispose();
+    _uploadCancelToken?.cancel('User cancelled the upload');
     _animationController.dispose();
     super.dispose();
   }
@@ -150,10 +156,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   Future<ApiCommonFile?> _uploadCommonFile(String filePath) async {
     try {
       final videoService = VideoService();
+      _uploadCancelToken = CancelToken();
 
       final uploadedFile = await videoService.uploadCommonFile(
         filePath: filePath,
         type: 'post',
+        cancelToken: _uploadCancelToken,
       );
 
       if (uploadedFile == null) {
@@ -170,6 +178,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
     } catch (e) {
       _showErrorSnackBar('Failed to upload video: $e');
       return null;
+    } finally {
+      _uploadCancelToken = null; // Clear the token when done
     }
   }
 
@@ -194,11 +204,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       return;
     }
 
-    setState(() => _isUploading = true);
+    setState(() {
+      _isUploading = true;
+      _isCancelled = false;
+    });
 
     try {
       print('Uploading video...${_selectedVideo!.path}');
       final uploadedFile = await _uploadCommonFile(_selectedVideo!.path);
+      if (_isCancelled) return;
       if (uploadedFile == null) {
         _showErrorSnackBar("Failed to upload video to server");
         return;
@@ -217,7 +231,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
         isPublic: true,
       );
       print('Uploaded video object: $uploadedVideo');
-
+      if (_isCancelled) return;
       if (uploadedVideo != null && mounted) {
         eventBus.fire('updatedVideo');
         Navigator.of(context).pop();
@@ -281,7 +295,40 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       backgroundColor: Colors.transparent,
       elevation: 0,
       leading: IconButton(
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () {
+          if (_isUploading) {
+            // Show confirmation dialog when upload is in progress
+            CommonDialog.showConfirmationDialog(
+            context: context,
+            title: "Cancel Upload?",
+            content: "Are you sure you want to cancel the upload?",
+            confirmText: "Yes, Cancel",
+            confirmColor: Colors.red,
+            ).then((confirmed) {
+              if (confirmed == true) {
+                // Cancel the upload
+                _uploadCancelToken?.cancel('User cancelled the upload');
+                setState(() {
+                  _isUploading = false;
+                  _isCancelled = true;
+                });
+                Navigator.of(context).pop();
+              }
+            });
+          } else {
+            CommonDialog.showConfirmationDialog(
+              context: context,
+              title: "Discard Post",
+              content: "Are you sure you want to discard this post?",
+              confirmText: "Discard",
+              confirmColor: Colors.red,
+            ).then((confirmed) {
+              if (confirmed == true) {
+                Navigator.of(context).pop();
+              }
+            });
+          }
+        },
         icon: const Icon(Icons.close, color: Colors.white),
       ),
       title: const Text('Create Post'),

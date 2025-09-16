@@ -267,6 +267,7 @@ class HttpClient {
     Map<String, dynamic>? headers,
     T Function(dynamic)? fromJson,
     Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
   }) async {
     try {
       final fileName = filePath.split('/').last;
@@ -280,6 +281,7 @@ class HttpClient {
         data: formData,
         options: Options(headers: headers),
         onSendProgress: onSendProgress,
+        cancelToken: cancelToken,
       );
 
       return _handleSuccessResponse<T>(response, fromJson);
