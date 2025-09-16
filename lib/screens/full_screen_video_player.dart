@@ -57,23 +57,42 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
     final padding = MediaQuery.of(context).padding;
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Center(
-            child: _chewieController != null
-                ? Chewie(controller: _chewieController!)
-                : const CircularProgressIndicator(),
-          ),
-
-          Positioned(
-            top: padding.top,
-            left: 10,
-            child: IconButton(
-                icon: Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.pop(context, false),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Center(
+              child: _chewieController != null
+                  ? Chewie(controller: _chewieController!)
+                  : const CircularProgressIndicator(),
             ),
-          ),
-        ],
+        
+            Positioned(
+              top: padding.top,
+              left: 10,
+              child: _buildRoundButton(
+                icon: Icons.close,
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _buildRoundButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      height: 40,
+      width: 40,  
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white),
+        onPressed: onPressed,
       ),
     );
   }
