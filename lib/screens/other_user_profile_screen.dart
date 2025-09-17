@@ -64,7 +64,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
         _loadUserProfile(isLoadingShow: false);
       }
      if (event == 'updatedVideo') {
-       _loadPostVideos();
+       _loadPostVideos(reset: true);
      }
     });
     _scrollController.addListener(() {
@@ -150,27 +150,29 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
   Future<void> _loadPostVideos({bool reset = false}) async {
     if (_isFetchingMore || (!_hasMoreVideos && !reset)) return;
 
-    setState(() => _isFetchingMore = true);
+    if(!reset) setState(() => _isFetchingMore = true);
+
+    if (reset) {
+      setState(() {
+        _currentPage = 1;
+        _hasMoreVideos = true;
+      });
+    }
 
     try {
-      final nextPage = reset ? 1 : _currentPage + 1;
-
       final videos = await ApiRepository.instance.videos.getUserPostedVideos(
         widget.userId,
         limit: _pageSize,
-        page: nextPage,
+        page: _currentPage,
       );
-
-      if (!mounted) return;
 
       setState(() {
         if (reset) {
           _userVideos = videos;
-          _currentPage = 1;
         } else {
           _userVideos.addAll(videos);
-          _currentPage = nextPage;
         }
+        _currentPage++;
         _hasMoreVideos = videos.length == _pageSize;
       });
     } catch (e) {
