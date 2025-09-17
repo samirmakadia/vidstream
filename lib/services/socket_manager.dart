@@ -42,6 +42,13 @@ class SocketManager {
       await _syncMessagesSinceLastSync();
     });
 
+    _socket?.on('reconnect', (_) {
+      print("🔄 Reconnected, re-attaching message listener");
+      _socket?.off('message');
+      _socket?.on('message', _handleMessage);
+      _syncMessagesSinceLastSync();
+    });
+
     _socket?.on('connect_error', (err) {
       print("❌ Socket connection error: $err");
     });
@@ -71,7 +78,7 @@ class SocketManager {
     final Map<String, dynamic> jsonData = (data as Map).cast<String, dynamic>();
 
     final message = MessageModel.fromJson(jsonData);
-    debugPrint("✅ Message ${message.content.text} updated with status ${message.status}");
+    debugPrint("✅ Got Message ${message.content.text} updated with status ${message.status}");
 
     final currentUserId = _currentUserId ?? "";
     final receiverId = _getReceiverId(

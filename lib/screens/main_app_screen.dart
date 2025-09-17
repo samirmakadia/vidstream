@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
@@ -32,6 +35,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
   final MeetService _meetService = MeetService();
 
   late final List<Widget> _screens;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   @override
   void initState() {
@@ -41,6 +45,13 @@ class _MainAppScreenState extends State<MainAppScreen> {
     _updateUserLocation();
     NotificationService().initialize();
     _connectSocket();
+    _connectivitySubscription =
+        Connectivity().onConnectivityChanged.listen((results) {
+          final status = results.isNotEmpty ? results.first : ConnectivityResult.none;
+          if (status != ConnectivityResult.none) {
+            _connectSocket();
+          }
+        });
     _screens = [
       HomeScreen(key: _homeScreenKey),
       const MeetScreen(),
@@ -49,11 +60,24 @@ class _MainAppScreenState extends State<MainAppScreen> {
     ];
   }
 
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
+  }
+
   Future<void> _connectSocket() async {
     final token = await SessionManager().getAccessToken();
     print("Retrieved token: $token");
     if (token != null && token.isNotEmpty) {
       await SocketManager().connect(token: token);
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _connectSocket();
     }
   }
 
