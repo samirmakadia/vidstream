@@ -120,7 +120,7 @@ class _ChatScreenState extends State<ChatScreen> {
       receiverId: otherUserId,
       messageType: messageType,
       content: content,
-      status: MessageStatus.sent,
+      status: MessageStatus.pending,
       createdAt: nowIso,
       updatedAt: nowIso,
     );

@@ -71,6 +71,7 @@ class SocketManager {
     final Map<String, dynamic> jsonData = (data as Map).cast<String, dynamic>();
 
     final message = MessageModel.fromJson(jsonData);
+    debugPrint("✅ Message ${message.content.text} updated with status ${message.status}");
 
     final currentUserId = _currentUserId ?? "";
     final receiverId = _getReceiverId(
@@ -124,9 +125,12 @@ class SocketManager {
     try {
       final nowIso = DateTime.now().toIso8601String();
       String jsonString = jsonEncode(message.toSocketJson());
-      print(jsonString);
+      print('📤 Sending message 1: $jsonString\n${message.toSocketJson()}');
 
-      _socket?.emit('message', message.toSocketJson());
+      final sentMessage = message.copyWith(
+        status: MessageStatus.sent,
+      );
+      _socket?.emit('message', sentMessage.toSocketJson());
 
       final localMessage = message.copyWith(
         status: MessageStatus.pending,
