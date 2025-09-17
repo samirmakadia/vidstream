@@ -41,7 +41,7 @@ class _NativeAdsWidgetState extends State<NativeAdsWidget> {
     final adUnitId = AdHelper.admobNativeUnitId;
     _adMobNativeAd = admob.NativeAd(
       adUnitId: adUnitId,
-      factoryId: widget.isMedium ? 'mediumTile' : 'listTile',
+      factoryId: 'mediumTile',
       request: const admob.AdRequest(),
       listener: admob.NativeAdListener(
         onAdLoaded: (ad) {
@@ -74,25 +74,43 @@ class _NativeAdsWidgetState extends State<NativeAdsWidget> {
   Widget build(BuildContext context) {
     if (_showAdMob) {
       if (_adMobLoaded && _adMobNativeAd != null) {
-        return Center(
-          child: SizedBox(
-            height: widget.isMedium ? 320 : 80,
-            width: widget.width,
-            child: Stack(
-              children: [
-                admob.AdWidget(ad: _adMobNativeAd!),
-                if (!_adMobLoaded)
-                  const Center(
-                    child: LoadingAdsText(),
+        return SizedBox(
+          height: widget.isMedium ? widget.height : 360,
+          width: widget.width,
+          child: Stack(
+            children: [
+              if (_adMobLoaded && _adMobNativeAd != null)
+                Center(
+                  child: SizedBox(
+                    height: 360,
+                    width: widget.width,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: admob.AdWidget(ad: _adMobNativeAd!),
+                    ),
                   ),
-                if (widget.showSwipeHint)
-                  _buildSwipeHint(),
-              ],
-            ),
+                ),
+              if (!_adMobLoaded)
+                const Center(
+                  child: LoadingAdsText(),
+                ),
+              if (widget.showSwipeHint)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _buildSwipeHint(),
+                ),
+            ],
           ),
         );
       }
-      return SizedBox(height: widget.height, width: widget.width);
+      return SizedBox(
+          height: widget.height,
+          width: widget.width,
+          child: !_adMobLoaded
+          ? Center(
+        child: LoadingAdsText(),)
+          : null
+      );
     }
 
     return Center(

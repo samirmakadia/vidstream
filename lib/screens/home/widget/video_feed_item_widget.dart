@@ -108,6 +108,7 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
           }
         });
         eventBus.fire('updatedVideo');
+        print("👍 Video ${widget.video.id} liked by $currentUserId");
         widget.onLikeUpdated?.call(_localLikeCount, _isLiked);
       } catch (e) {
         if (mounted) {
@@ -309,6 +310,7 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
                 // Video Actions (only if user data is available)
                 if (widget.video.user != null)
                   VideoActionsWidget(
+                    key: ValueKey(widget.video.id),
                     isFollowLoading: _isFollowLoading,
                     onFollowToggle: _toggleFollow,
                     user: widget.video.user!,

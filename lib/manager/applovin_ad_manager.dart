@@ -217,7 +217,7 @@ class AppLovinAdManager {
         debugPrint("MREC Loaded: $isLoaded");
       },
       height: height,
-      width: width,
+      width: double.infinity,
       showSwipeHint: false,
     );
   }
