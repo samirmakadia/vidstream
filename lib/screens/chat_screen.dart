@@ -346,12 +346,16 @@ class _ChatScreenState extends State<ChatScreen> {
         reasons: reasons,
         isDescriptionRequired: true,
         onSubmit: ({required reason, String? description}) async {
-          return await _handleReport(
+          final result = await _handleReport(
             targetId: message.id ?? '',
             targetType: 'Message',
             reason: reason,
             description: description,
           );
+          if (result.isNotEmpty) {
+            Navigator.of(context).pop();
+          }
+          return result;
         },
       ),
     );
