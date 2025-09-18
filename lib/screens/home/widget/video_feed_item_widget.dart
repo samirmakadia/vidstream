@@ -64,11 +64,6 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
           if (widget.video.user != null && widget.video.user!.id == userId) {
             final updatedUser = widget.video.user!.copyWith(
               isFollow: isFollow,
-              followersCount: isFollow
-                  ? widget.video.user!.followersCount + 1
-                  : (widget.video.user!.followersCount > 0
-                  ? widget.video.user!.followersCount - 1
-                  : 0),
             );
             widget.onFollowUpdated?.call(updatedUser);
           }
@@ -87,8 +82,12 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
   void didUpdateWidget(VideoFeedItemWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.video.id != widget.video.id ||
-        oldWidget.video.likesCount != widget.video.likesCount) {
-      _localLikeCount = widget.video.likesCount;
+        oldWidget.video.likesCount != widget.video.likesCount ||
+        oldWidget.video.isLiked != widget.video.isLiked) {
+      setState(() {
+        _localLikeCount = widget.video.likesCount;
+        _isLiked = widget.video.isLiked;
+      });
     }
 
     if (!widget.isActive && oldWidget.isActive) {
@@ -195,7 +194,6 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
 
     final videoController = betterController.videoPlayerController;
     if (videoController == null) {
-      // Retry if underlying controller is not ready
       Future.delayed(const Duration(milliseconds: 200), () {
         if (mounted) _incrementViewCount();
       });
@@ -322,10 +320,9 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
 
                 const SizedBox(width: 16),
 
-                // Video Actions (only if user data is available)
                 if (widget.video.user != null)
                   VideoActionsWidget(
-                    key: ValueKey(widget.video.id),
+                    key: ValueKey('${widget.video.id}_$_localLikeCount$_isLiked'),
                     isFollowLoading: _isFollowLoading,
                     onFollowToggle: _toggleFollow,
                     user: widget.video.user!,

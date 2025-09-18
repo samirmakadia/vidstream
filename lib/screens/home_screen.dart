@@ -62,17 +62,47 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         const BetterPlayerConfiguration(autoPlay: false),
       );
     }
+    updateEventSubscription();
+  }
+
+  void updateEventSubscription() {
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'updatedVideo') {
-        _loadVideos(isLoadingShow: false,isRefresh: true);
+        _loadVideos(isLoadingShow: false, isRefresh: true);
+        return;
+      }
+
+      if (event is Map<String, dynamic>) {
+        final userId = event["userId"];
+        final isFollow = event["isFollow"];
+
+        if (userId == null || isFollow == null) return;
+
+        debugPrint("🏷 Updating follow status for $userId → $isFollow");
+
+        setState(() {
+          _updateFollowStatus(_videos, userId, isFollow);
+          _updateFollowStatus(_allVideos, userId, isFollow);
+        });
       }
     });
   }
 
+  void _updateFollowStatus(List<ApiVideo> videos, String userId, bool isFollow) {
+    for (var i = 0; i < videos.length; i++) {
+      final video = videos[i];
+      if (video.user?.id == userId) {
+        videos[i] = video.copyWith(
+          user: video.user!.copyWith(isFollow: isFollow),
+        );
+      }
+    }
+  }
+
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    // stop all precache tasks
     if (_canPrecache) {
       for (var url in _precaching.toList()) {
         _stopPrecache(url);
@@ -80,6 +110,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       _precacheController.dispose();
     }
     _pageController.dispose();
+    _videoUploadedSubscription.cancel();
     super.dispose();
   }
 
@@ -403,7 +434,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           }
 
           if (_hasMore && !_isFetchingMore && videoIndex >= _videos.length - 3) {
-            print("📤 Loading more videos...");
             _loadVideos(isLoadingShow: false);
           }
         },
@@ -429,7 +459,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           final video = loadedVideos[videoIndex];
 
           return VideoFeedItemWidget(
-            key: ValueKey('${video.id}_${video.likesCount}_${video.commentsCount}_${video.user?.isFollow}'),
+            key: ValueKey(video.id),
             video: video,
             isActive: index == _currentIndex && _isScreenVisible,
             onVideoCompleted: () {
@@ -443,7 +473,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               }
             },
             onVideoDeleted: (deletedVideo) {
-              _modifyVideo(video.id, (_) => null);
+                _modifyVideo(video.id, (_) => null);
             },
             onLikeUpdated: (newCount, isLiked) =>
                 _modifyVideo(video.id, (v) => v.copyWith(
