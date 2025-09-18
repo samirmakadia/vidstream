@@ -147,14 +147,14 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     _isFetchingMore = true;
 
     if (isLoadingShow && isRefresh) setState(() => _isLoading = true);
+
     try {
       if (isRefresh) {
         _page = 1;
         _hasMore = true;
       }
 
-      final videos = await ApiRepository.instance.videos
-          .getVideosOnce(limit: _pageSize, page: _page);
+      final videos = await ApiRepository.instance.videos.getVideosOnce(limit: _pageSize, page: _page);
 
       if (mounted) {
         setState(() {
@@ -395,7 +395,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         onPageChanged: (index) {
           setState(() => _currentIndex = index);
 
-          // trigger preloading of next 2–3 videos
           final videoIndex = showAds
               ? index - (index ~/ (videosPerAd + 1))
               : index;
@@ -403,7 +402,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             _preloadWindow(videoIndex);
           }
 
-          if (_hasMore && videoIndex >= _videos.length - 3) {
+          if (_hasMore && !_isFetchingMore && videoIndex >= _videos.length - 3) {
+            print("📤 Loading more videos...");
             _loadVideos(isLoadingShow: false);
           }
         },

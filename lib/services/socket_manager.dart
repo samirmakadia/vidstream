@@ -33,6 +33,9 @@ class SocketManager {
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
+          .enableReconnection()
+          .setReconnectionAttempts(5)
+          .setReconnectionDelay(2000)
           .setAuth({'token': token})
           .build(),
     );
