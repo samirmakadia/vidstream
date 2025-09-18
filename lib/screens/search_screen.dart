@@ -193,20 +193,6 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     await _fetchUsers(isLoading: isLoading, reset: true);
   }
 
-  void _resetAndLoadDefaultContent() {
-    _cancelToken?.cancel('Cancelled previous request');
-    _cancelToken = CancelToken();
-
-    setState(() {
-      _videosPage = 1;
-      _usersPage = 1;
-      _hasMoreVideos = true;
-      _hasMoreUsers = true;
-    });
-
-    _loadDefaultContent(false);
-  }
-
   void _performSearch(String query, {bool isLoading = true}) async {
     _cancelToken?.cancel('Cancelled previous request');
     _cancelToken = CancelToken();
@@ -423,13 +409,13 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
         itemBuilder: (context, index) {
           final video = chunk[index];
           return VideoGridItemWidget(
+            key: ValueKey(video.id),
             video: video,
             onTap: () => _openVideoPlayer(video),
           );
         },
       ));
 
-      // Regular ads after each chunk
       if (AppLovinAdManager.isMrecAdLoaded && end < _videos.length) {
         items.add(const SizedBox(height: 8));
         items.add(AppLovinAdManager.mrecAd());
@@ -437,7 +423,6 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       }
     }
 
-    // Ad at end if list smaller than chunk or remaining items
     if (AppLovinAdManager.isMrecAdLoaded &&
         (_videos.length < videosPerChunk || _videos.length % videosPerChunk != 0)) {
       items.add(const SizedBox(height: 8));
@@ -445,7 +430,6 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       items.add(const SizedBox(height: 8));
     }
 
-    // Bottom loader for pagination
     if (_isFetchingVideosPagination) {
       items.add(const Padding(
         padding: EdgeInsets.symmetric(vertical: 16),
@@ -541,7 +525,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                       if (_currentQuery.isNotEmpty) {
                         _performSearch(_currentQuery);
                       } else {
-                        _resetAndLoadDefaultContent();
+                        _loadDefaultContent(false);
                       }
                     },
                   );
@@ -584,24 +568,32 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   }
 
   Future<void> _openVideoPlayer(ApiVideo video) async {
+    final snapshot = List<ApiVideo>.from(_videos);
+    final startIndex = snapshot.indexWhere((v) => v.id == video.id);
+
     AppLovinAdManager.handleScreenOpen(() {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => VideoPlayerScreen(
-            video: video,
-            allVideos: _videos,
-            user: null,
-          )),
+          MaterialPageRoute(
+            builder: (_) => VideoPlayerScreen(
+              video: video,
+              allVideos: snapshot,
+              initialIndex: startIndex >= 0 ? startIndex : 0,
+              user: null,
+            ),
+          ),
         );
 
+        // Refresh content after returning
         if (_currentQuery.isNotEmpty) {
           _performSearch(_currentQuery);
         } else {
-          _resetAndLoadDefaultContent();
+          _loadDefaultContent(false);
         }
       });
     });
   }
+
 }
 
 

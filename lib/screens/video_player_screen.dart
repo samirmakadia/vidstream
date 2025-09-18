@@ -9,12 +9,14 @@ class VideoPlayerScreen extends StatefulWidget {
   final ApiVideo video;
   final List<ApiVideo> allVideos;
   final ApiUser? user;
+  final int initialIndex;
 
   const VideoPlayerScreen({
     super.key,
     this.user,
     required this.video,
     required this.allVideos,
+    this.initialIndex = 0,
   });
 
   @override
@@ -34,10 +36,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
   void initState() {
     super.initState();
     _videos = List.from(widget.allVideos);
-    final initialIndex = _videos.indexWhere((v) => v.id == widget.video.id);
-    _currentIndex = initialIndex != -1 ? initialIndex : 0;
+    final videosPerAd = SettingManager().nativeFrequency;
+    final adsBeforeIndex = AppLovinAdManager.isMrecAdLoaded
+        ? (widget.initialIndex ~/ videosPerAd)
+        : 0;
+
+    _currentIndex = widget.initialIndex + adsBeforeIndex;
+
     _pageController = PageController(initialPage: _currentIndex);
   }
+
 
   @override
   void dispose() {
@@ -131,9 +139,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
           );
         }
 
-        final videoIndex = showAds
+        final videoIndex = AppLovinAdManager.isMrecAdLoaded
             ? index - (index ~/ (videosPerAd + 1))
             : index;
+
         if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
 
         final video = loadedVideos[videoIndex];

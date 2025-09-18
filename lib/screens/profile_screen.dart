@@ -674,6 +674,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           itemBuilder: (context, index) {
             final video = videosChunk[index];
             return VideoGridItemWidget(
+              key: ValueKey(video.id),
               video: video,
               onTap: () => _openVideoPlayer(video),
             );
@@ -710,17 +711,19 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Future<void> _openVideoPlayer(ApiVideo video) async {
     final videos = _selectedTabIndex == 0 ? _userVideos : _likedVideos;
+    final snapshot = List<ApiVideo>.from(videos);
+    final startIndex = snapshot.indexWhere((v) => v.id == video.id);
     AppLovinAdManager.handleScreenOpen(() {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final  result = await Navigator.of(context).push(
           MaterialPageRoute(builder: (_) =>  VideoPlayerScreen(
             video: video,
-            allVideos: videos,
+            allVideos: snapshot,
+            initialIndex: startIndex >= 0 ? startIndex : 0,
             user: _currentUser,
           )),
         );
         if (result != null) {
-          print("Returned from video player screen");
           setState(() {
             if (_selectedTabIndex == 0) {
               _userVideos.removeWhere((v) => v.id == result);

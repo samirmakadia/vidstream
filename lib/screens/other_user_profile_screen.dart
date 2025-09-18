@@ -841,6 +841,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
           itemBuilder: (context, index) {
             final video = videosChunk[index];
             return VideoGridItemWidget(
+              key: ValueKey(video.id),
               video: video,
               onTap: () => _openVideoPlayer(video),
             );
@@ -883,15 +884,22 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
   }
 
   Future<void> _openVideoPlayer(ApiVideo video) async {
+    final snapshot = List<ApiVideo>.from(_userVideos);
+    final startIndex = snapshot.indexWhere((v) => v.id == video.id);
+
     AppLovinAdManager.handleScreenOpen(() {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final  result = await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) =>  VideoPlayerScreen(
-            video: video,
-            allVideos: _userVideos,
-            user: _user,
-          )),
+        final result = await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => VideoPlayerScreen(
+              video: video,
+              allVideos: snapshot,
+              initialIndex: startIndex >= 0 ? startIndex : 0,
+              user: _user,
+            ),
+          ),
         );
+
         if (result != null) {
           print("Returned from video player screen");
           _loadUserProfile(isLoadingShow: false);
@@ -899,4 +907,5 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
       });
     });
   }
+
 }
