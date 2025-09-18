@@ -1,4 +1,10 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:vidmeet/models/api_models.dart';
 import 'package:flutter/services.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
@@ -62,13 +68,52 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
     widget.onResumeRequested?.call();
   }
 
-  void _shareVideo(BuildContext context) {
-    Clipboard.setData(ClipboardData(text: 'Check out this video on VidMeet!'));
-    Graphics.showTopDialog(
-      context,
-      "Success!",
-      'Link copied to clipboard!',
-    );
+  Future<bool> _requestStoragePermission() async {
+    var status = await Permission.storage.status;
+
+    if (status.isPermanentlyDenied) {
+      await openAppSettings();
+      return false;
+    }
+
+    if (!status.isGranted) {
+      final result = await Permission.storage.request();
+      return result.isGranted;
+    }
+    return true;
+  }
+
+  Future<void> _shareVideo(BuildContext context) async {
+    final videoUrl = widget.video.videoUrl;
+    const appLink = 'https://play.google.com/store/apps/details?id=com.yourapp.id';
+
+    try {
+      final granted = await _requestStoragePermission();
+      if (!granted) {
+        print('Storage permission not granted');
+        return;
+      }
+
+      Graphics.showTopDialog(context, "Preparing", "Downloading video...");
+
+      final downloadsDir = Directory('/storage/emulated/0/Download');
+      if (!downloadsDir.existsSync()) {
+        downloadsDir.createSync(recursive: true);
+      }
+      final filePath = '${downloadsDir.path}/${widget.video.id}.mp4';
+      await Dio().download(videoUrl, filePath);
+      final file = File(filePath);
+      if (!await file.exists()) throw Exception('Failed to download video');
+
+      print('Successfully downloaded video to ${file.path}');
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'Watch this awesome video on VidMeet!\n$appLink',
+      );
+    } catch (e, s) {
+      print('Error sharing video: $e');
+      print('Stacktrace: $s');
+    }
   }
 
   void _showVideoOptions(BuildContext context) {
@@ -359,7 +404,9 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
           icon: Icons.share_outlined,
           color: Colors.white,
           count: null,
-          onTap: () => _shareVideo(context),
+          onTap: () async {
+            await _shareVideo(context);
+          },
         ),
 
         const SizedBox(height: 12),

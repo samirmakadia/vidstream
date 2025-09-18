@@ -166,9 +166,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
       setState(() {
         if (_likedPage == 1) {
-          _likedVideos = newVideos.map((v) => v.copyWith(isLiked: true)).toList();
+          _likedVideos = newVideos;
         } else {
-          _likedVideos.addAll(newVideos.map((v) => v.copyWith(isLiked: true)));
+          _likedVideos.addAll(newVideos);
         }
 
         _likedPage++;
