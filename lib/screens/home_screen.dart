@@ -24,7 +24,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
-  bool get _canPrecache => Platform.isAndroid; // Precache is unstable on iOS with BetterPlayer
+  bool get _canPrecache => Platform.isAndroid;
   final PageController _pageController = PageController();
   List<ApiVideo> _videos = [];
   List<ApiVideo> _allVideos = [];
@@ -57,7 +57,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadVideos();
-    // init dummy controller for preCache API
     if (_canPrecache) {
       _precacheController = BetterPlayerController(
         const BetterPlayerConfiguration(autoPlay: false),
@@ -65,7 +64,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     }
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'updatedVideo') {
-        _loadVideos(isLoadingShow: false);
+        _loadVideos(isLoadingShow: false,isRefresh: true);
       }
     });
   }
@@ -146,7 +145,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     if (_isFetchingMore) return;
     _isFetchingMore = true;
 
-    if (isLoadingShow && isRefresh) setState(() => _isLoading = true);
+    if (isLoadingShow) setState(() => _isLoading = true);
 
     try {
       if (isRefresh) {
@@ -159,6 +158,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       if (mounted) {
         setState(() {
           if (isRefresh) {
+            print("📤 Refreshed videos");
             _videos = videos;
             _allVideos = videos;
           } else {
@@ -429,7 +429,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           final video = loadedVideos[videoIndex];
 
           return VideoFeedItemWidget(
-            key: ValueKey(video.id),
+            key: ValueKey('${video.id}_${video.likesCount}_${video.commentsCount}_${video.user?.isFollow}'),
             video: video,
             isActive: index == _currentIndex && _isScreenVisible,
             onVideoCompleted: () {

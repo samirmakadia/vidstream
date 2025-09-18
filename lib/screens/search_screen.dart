@@ -101,11 +101,16 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
 
     if (!_hasMoreVideos || _isFetchingVideosPagination) return;
 
-    if(!reset) {
+    if (!reset) {
       setState(() => _isFetchingVideosPagination = true);
     }
 
     try {
+      if (reset) {
+        _videosPage = 1;
+        _hasMoreVideos = true;
+      }
+
       final newVideos = _currentQuery.isNotEmpty
           ? await _searchService.searchVideos(
           _currentQuery, _cancelToken,
@@ -116,14 +121,15 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       if (!mounted) return;
 
       setState(() {
-        if (reset) {
+        if (_videosPage == 1) {
           _videos = newVideos;
-          _videosPage = 1;
         } else {
           _videos.addAll(newVideos);
-          _videosPage++;
         }
         _hasMoreVideos = newVideos.length == _pageSize;
+        if (_hasMoreVideos) {
+          _videosPage++;
+        }
         _isLoading = false;
       });
     } catch (e) {
@@ -150,24 +156,26 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     }
 
     try {
+      if (reset) {
+        _usersPage = 1;
+        _hasMoreUsers = true;
+      }
       final newUsers = _currentQuery.isNotEmpty
-          ? await _searchService.searchUsers(
-          _currentQuery, _cancelToken,
-          page: _usersPage, limit: _pageSize)
-          : await _searchService.getPopularUsers(
-          limit: _pageSize, page: _usersPage);
+          ? await _searchService.searchUsers(_currentQuery, _cancelToken, page: _usersPage, limit: _pageSize)
+          : await _searchService.getPopularUsers(limit: _pageSize, page: _usersPage);
 
       if (!mounted) return;
 
       setState(() {
-        if (reset) {
+        if (_usersPage == 1) {
           _users = newUsers;
-          _usersPage = 1;
         } else {
           _users.addAll(newUsers);
-          _usersPage++;
         }
         _hasMoreUsers = newUsers.length == _pageSize;
+        if (_hasMoreUsers) {
+          _usersPage++;
+        }
         _isLoading = false;
       });
     } catch (e) {
@@ -241,10 +249,6 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       setState(() {
         _videos = videos;
         _users = users;
-        _videosPage++;
-        _usersPage++;
-        _hasMoreVideos = videos.length == _pageSize;
-        _hasMoreUsers = users.length == _pageSize;
         _isLoading = false;
       });
     } catch (e) {

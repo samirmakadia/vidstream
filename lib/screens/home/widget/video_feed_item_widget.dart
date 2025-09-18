@@ -49,6 +49,10 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
     super.initState();
     _localLikeCount = widget.video.likesCount;
     _isLiked = widget.video.isLiked;
+    updateEventBus();
+  }
+
+  void updateEventBus() {
     _followSubscription = eventBus.on().listen((event) {
       if (event is Map<String, dynamic>) {
         if (event.containsKey("userId") && event.containsKey("isFollow")) {
@@ -71,6 +75,12 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
         }
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _followSubscription.cancel();
+    super.dispose();
   }
 
   @override
@@ -154,6 +164,11 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
 
           widget.onFollowUpdated?.call(updatedUser);
           eventBus.fire('updatedUser');
+          print("👤 userId  ${widget.video.userId} followed by $currentUserId");
+          eventBus.fire({
+            "userId": widget.video.userId,
+            "isFollow": updatedUser.isFollow,
+          });
         }
       } catch (e) {
         if (mounted) {

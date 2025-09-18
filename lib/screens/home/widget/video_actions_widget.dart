@@ -56,9 +56,8 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
     );
 
     if (updatedCommentCount != null) {
-      setState(() {
-        widget.onCommentUpdated?.call(updatedCommentCount);
-      });
+      widget.onCommentUpdated?.call(updatedCommentCount);
+      eventBus.fire('updatedVideo');
     }
     widget.onResumeRequested?.call();
   }
