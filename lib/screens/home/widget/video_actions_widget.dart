@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vidmeet/models/api_models.dart';
@@ -50,6 +49,7 @@ class VideoActionsWidget extends StatefulWidget {
 }
 
 class _VideoActionsWidgetState extends State<VideoActionsWidget> {
+  bool _isSharing = false;
 
   Future<void> _showComments(BuildContext context) async {
     widget.onPauseRequested?.call();
@@ -93,8 +93,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
         print('Storage permission not granted');
         return;
       }
-
-      Graphics.showTopDialog(context, "Preparing", "Downloading video...");
+      setState(() => _isSharing = true);
 
       final downloadsDir = Directory('/storage/emulated/0/Download');
       if (!downloadsDir.existsSync()) {
@@ -113,6 +112,8 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
     } catch (e, s) {
       print('Error sharing video: $e');
       print('Stacktrace: $s');
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
     }
   }
 
@@ -398,20 +399,17 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
 
         const SizedBox(height: 12),
 
-        // Share Button
         _buildActionButton(
           context,
           icon: Icons.share_outlined,
           color: Colors.white,
           count: null,
-          onTap: () async {
-            await _shareVideo(context);
-          },
+          onTap: _isSharing ? () {} : () async => await _shareVideo(context),
+          isLoading: _isSharing,
         ),
 
         const SizedBox(height: 12),
 
-        // More Options Button
         _buildActionButton(
           context,
           icon: Icons.more_horiz,
@@ -463,12 +461,12 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
               shape: BoxShape.circle,
             ),
             child: isLoading
-                ? SizedBox(
+                ? const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(color),
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
             )
                 : Icon(
@@ -491,6 +489,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
       ),
     );
   }
+
 
   String _formatCount(int count) {
     if (count >= 1000000) {
