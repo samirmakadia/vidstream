@@ -272,7 +272,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.black,
       appBar:_buildAppBar(context),
       body: SafeArea(
