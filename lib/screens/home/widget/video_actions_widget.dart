@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -93,19 +92,21 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
 
   Future<void> _shareVideo(BuildContext context) async {
     final videoUrl = widget.video.videoUrl;
-    const appLink = 'https://play.google.com/store/apps/details?id=com.yourapp.id';
+    const appLink = 'https://play.google.com/store/apps/details?id=com.vidmeet.app';
 
     try {
+      widget.onPauseRequested?.call();
+
       final granted = await _ensureStoragePermission();
       if (!granted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Storage permission denied.')),
         );
+        widget.onResumeRequested?.call();
         return;
       }
 
       setState(() => _isSharing = true);
-
       final tempDir = Platform.isAndroid
           ? await getExternalCacheDirectories().then((dirs) => dirs!.first)
           : await getTemporaryDirectory();
@@ -116,19 +117,21 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
       final file = File(filePath);
       if (!await file.exists()) throw Exception('Failed to download video');
 
-      print('Successfully downloaded video to ${file.path}');
+      print('✅ Successfully downloaded video to ${file.path}');
 
       await Share.shareXFiles(
         [XFile(file.path)],
         text: 'Watch this awesome video on VidMeet!\n$appLink',
       );
     } catch (e, s) {
-      print('Error sharing video: $e');
+      print('❌ Error sharing video: $e');
       print('Stacktrace: $s');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to share video. Please try again.')),
       );
     } finally {
+      // ▶ Resume video after share or error
+      widget.onResumeRequested?.call();
       if (mounted) setState(() => _isSharing = false);
     }
   }
@@ -319,7 +322,6 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-
         Stack(
           alignment: Alignment.center,
           children: [

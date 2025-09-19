@@ -342,8 +342,8 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
                         widget.onReported?.call(reportedVideo);
                       });
                     },
-                    onPauseRequested: () => widget.onPauseRequested?.call(),
-                    onResumeRequested: () => widget.onResumeRequested?.call(),
+                    onPauseRequested: () => _videoKey.currentState?.pauseVideo(),
+                    onResumeRequested: () => _videoKey.currentState?.playVideo(),
                   ),
               ],
             ),
