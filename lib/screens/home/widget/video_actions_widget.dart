@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vidmeet/models/api_models.dart';
@@ -68,19 +70,25 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
     widget.onResumeRequested?.call();
   }
 
-  Future<bool> _requestStoragePermission() async {
-    var status = await Permission.storage.status;
+  Future<bool> _ensureStoragePermission() async {
+    if (Platform.isAndroid && (await _androidVersion()) <= 28) {
+      var status = await Permission.storage.status;
 
-    if (status.isPermanentlyDenied) {
-      await openAppSettings();
-      return false;
-    }
-
-    if (!status.isGranted) {
-      final result = await Permission.storage.request();
-      return result.isGranted;
+      if (status.isPermanentlyDenied) {
+        await openAppSettings();
+        return false;
+      }
+      if (!status.isGranted) {
+        final result = await Permission.storage.request();
+        return result.isGranted;
+      }
     }
     return true;
+  }
+
+  Future<int> _androidVersion() async {
+    final info = await DeviceInfoPlugin().androidInfo;
+    return info.version.sdkInt;
   }
 
   Future<void> _shareVideo(BuildContext context) async {
@@ -88,23 +96,28 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
     const appLink = 'https://play.google.com/store/apps/details?id=com.yourapp.id';
 
     try {
-      final granted = await _requestStoragePermission();
+      final granted = await _ensureStoragePermission();
       if (!granted) {
-        print('Storage permission not granted');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Storage permission denied.')),
+        );
         return;
       }
+
       setState(() => _isSharing = true);
 
-      final downloadsDir = Directory('/storage/emulated/0/Download');
-      if (!downloadsDir.existsSync()) {
-        downloadsDir.createSync(recursive: true);
-      }
-      final filePath = '${downloadsDir.path}/${widget.video.id}.mp4';
+      final tempDir = Platform.isAndroid
+          ? await getExternalCacheDirectories().then((dirs) => dirs!.first)
+          : await getTemporaryDirectory();
+
+      final filePath = '${tempDir.path}/${widget.video.id}.mp4';
+
       await Dio().download(videoUrl, filePath);
       final file = File(filePath);
       if (!await file.exists()) throw Exception('Failed to download video');
 
       print('Successfully downloaded video to ${file.path}');
+
       await Share.shareXFiles(
         [XFile(file.path)],
         text: 'Watch this awesome video on VidMeet!\n$appLink',
@@ -112,6 +125,9 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
     } catch (e, s) {
       print('Error sharing video: $e');
       print('Stacktrace: $s');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to share video. Please try again.')),
+      );
     } finally {
       if (mounted) setState(() => _isSharing = false);
     }
