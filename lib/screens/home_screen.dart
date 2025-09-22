@@ -226,19 +226,20 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       if (mounted) {
         setState(() {
           if (isRefresh) {
-            print("📤 Refreshed videos");
             _videos = videos;
             _allVideos = videos;
+            _videosFeedWidgets.addAll(List.generate(_videos.length, (_) => const SizedBox.shrink()));
           } else {
             _videos.addAll(videos);
             _allVideos.addAll(videos);
+            _videosFeedWidgets.addAll(List.generate(videos.length, (_) => const SizedBox.shrink()));
           }
           _isLoading = false;
           _hasMore = videos.length == _pageSize;
         });
-        // Preload first video window
         if (_videos.isNotEmpty) {
-          _preloadWindow(0);
+          // _preloadWindow(0);
+          _buildVideoWidgets(0);
         }
       }
       _page++;
@@ -525,12 +526,12 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               ? index - (index ~/ (videosPerAd + 1))
               : index;
           if (videoIndex >= 0 && videoIndex < _videos.length) {
-            _preloadWindow(videoIndex, prevCount: 1, nextCount: 2);
+            // _preloadWindow(videoIndex, prevCount: 1, nextCount: 2);
+            _buildVideoWidgets(videoIndex);
           }
 
           if (_hasMore && !_isFetchingMore && videoIndex >= _videos.length - 3) {
             _loadVideos(isLoadingShow: false);
-            _buildVideoWidgets(videoIndex);
           }
         },
         itemBuilder: (context, index) {
