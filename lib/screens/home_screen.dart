@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:custom_preload_videos/preload_videos.dart';
 import 'package:flutter/material.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
 import 'package:vidmeet/models/api_models.dart';
@@ -40,6 +40,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   bool _hasMore = true;
   int _page = 1;
   final int _pageSize = 20;
+  late PreloadVideos _preloadVideos;
 
   @override
   bool get wantKeepAlive => true;
