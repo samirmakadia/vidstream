@@ -42,8 +42,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   int _page = 1;
   final int _pageSize = 20;
   // late PreloadVideos _preloadVideos;
-  final List<Widget> _videoWidgets = [];
-  final Map<String, CustomVideoController> _videoControllers = {};
+  final List<Widget> _videosFeedWidgets = [];
   final int _prevToKeep = 1;
   final int _nextToKeep = 2;
 
@@ -198,24 +197,15 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     final int end = (index + _nextToKeep).clamp(0, _videos.length - 1);
 
     for (int i = start; i <= end; i++) {
-      if (i < _videoWidgets.length) {
-        _videoWidgets[i] = _videoFeedWidget(
-          index: i,
-          showAds: false,
-          videosPerAd: 0,
-          loadedVideos: _videos,
-        );
-      } else {
-        while (_videoWidgets.length <= i) {
-          _videoWidgets.add(const SizedBox());
-        }
-        _videoWidgets[i] = _videoFeedWidget(
-          index: i,
-          showAds: false,
-          videosPerAd: 0,
-          loadedVideos: _videos,
-        );
+      final video = _videos[i];
+      if (_videosFeedWidgets.any((currentVideo) => currentVideo is VideoFeedItemWidget && currentVideo.video.id == video.id)) {
+        continue;
       }
+      _videosFeedWidgets[i] = _videoFeedWidget(
+        index: i,
+        showAds: false,
+        videosPerAd: 0,
+      );
     }
   }
 
@@ -234,7 +224,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       final videos = await ApiRepository.instance.videos.getVideosOnce(limit: _pageSize, page: _page);
 
       if (mounted) {
-        setState(() async {
+        setState(() {
           if (isRefresh) {
             print("📤 Refreshed videos");
             _videos = videos;
@@ -245,12 +235,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           }
           _isLoading = false;
           _hasMore = videos.length == _pageSize;
-
-          // Preload first video window
-          if (_videos.isNotEmpty) {
-            _preloadWindow(0);
-          }
         });
+        // Preload first video window
+        if (_videos.isNotEmpty) {
+          _preloadWindow(0);
+        }
       }
       _page++;
     } catch (e) {
@@ -356,13 +345,12 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       required int index,
       required bool showAds,
       required int videosPerAd,
-      required List<ApiVideo> loadedVideos
   }) {
     final videoIndex = showAds ? index - (index ~/ (videosPerAd + 1)) : index;
 
-    if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
+    if (videoIndex >= _videos.length) return const SizedBox.shrink();
 
-    final video = loadedVideos[videoIndex];
+    final video = _videos[videoIndex];
 
     final betterController = BetterPlayerController(
       const BetterPlayerConfiguration(
@@ -523,11 +511,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
     final totalAds = showAds ? (loadedVideos.length / videosPerAd).floor() : 0;
     final totalItems = loadedVideos.length + totalAds;
-    final upcomingIndices = [
-      _currentIndex,
-      _currentIndex + 1,
-      _currentIndex + 2
-    ];
 
     return RefreshIndicator(
       onRefresh: _refreshVideos,
@@ -563,7 +546,15 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             );
           }
           final videoIndex = showAds ? index - (index ~/ (videosPerAd + 1)) : index;
-          return _videoWidgets[videoIndex];
+
+          // if (videoIndex >= _videosFeedWidgets.length) {
+          //   return _videoFeedWidget(
+          //     index: videoIndex,
+          //     showAds: showAds,
+          //     videosPerAd: videosPerAd,
+          //   );
+          // }
+          return _videosFeedWidgets[videoIndex];
         },
       ),
     );
