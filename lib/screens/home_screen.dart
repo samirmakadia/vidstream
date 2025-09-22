@@ -44,6 +44,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   // late PreloadVideos _preloadVideos;
   final List<Widget> _videoWidgets = [];
   final Map<String, CustomVideoController> _videoControllers = {};
+  final int _prevToKeep = 1;
+  final int _nextToKeep = 2;
 
   @override
   bool get wantKeepAlive => true;
@@ -190,38 +192,30 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     _preloadVideos(urlsToPreload.toSet().toList());
   }
 
-  Future<void> _buildVideoWidgets() async {
-    _videoWidgets.clear();
-    for (int i = 0; i < _videos.length; i++) {
-      final video = _videos[i];
+  Future<void> _buildVideoWidgets(int index) async {
 
-      if (!_videoControllers.containsKey(video.videoUrl)) {
-        final betterController = BetterPlayerController(
-          const BetterPlayerConfiguration(
-            autoPlay: false,
-            looping: false,
-            handleLifecycle: true,
-            expandToFill: true,
-            fit: BoxFit.contain,
-            controlsConfiguration: BetterPlayerControlsConfiguration(showControls: false),
-          ),
-          betterPlayerDataSource: _makeDS(video.videoUrl),
-        );
+    final int start = (index - _prevToKeep).clamp(0, _videos.length - 1);
+    final int end = (index + _nextToKeep).clamp(0, _videos.length - 1);
 
-        _videoControllers[video.videoUrl];
-
-        // Pre-cache video
-        if (_canPrecache) await _precacheController.preCache(_makeDS(video.videoUrl));
-      }
-
-      _videoWidgets.add(
-        _videoFeedWidget(
+    for (int i = start; i <= end; i++) {
+      if (i < _videoWidgets.length) {
+        _videoWidgets[i] = _videoFeedWidget(
           index: i,
           showAds: false,
           videosPerAd: 0,
           loadedVideos: _videos,
-        ),
-      );
+        );
+      } else {
+        while (_videoWidgets.length <= i) {
+          _videoWidgets.add(const SizedBox());
+        }
+        _videoWidgets[i] = _videoFeedWidget(
+          index: i,
+          showAds: false,
+          videosPerAd: 0,
+          loadedVideos: _videos,
+        );
+      }
     }
   }
 
@@ -251,9 +245,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           }
           _isLoading = false;
           _hasMore = videos.length == _pageSize;
-
-          // Build video widgets after loading
-          await _buildVideoWidgets();
 
           // Preload first video window
           if (_videos.isNotEmpty) {
@@ -372,6 +363,24 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
 
     final video = loadedVideos[videoIndex];
+    if (!_videoControllers.containsKey(video.videoUrl)) {
+      final betterController = BetterPlayerController(
+        const BetterPlayerConfiguration(
+          autoPlay: false,
+          looping: false,
+          handleLifecycle: true,
+          expandToFill: true,
+          fit: BoxFit.contain,
+          controlsConfiguration: BetterPlayerControlsConfiguration(showControls: false),
+        ),
+        betterPlayerDataSource: _makeDS(video.videoUrl),
+      );
+
+      _videoControllers[video.videoUrl];
+
+      // Pre-cache video
+      if (_canPrecache) _precacheController.preCache(_makeDS(video.videoUrl));
+    }
 
     return VideoFeedItemWidget(
       key: ValueKey(video.id),
@@ -544,6 +553,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
           if (_hasMore && !_isFetchingMore && videoIndex >= _videos.length - 3) {
             _loadVideos(isLoadingShow: false);
+            _buildVideoWidgets(videoIndex);
           }
         },
         itemBuilder: (context, index) {
