@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:better_player_plus/better_player_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:vidmeet/screens/home/widget/video_player_widget.dart';
@@ -19,6 +20,7 @@ class VideoFeedItemWidget extends StatefulWidget {
   final void Function(ApiVideo video)? onReported;
   final void Function(ApiUser updatedUser)? onFollowUpdated;
   final VoidCallback? onVideoCompleted;
+  final BetterPlayerController? customController;
 
   final ApiUser? user;
   final VoidCallback? onPauseRequested;
@@ -29,6 +31,7 @@ class VideoFeedItemWidget extends StatefulWidget {
     required this.video,
     required this.isActive,
     this.onVideoDeleted,
+    this.customController,
     this.onLikeUpdated, this.onCommentUpdated, this.onReported, this.onFollowUpdated, this.user, this.onPauseRequested, this.onResumeRequested, this.onVideoCompleted,
   });
 

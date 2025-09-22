@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:custom_preload_videos/preload_videos.dart';
+import 'package:custom_preload_videos/interface/controller_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
 import 'package:vidmeet/models/api_models.dart';
@@ -24,7 +25,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
-  bool get _canPrecache => Platform.isAndroid;
+  bool get _canPrecache => true;
   final PageController _pageController = PageController();
   List<ApiVideo> _videos = [];
   List<ApiVideo> _allVideos = [];
@@ -40,7 +41,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   bool _hasMore = true;
   int _page = 1;
   final int _pageSize = 20;
-  late PreloadVideos _preloadVideos;
+  // late PreloadVideos _preloadVideos;
+  final Map<String, BetterPlayerController> _preInitControllers = {};
 
   @override
   bool get wantKeepAlive => true;
@@ -150,28 +152,76 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     _precaching.remove(url);
   }
 
-  void _preloadWindow(int center) {
-    if (_videos.isEmpty) return;
-    if (!_canPrecache) return; // disable on iOS
-    final wanted = <String>{};
+  /// Preload multiple videos at once
+  Future<void> _preloadVideos(List<String> urls) async {
+    if (!_canPrecache) return;
 
-    // preload prev 1 and next 2
-    if (center - 1 >= 0) wanted.add(_videos[center - 1].videoUrl);
-    if (center + 1 < _videos.length) wanted.add(_videos[center + 1].videoUrl);
-    if (center + 2 < _videos.length) wanted.add(_videos[center + 2].videoUrl);
+    final wanted = urls.toSet();
 
-    // start wanted
-    for (var url in wanted) {
-      _startPrecache(url);
-    }
+    await Future.wait(
+      wanted
+          .where((url) => !_precaching.contains(url))
+          .map((url) => _startPrecache(url)),
+    );
 
-    // stop unwanted
     for (var url in _precaching.toList()) {
       if (!wanted.contains(url)) {
         _stopPrecache(url);
       }
     }
   }
+
+  void _preloadWindow(List<int> indices, {int prevCount = 1, int nextCount = 3}) {
+    if (_videos.isEmpty) return;
+    if (!_canPrecache) return;
+
+    final urlsToPreload = <String>[];
+
+    // Add previous videos
+    for (var center in indices) {
+      // Previous videos
+      for (int i = center - prevCount; i < center; i++) {
+        if (i >= 0) urlsToPreload.add(_videos[i].videoUrl);
+      }
+
+      // Current and next videos
+      for (int i = center; i <= center + nextCount && i < _videos.length; i++) {
+        urlsToPreload.add(_videos[i].videoUrl);
+      }
+    }
+
+    // Preload all
+    final uniqueUrls = urlsToPreload.toSet().toList();
+    _preloadVideos(uniqueUrls);
+  }
+
+  Future<void> _preInitVideoControllers(List<int> indices) async {
+    for (var i in indices) {
+      if (i < 0 || i >= _videos.length) continue;
+      final url = _videos[i].videoUrl;
+
+      if (_preInitControllers.containsKey(url)) continue;
+
+      final controller = BetterPlayerController(
+        const BetterPlayerConfiguration(
+          autoPlay: false,
+          looping: false,
+          handleLifecycle: true,
+          expandToFill: true,
+          fit: BoxFit.contain,
+          controlsConfiguration: BetterPlayerControlsConfiguration(
+            showControls: false,
+          ),
+        ),
+        betterPlayerDataSource: _makeDS(url),
+      );
+
+      _preInitControllers[url] = controller;
+
+      await _precacheController.preCache(_makeDS(url));
+    }
+  }
+
 
   Future<void> _loadVideos({bool isLoadingShow = true, bool isRefresh = false}) async {
     if (_isFetchingMore) return;
@@ -200,7 +250,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           _isLoading = false;
           _hasMore = videos.length == _pageSize;
           if (_videos.isNotEmpty) {
-            _preloadWindow(0);
+            _preloadWindow(0 as List<int>);
           }
         });
       }
@@ -302,6 +352,52 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     updateList(_allVideos);
 
     if (changed) setState(() {});
+  }
+
+  Widget _videoFeedWidget({
+      required int index,
+      required bool showAds,
+      required int videosPerAd,
+      required List<ApiVideo> loadedVideos
+  }) {
+    final videoIndex = showAds ? index - (index ~/ (videosPerAd + 1)) : index;
+
+    if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
+
+    final video = loadedVideos[videoIndex];
+
+    return VideoFeedItemWidget(
+      key: ValueKey(video.id),
+      video: video,
+      isActive: index == _currentIndex && _isScreenVisible,
+      customController: _preInitControllers[video.videoUrl],
+      onVideoCompleted: () {
+        if (_pageController.hasClients) {
+          final nextPage = (_currentIndex + 1) % _videos.length;
+          _pageController.animateToPage(
+            nextPage,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+          );
+        }
+      },
+      onVideoDeleted: (deletedVideo) {
+        _modifyVideo(video.id, (_) => null);
+      },
+      onLikeUpdated: (newCount, isLiked) =>
+          _modifyVideo(video.id, (v) => v.copyWith(
+            likesCount: newCount,
+            isLiked: isLiked,
+          )),
+      onCommentUpdated: (newCount) =>
+          _modifyVideo(video.id, (v) => v.copyWith(commentsCount: newCount)),
+      onReported: (reportedVideo) =>
+          _modifyVideo(reportedVideo.id, (_) => null),
+      onFollowUpdated: (updatedUser) =>
+          _modifyVideo(video.id, (v) => v.copyWith(user: updatedUser)),
+      onPauseRequested: () => setScreenVisible(false),
+      onResumeRequested: () => setScreenVisible(true),
+    );
   }
 
   @override
@@ -417,6 +513,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
     final totalAds = showAds ? (loadedVideos.length / videosPerAd).floor() : 0;
     final totalItems = loadedVideos.length + totalAds;
+    final upcomingIndices = [
+      _currentIndex,
+      _currentIndex + 1,
+      _currentIndex + 2
+    ];
 
     return RefreshIndicator(
       onRefresh: _refreshVideos,
@@ -431,7 +532,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               ? index - (index ~/ (videosPerAd + 1))
               : index;
           if (videoIndex >= 0 && videoIndex < _videos.length) {
-            _preloadWindow(videoIndex);
+            _preloadWindow(upcomingIndices, prevCount: 1, nextCount: 2);
+            _preInitVideoControllers(upcomingIndices);
           }
 
           if (_hasMore && !_isFetchingMore && videoIndex >= _videos.length - 3) {
@@ -451,44 +553,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             );
           }
 
-          final videoIndex = showAds
-              ? index - (index ~/ (videosPerAd + 1))
-              : index;
-
-          if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
-
-          final video = loadedVideos[videoIndex];
-
-          return VideoFeedItemWidget(
-            key: ValueKey(video.id),
-            video: video,
-            isActive: index == _currentIndex && _isScreenVisible,
-            onVideoCompleted: () {
-              if (_pageController.hasClients) {
-                final nextPage = (_currentIndex + 1) % _videos.length;
-                _pageController.animateToPage(
-                  nextPage,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                );
-              }
-            },
-            onVideoDeleted: (deletedVideo) {
-                _modifyVideo(video.id, (_) => null);
-            },
-            onLikeUpdated: (newCount, isLiked) =>
-                _modifyVideo(video.id, (v) => v.copyWith(
-                  likesCount: newCount,
-                  isLiked: isLiked,
-                )),
-            onCommentUpdated: (newCount) =>
-                _modifyVideo(video.id, (v) => v.copyWith(commentsCount: newCount)),
-            onReported: (reportedVideo) =>
-                _modifyVideo(reportedVideo.id, (_) => null),
-            onFollowUpdated: (updatedUser) =>
-                _modifyVideo(video.id, (v) => v.copyWith(user: updatedUser)),
-            onPauseRequested: () => setScreenVisible(false),
-            onResumeRequested: () => setScreenVisible(true),
+          return _videoFeedWidget(
+            index: index,
+            showAds: showAds,
+            videosPerAd: videosPerAd,
+            loadedVideos: loadedVideos,
           );
         },
       ),
