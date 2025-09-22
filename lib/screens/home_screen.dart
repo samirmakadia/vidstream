@@ -42,7 +42,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   int _page = 1;
   final int _pageSize = 20;
   // late PreloadVideos _preloadVideos;
-  final Map<String, BetterPlayerController> _preInitControllers = {};
+  final List<Widget> _videoWidgets = [];
+  final Map<String, CustomVideoController> _videoControllers = {};
 
   @override
   bool get wantKeepAlive => true;
@@ -171,57 +172,58 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     }
   }
 
-  void _preloadWindow(List<int> indices, {int prevCount = 1, int nextCount = 3}) {
-    if (_videos.isEmpty) return;
-    if (!_canPrecache) return;
+  void _preloadWindow(int index, {int prevCount = 1, int nextCount = 3}) {
+    if (_videos.isEmpty || !_canPrecache) return;
 
     final urlsToPreload = <String>[];
 
-    // Add previous videos
-    for (var center in indices) {
-      // Previous videos
-      for (int i = center - prevCount; i < center; i++) {
-        if (i >= 0) urlsToPreload.add(_videos[i].videoUrl);
-      }
-
-      // Current and next videos
-      for (int i = center; i <= center + nextCount && i < _videos.length; i++) {
-        urlsToPreload.add(_videos[i].videoUrl);
-      }
+    // Previous videos
+    for (int i = index - prevCount; i < index; i++) {
+      if (i >= 0) urlsToPreload.add(_videos[i].videoUrl);
     }
 
-    // Preload all
-    final uniqueUrls = urlsToPreload.toSet().toList();
-    _preloadVideos(uniqueUrls);
+    // Current + next videos
+    for (int i = index; i <= index + nextCount && i < _videos.length; i++) {
+      urlsToPreload.add(_videos[i].videoUrl);
+    }
+
+    _preloadVideos(urlsToPreload.toSet().toList());
   }
 
-  Future<void> _preInitVideoControllers(List<int> indices) async {
-    for (var i in indices) {
-      if (i < 0 || i >= _videos.length) continue;
-      final url = _videos[i].videoUrl;
+  Future<void> _buildVideoWidgets() async {
+    _videoWidgets.clear();
+    for (int i = 0; i < _videos.length; i++) {
+      final video = _videos[i];
 
-      if (_preInitControllers.containsKey(url)) continue;
-
-      final controller = BetterPlayerController(
-        const BetterPlayerConfiguration(
-          autoPlay: false,
-          looping: false,
-          handleLifecycle: true,
-          expandToFill: true,
-          fit: BoxFit.contain,
-          controlsConfiguration: BetterPlayerControlsConfiguration(
-            showControls: false,
+      if (!_videoControllers.containsKey(video.videoUrl)) {
+        final betterController = BetterPlayerController(
+          const BetterPlayerConfiguration(
+            autoPlay: false,
+            looping: false,
+            handleLifecycle: true,
+            expandToFill: true,
+            fit: BoxFit.contain,
+            controlsConfiguration: BetterPlayerControlsConfiguration(showControls: false),
           ),
+          betterPlayerDataSource: _makeDS(video.videoUrl),
+        );
+
+        _videoControllers[video.videoUrl];
+
+        // Pre-cache video
+        if (_canPrecache) await _precacheController.preCache(_makeDS(video.videoUrl));
+      }
+
+      _videoWidgets.add(
+        _videoFeedWidget(
+          index: i,
+          showAds: false,
+          videosPerAd: 0,
+          loadedVideos: _videos,
         ),
-        betterPlayerDataSource: _makeDS(url),
       );
-
-      _preInitControllers[url] = controller;
-
-      await _precacheController.preCache(_makeDS(url));
     }
   }
-
 
   Future<void> _loadVideos({bool isLoadingShow = true, bool isRefresh = false}) async {
     if (_isFetchingMore) return;
@@ -238,7 +240,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       final videos = await ApiRepository.instance.videos.getVideosOnce(limit: _pageSize, page: _page);
 
       if (mounted) {
-        setState(() {
+        setState(() async {
           if (isRefresh) {
             print("📤 Refreshed videos");
             _videos = videos;
@@ -249,8 +251,13 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           }
           _isLoading = false;
           _hasMore = videos.length == _pageSize;
+
+          // Build video widgets after loading
+          await _buildVideoWidgets();
+
+          // Preload first video window
           if (_videos.isNotEmpty) {
-            _preloadWindow(0 as List<int>);
+            _preloadWindow(0);
           }
         });
       }
@@ -370,7 +377,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       key: ValueKey(video.id),
       video: video,
       isActive: index == _currentIndex && _isScreenVisible,
-      customController: _preInitControllers[video.videoUrl],
+      // customController: _preInitControllers[video.videoUrl],
       onVideoCompleted: () {
         if (_pageController.hasClients) {
           final nextPage = (_currentIndex + 1) % _videos.length;
@@ -532,8 +539,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               ? index - (index ~/ (videosPerAd + 1))
               : index;
           if (videoIndex >= 0 && videoIndex < _videos.length) {
-            _preloadWindow(upcomingIndices, prevCount: 1, nextCount: 2);
-            _preInitVideoControllers(upcomingIndices);
+            _preloadWindow(videoIndex, prevCount: 1, nextCount: 2);
           }
 
           if (_hasMore && !_isFetchingMore && videoIndex >= _videos.length - 3) {
@@ -552,13 +558,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               ),
             );
           }
-
-          return _videoFeedWidget(
-            index: index,
-            showAds: showAds,
-            videosPerAd: videosPerAd,
-            loadedVideos: loadedVideos,
-          );
+          final videoIndex = showAds ? index - (index ~/ (videosPerAd + 1)) : index;
+          return _videoWidgets[videoIndex];
         },
       ),
     );
