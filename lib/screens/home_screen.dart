@@ -363,30 +363,24 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
 
     final video = loadedVideos[videoIndex];
-    if (!_videoControllers.containsKey(video.videoUrl)) {
-      final betterController = BetterPlayerController(
-        const BetterPlayerConfiguration(
-          autoPlay: false,
-          looping: false,
-          handleLifecycle: true,
-          expandToFill: true,
-          fit: BoxFit.contain,
-          controlsConfiguration: BetterPlayerControlsConfiguration(showControls: false),
-        ),
-        betterPlayerDataSource: _makeDS(video.videoUrl),
-      );
 
-      _videoControllers[video.videoUrl];
-
-      // Pre-cache video
-      if (_canPrecache) _precacheController.preCache(_makeDS(video.videoUrl));
-    }
+    final betterController = BetterPlayerController(
+      const BetterPlayerConfiguration(
+        autoPlay: false,
+        looping: false,
+        handleLifecycle: true,
+        expandToFill: true,
+        fit: BoxFit.contain,
+        controlsConfiguration: BetterPlayerControlsConfiguration(showControls: false),
+      ),
+      betterPlayerDataSource: _makeDS(video.videoUrl),
+    );
 
     return VideoFeedItemWidget(
       key: ValueKey(video.id),
       video: video,
       isActive: index == _currentIndex && _isScreenVisible,
-      // customController: _preInitControllers[video.videoUrl],
+      customController: betterController,
       onVideoCompleted: () {
         if (_pageController.hasClients) {
           final nextPage = (_currentIndex + 1) % _videos.length;

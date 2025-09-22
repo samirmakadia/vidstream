@@ -236,6 +236,7 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
           videoUrl: widget.video.videoUrl,
           isActive: widget.isActive,
           onVideoCompleted: widget.onVideoCompleted,
+          customController: widget.customController,
         ),
 
         Positioned(

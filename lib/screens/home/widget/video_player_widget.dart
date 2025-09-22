@@ -7,9 +7,11 @@ class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
   final bool isActive;
   final VoidCallback? onVideoCompleted;
+  final BetterPlayerController? customController;
 
   const VideoPlayerWidget({
     super.key,
+    this.customController,
     required this.videoUrl,
     required this.isActive, this.onVideoCompleted,
   });
