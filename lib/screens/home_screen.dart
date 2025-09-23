@@ -336,6 +336,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             _clearPreparedControllers();
             _prepareControllersAround(safeIndex);
             _cleanupPreparedNotNeeded(safeIndex);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              setState(() => _currentIndex = 0);
+              _prepareControllersAround(0);
+            });
           }
         });
       }
@@ -488,13 +492,26 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_videos.isEmpty) {
-      return _buildEmptyState();
-    }
-    return _buildFeedView();
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          _isLoading
+              ? const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          )
+              : _videos.isEmpty
+              ? _buildEmptyState()
+              : _buildFeedView(),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            right: 16,
+            child: _buildTopActionBar(),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTopActionBar() {

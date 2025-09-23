@@ -89,6 +89,9 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
       if (widget.isActive) {
         controller!.play();
+      } else if (mounted && !_initialized && widget.shouldPreload && widget.key == const ValueKey("firstVideo")) {
+        // Edge-case safety: if first video, auto-play it
+        controller!.play();
       }
 
       _attachListenersOnce();
