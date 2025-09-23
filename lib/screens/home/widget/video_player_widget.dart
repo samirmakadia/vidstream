@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:better_player_plus/better_player_plus.dart';
 import 'package:flutter/services.dart';
@@ -105,9 +104,16 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     return BetterPlayerDataSource(
       BetterPlayerDataSourceType.network,
       url,
+      liveStream: true,
+      bufferingConfiguration: BetterPlayerBufferingConfiguration(
+        minBufferMs: 2000,
+        maxBufferMs: 8000,
+        bufferForPlaybackMs: 500,
+        bufferForPlaybackAfterRebufferMs: 1000,
+      ),
       cacheConfiguration: BetterPlayerCacheConfiguration(
         useCache: true,
-        //useCache: Platform.isAndroid, // disable cache on iOS
+        //useCache: Platform.isAndroid,
         preCacheSize: 2 * 1024 * 1024,
         maxCacheSize: 500 * 1024 * 1024,
         maxCacheFileSize: 20 * 1024 * 1024,

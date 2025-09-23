@@ -42,7 +42,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   final int _pageSize = 20;
   late PreloadVideos _preloadVideos;
   bool _preloadReady = false;
-  // Prebuilt BetterPlayer controllers for upcoming items
   final Map<int, BetterPlayerController> _preparedControllers = {};
   final Set<int> _preparingControllers = {};
 
@@ -128,6 +127,13 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     return BetterPlayerDataSource(
       BetterPlayerDataSourceType.network,
       url,
+      liveStream: true,
+      bufferingConfiguration: BetterPlayerBufferingConfiguration(
+        minBufferMs: 2000,
+        maxBufferMs: 8000,
+        bufferForPlaybackMs: 500,
+        bufferForPlaybackAfterRebufferMs: 1000,
+      ),
       cacheConfiguration: const BetterPlayerCacheConfiguration(
         useCache: true,
         preCacheSize: 5 * 1024 * 1024,
@@ -138,7 +144,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   Future<void> _startPrecache(String url) async {
-    if (!_canPrecache) return; // disable on iOS
+    if (!_canPrecache) return;
     if (_precaching.contains(url)) return;
     try {
       _precaching.add(url);
@@ -151,7 +157,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   Future<void> _stopPrecache(String url) async {
-    if (!_canPrecache) return; // disable on iOS
+    if (!_canPrecache) return;
     if (!_precaching.contains(url)) return;
     try {
       await _precacheController.stopPreCache(_makeDS(url));
@@ -312,7 +318,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               preloadForward: 5,
               preloadBackward: 5,
               windowSize: 11,
-              autoplayFirstVideo: false, // avoid unintended background playback
+              autoplayFirstVideo: true,
               onPaginationNeeded: () async {
                 final more = await ApiRepository.instance.videos.getVideosOnce(
                   limit: _pageSize,
@@ -617,9 +623,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               : index;
           if (videoIndex >= 0 && videoIndex < _videos.length) {
             _preloadWindow(videoIndex);
-            if (_preloadReady) {
-              _preloadVideos.scroll(videoIndex);
-            }
+            _preloadVideos.scroll(videoIndex);
             _prepareControllersAround(videoIndex);
             _cleanupPreparedNotNeeded(videoIndex);
           }
