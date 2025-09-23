@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:better_player_plus/better_player_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:better_player_plus/better_player_plus.dart';
 import 'package:vidmeet/screens/home/widget/video_player_widget.dart';
 import '../../../models/api_models.dart';
 import '../../../repositories/api_repository.dart';
@@ -14,13 +14,14 @@ import 'video_actions_widget.dart';
 class VideoFeedItemWidget extends StatefulWidget {
   final ApiVideo video;
   final bool isActive;
+  final bool shouldPreload;
+  final BetterPlayerController? externalController;
   final void Function(ApiVideo video)? onVideoDeleted;
   final void Function(int likeCount, bool isLiked)? onLikeUpdated;
   final void Function(int commentCount)? onCommentUpdated;
   final void Function(ApiVideo video)? onReported;
   final void Function(ApiUser updatedUser)? onFollowUpdated;
   final VoidCallback? onVideoCompleted;
-  final BetterPlayerController? customController;
 
   final ApiUser? user;
   final VoidCallback? onPauseRequested;
@@ -30,8 +31,9 @@ class VideoFeedItemWidget extends StatefulWidget {
     super.key,
     required this.video,
     required this.isActive,
+    required this.shouldPreload,
+    this.externalController,
     this.onVideoDeleted,
-    this.customController,
     this.onLikeUpdated, this.onCommentUpdated, this.onReported, this.onFollowUpdated, this.user, this.onPauseRequested, this.onResumeRequested, this.onVideoCompleted,
   });
 
@@ -235,8 +237,9 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
           key: _videoKey,
           videoUrl: widget.video.videoUrl,
           isActive: widget.isActive,
+          shouldPreload: widget.shouldPreload,
+          externalController: widget.externalController,
           onVideoCompleted: widget.onVideoCompleted,
-          customController: widget.customController,
         ),
 
         Positioned(

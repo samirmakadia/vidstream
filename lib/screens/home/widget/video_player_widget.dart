@@ -6,14 +6,15 @@ import 'package:flutter/services.dart';
 class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
   final bool isActive;
+  final bool shouldPreload;
+  final BetterPlayerController? externalController;
   final VoidCallback? onVideoCompleted;
-  final BetterPlayerController? customController;
 
   const VideoPlayerWidget({
     super.key,
-    this.customController,
     required this.videoUrl,
-    required this.isActive, this.onVideoCompleted,
+    required this.isActive,
+    required this.shouldPreload, this.externalController, this.onVideoCompleted,
   });
 
   @override
@@ -24,16 +25,33 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   BetterPlayerController? controller;
   bool _showPlayPauseIcon = false;
   bool _initialized = false;
+  bool _ownsController = true;
+  bool _listenersAttached = false;
+
+  BetterPlayerController? _activeController() {
+    return _ownsController ? controller : (widget.externalController ?? controller);
+  }
 
   @override
   void initState() {
     super.initState();
+    // Use external prebuilt controller if provided
+    if (widget.externalController != null) {
+      controller = widget.externalController;
+      _ownsController = false;
+      _attachListenersOnce();
+    }
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp,]);
   }
 
   @override
   void dispose() {
-    controller?.dispose();
+    if (_ownsController) {
+      controller?.dispose();
+    } else {
+      // Don't dispose external controller; just pause for safety
+      controller?.pause();
+    }
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -47,7 +65,9 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
 
   void _initializePlayer() {
-    if (!widget.isActive) return;
+    // Initialize when either visible or within preload window
+    if (!(widget.isActive || widget.shouldPreload)) return;
+    if (controller != null) return;
 
     controller = BetterPlayerController(
       BetterPlayerConfiguration(
@@ -71,11 +91,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         controller!.play();
       }
 
-      controller!.addEventsListener((event) {
-        if (event.betterPlayerEventType == BetterPlayerEventType.finished) {
-          widget.onVideoCompleted?.call();
-        }
-      });
+      _attachListenersOnce();
 
       setState(() {});
     });
@@ -109,45 +125,123 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   void didUpdateWidget(VideoPlayerWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Stop old controller if video became inactive
+    // Adopt or release external controller if it changed
+    if (oldWidget.externalController != widget.externalController) {
+      if (widget.externalController != null) {
+        // Prefer to use external controller only if we don't already have one
+        if (controller == null) {
+          controller = widget.externalController;
+          _ownsController = false;
+          _listenersAttached = false;
+          _attachListenersOnce();
+          setState(() {});
+        }
+      } else {
+        // External removed; if we didn't own the previous controller, just drop reference
+        if (!_ownsController) {
+          controller?.pause();
+          controller = null;
+          _ownsController = true;
+          _listenersAttached = false;
+          setState(() {});
+        }
+      }
+    }
+
+    // Stop or keep controller based on preload/active state
     if (oldWidget.isActive && !widget.isActive) {
-      controller?.pause();
-      controller?.dispose();
-      controller = null;
+      if (widget.shouldPreload) {
+        try { controller?.pause(); } catch (_) {}
+        // keep controller initialized for instant resume
+      } else {
+        try { controller?.pause(); } catch (_) {}
+        if (_ownsController) {
+          controller?.dispose();
+        }
+        controller = null;
+      }
     }
 
     // Initialize controller if this video became active
     if (!oldWidget.isActive && widget.isActive) {
+      if (controller == null) {
+        _initializePlayer();
+      } else {
+        controller!.play();
+      }
+    }
+
+    // Begin preloading if it entered the preload window
+    if (!oldWidget.shouldPreload && widget.shouldPreload && !widget.isActive) {
       _initializePlayer();
     }
 
+    // Dispose if it left the preload window and is not active
+    if (oldWidget.shouldPreload && !widget.shouldPreload && !widget.isActive) {
+      try { controller?.pause(); } catch (_) {}
+      if (_ownsController) {
+        controller?.dispose();
+      }
+      controller = null;
+      setState(() {});
+    }
+
     // Replace video source if URL changed
-    if (oldWidget.videoUrl != widget.videoUrl && widget.isActive) {
-      controller?.dispose();
-      _initializePlayer();
+    if (oldWidget.videoUrl != widget.videoUrl) {
+      if (_ownsController) {
+        if (widget.isActive || widget.shouldPreload) {
+          controller?.dispose();
+          controller = null;
+          _initializePlayer();
+        } else {
+          controller?.dispose();
+          controller = null;
+        }
+      } else {
+        // External controller is managed by parent; detach reference without invoking methods
+        controller = widget.externalController;
+        _listenersAttached = false;
+        if (controller != null) {
+          _attachListenersOnce();
+        }
+      }
     }
   }
 
 
   void playVideo() {
-    if (controller != null && !(controller!.isPlaying() ?? false)) {
-      controller!.play();
-    }
+    final ctrl = _activeController();
+    if (ctrl == null) return;
+    try {
+      if (!(ctrl.isPlaying() ?? false)) {
+        ctrl.play();
+      }
+    } catch (_) {}
   }
 
   void pauseVideo() {
-    if (controller != null && (controller!.isPlaying() ?? false)) {
-      controller!.pause();
-    }
+    final ctrl = _activeController();
+    if (ctrl == null) return;
+    try {
+      if (ctrl.isPlaying() ?? false) {
+        ctrl.pause();
+      }
+    } catch (_) {}
   }
 
   void _togglePlayPause() {
-    if (controller == null) return;
-
-    if (controller!.isPlaying() ?? false) {
-      controller!.pause();
-    } else {
-      controller!.play();
+    final ctrl = _activeController();
+    if (ctrl == null) return;
+    try {
+      final playing = ctrl.isPlaying() ?? false;
+      if (playing) {
+        ctrl.pause();
+      } else {
+        ctrl.play();
+      }
+    } catch (_) {
+      // If controller was disposed externally, ignore tap
+      return;
     }
 
     setState(() {
@@ -165,25 +259,26 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (controller == null) {
+    final renderController = _ownsController ? controller : (widget.externalController ?? controller);
+    if (renderController == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final videoController = controller?.videoPlayerController;
-    final videoValue = videoController?.value;
-
-    final isBuffering = videoValue?.isBuffering ?? false;
-    final isInitialized = controller!.isVideoInitialized() ?? false;
-
+    bool isInitialized = false;
+    try {
+      isInitialized = renderController.isVideoInitialized() ?? false;
+    } catch (_) {
+      isInitialized = false;
+    }
 
     return Stack(
       alignment: Alignment.center,
       children: [
         SizedBox.expand(
-          child: BetterPlayer(controller: controller!),
+          child: BetterPlayer(controller: renderController),
         ),
 
-        if (!isInitialized || isBuffering)
+        if (!isInitialized)
           const Center(
             child: CircularProgressIndicator(
             ),
@@ -213,5 +308,15 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         ),
       ],
     );
+  }
+
+  void _attachListenersOnce() {
+    if (controller == null || _listenersAttached) return;
+    controller!.addEventsListener((event) {
+      if (event.betterPlayerEventType == BetterPlayerEventType.finished) {
+        widget.onVideoCompleted?.call();
+      }
+    });
+    _listenersAttached = true;
   }
 }

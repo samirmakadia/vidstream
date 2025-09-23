@@ -151,6 +151,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
           key: ValueKey(video.id),
           video: video,
           isActive: index == _currentIndex && _isScreenVisible,
+          shouldPreload: () {
+            final currentVideoIndex = showAds
+                ? _currentIndex - (_currentIndex ~/ (videosPerAd + 1))
+                : _currentIndex;
+            return videoIndex >= currentVideoIndex - 1 &&
+                videoIndex <= currentVideoIndex + 2;
+          }(),
           user: widget.user,
           onVideoCompleted: () {
             if (_pageController.hasClients) {

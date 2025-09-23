@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:custom_preload_videos/preload_videos.dart';
-import 'package:custom_preload_videos/interface/controller_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
 import 'package:vidmeet/models/api_models.dart';
@@ -25,7 +24,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
-  bool get _canPrecache => true;
+  bool get _canPrecache => Platform.isAndroid;
   final PageController _pageController = PageController();
   List<ApiVideo> _videos = [];
   List<ApiVideo> _allVideos = [];
@@ -41,10 +40,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   bool _hasMore = true;
   int _page = 1;
   final int _pageSize = 20;
-  // late PreloadVideos _preloadVideos;
-  final List<Widget> _videosFeedWidgets = [];
-  final int _prevToKeep = 1;
-  final int _nextToKeep = 2;
+  late PreloadVideos _preloadVideos;
+  bool _preloadReady = false;
+  // Prebuilt BetterPlayer controllers for upcoming items
+  final Map<int, BetterPlayerController> _preparedControllers = {};
+  final Set<int> _preparingControllers = {};
 
   @override
   bool get wantKeepAlive => true;
@@ -114,8 +114,13 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       }
       _precacheController.dispose();
     }
+    if (_preloadReady) {
+      _preloadVideos.disposeAll();
+      _preloadReady = false;
+    }
     _pageController.dispose();
     _videoUploadedSubscription.cancel();
+    _clearPreparedControllers();
     super.dispose();
   }
 
@@ -154,58 +159,116 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     _precaching.remove(url);
   }
 
-  /// Preload multiple videos at once
-  Future<void> _preloadVideos(List<String> urls) async {
-    if (!_canPrecache) return;
+  Future<void> _prepareControllerAt(int index) async {
+    if (index < 0 || index >= _videos.length) return;
+    if (_preparedControllers.containsKey(index)) return;
+    if (_preparingControllers.contains(index)) return;
+    _preparingControllers.add(index);
+    try {
+      final url = _videos[index].videoUrl;
+      final controller = BetterPlayerController(
+        BetterPlayerConfiguration(
+          autoPlay: false,
+          looping: false,
+          handleLifecycle: true,
+          expandToFill: true,
+          fit: BoxFit.contain,
+          controlsConfiguration: const BetterPlayerControlsConfiguration(
+            showControls: false,
+          ),
+        ),
+      );
+      await controller.setupDataSource(_makeDS(url));
+      final aspect = controller.videoPlayerController!.value.aspectRatio;
+      controller.setOverriddenAspectRatio(aspect);
+      await controller.pause();
+      _preparedControllers[index] = controller;
+      if (mounted) setState(() {});
+    } catch (_) {
+      // ignore prep failure; widget will initialize on demand
+    } finally {
+      _preparingControllers.remove(index);
+    }
+  }
 
-    final wanted = urls.toSet();
+  void _disposePreparedAt(int index) {
+    final c = _preparedControllers.remove(index);
+    c?.dispose();
+    if (mounted) setState(() {});
+  }
 
-    await Future.wait(
-      wanted
-          .where((url) => !_precaching.contains(url))
-          .map((url) => _startPrecache(url)),
-    );
+  void _clearPreparedControllers({bool immediate = false}) {
+    final toDispose = _preparedControllers.values.toList();
+    _preparedControllers.clear();
+    _preparingControllers.clear();
+    if (immediate) {
+      for (final c in toDispose) {
+        c.dispose();
+      }
+    } else {
+      Future.delayed(const Duration(milliseconds: 400), () {
+        for (final c in toDispose) {
+          try { c.dispose(); } catch (_) {}
+        }
+      });
+    }
+  }
 
+  void _prepareControllersAround(int center) {
+    // Prepare previous 1 and next two items' controllers in advance
+    _prepareControllerAt(center - 1);
+    _prepareControllerAt(center + 1);
+    _prepareControllerAt(center + 2);
+  }
+
+  int _currentLogicalIndex() {
+    final videosPerAd = SettingManager().nativeFrequency;
+    final showAds = AppLovinAdManager.isMrecAdLoaded;
+    return showAds
+        ? _currentIndex - (_currentIndex ~/ (videosPerAd + 1))
+        : _currentIndex;
+  }
+
+  bool _shouldKeepIndex(int center, int idx) {
+    return idx == center || idx == center - 1 || idx == center + 1 || idx == center + 2;
+  }
+
+  void _cleanupPreparedNotNeeded(int center) {
+    // Keep current and nearby indices so we don't dispose in-use controllers
+    final keep = <int>{center - 1, center, center + 1, center + 2};
+    for (final idx in _preparedControllers.keys.toList()) {
+      if (!keep.contains(idx)) {
+        // Delay disposal slightly to avoid race with ongoing frames
+        Future.delayed(const Duration(milliseconds: 350), () {
+          final currentCenter = _currentLogicalIndex();
+          if (!_shouldKeepIndex(currentCenter, idx)) {
+            _disposePreparedAt(idx);
+          }
+        });
+      }
+    }
+  }
+
+  void _preloadWindow(int center) {
+    if (_videos.isEmpty) return;
+    if (!_canPrecache) return; // disable on iOS
+    final wanted = <String>{};
+
+    // preload prev 1 and next 2
+    if (center - 1 >= 0) wanted.add(_videos[center - 1].videoUrl);
+    if (center + 1 < _videos.length) wanted.add(_videos[center + 1].videoUrl);
+    if (center + 2 < _videos.length) wanted.add(_videos[center + 2].videoUrl);
+
+    // start wanted
+    for (var url in wanted) {
+      _startPrecache(url);
+    }
+
+    // stop unwanted
     for (var url in _precaching.toList()) {
       if (!wanted.contains(url)) {
         _stopPrecache(url);
       }
-    }
-  }
-
-  void _preloadWindow(int index, {int prevCount = 1, int nextCount = 3}) {
-    if (_videos.isEmpty || !_canPrecache) return;
-
-    final urlsToPreload = <String>[];
-
-    // Previous videos
-    for (int i = index - prevCount; i < index; i++) {
-      if (i >= 0) urlsToPreload.add(_videos[i].videoUrl);
-    }
-
-    // Current + next videos
-    for (int i = index; i <= index + nextCount && i < _videos.length; i++) {
-      urlsToPreload.add(_videos[i].videoUrl);
-    }
-
-    _preloadVideos(urlsToPreload.toSet().toList());
-  }
-
-  Future<void> _buildVideoWidgets(int index) async {
-
-    final int start = (index - _prevToKeep).clamp(0, _videos.length - 1);
-    final int end = (index + _nextToKeep).clamp(0, _videos.length - 1);
-
-    for (int i = start; i <= end; i++) {
-      final video = _videos[i];
-      if (_videosFeedWidgets.any((currentVideo) => currentVideo is VideoFeedItemWidget && currentVideo.video.id == video.id)) {
-        continue;
-      }
-      _videosFeedWidgets[i] = _videoFeedWidget(
-        index: i,
-        showAds: false,
-        videosPerAd: 0,
-      );
     }
   }
 
@@ -221,33 +284,71 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         _hasMore = true;
       }
 
-      final videos = await ApiRepository.instance.videos.getVideosOnce(limit: _pageSize, page: _page);
+      final videos = await ApiRepository.instance.videos.getVideosOnce(
+        limit: _pageSize,
+        page: _page,
+      );
 
       if (mounted) {
         setState(() {
           if (isRefresh) {
             _videos = videos;
             _allVideos = videos;
-            _videosFeedWidgets.addAll(List.generate(_videos.length, (_) => const SizedBox.shrink()));
           } else {
             _videos.addAll(videos);
             _allVideos.addAll(videos);
-            _videosFeedWidgets.addAll(List.generate(videos.length, (_) => const SizedBox.shrink()));
           }
           _isLoading = false;
           _hasMore = videos.length == _pageSize;
+
+          if (_videos.isNotEmpty) {
+            // ✅ Initialize/Reset PreloadVideos for background preloading (no UI)
+            if (_preloadReady) {
+              _preloadVideos.disposeAll();
+              _preloadReady = false;
+            }
+            _preloadVideos = PreloadVideos(
+              videoUrls: _videos.map((v) => v.videoUrl).toList(),
+              preloadForward: 5,
+              preloadBackward: 5,
+              windowSize: 11,
+              autoplayFirstVideo: false, // avoid unintended background playback
+              onPaginationNeeded: () async {
+                final more = await ApiRepository.instance.videos.getVideosOnce(
+                  limit: _pageSize,
+                  page: _page + 1,
+                );
+                return more.map((v) => v.videoUrl).toList();
+              },
+            );
+            _preloadReady = true;
+            // Prime around the current video index if possible
+            final videosPerAd = SettingManager().nativeFrequency;
+            final showAds = AppLovinAdManager.isMrecAdLoaded;
+            final currentVideoIndex = showAds
+                ? _currentIndex - (_currentIndex ~/ (videosPerAd + 1))
+                : _currentIndex;
+            final safeIndex = (currentVideoIndex >= 0 && currentVideoIndex < _videos.length)
+                ? currentVideoIndex
+                : 0;
+            _preloadVideos.scroll(safeIndex);
+            _preloadWindow(safeIndex);
+            _clearPreparedControllers();
+            _prepareControllersAround(safeIndex);
+            _cleanupPreparedNotNeeded(safeIndex);
+          }
         });
-        if (_videos.isNotEmpty) {
-          // _preloadWindow(0);
-          _buildVideoWidgets(0);
-        }
       }
       _page++;
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        Graphics.showTopDialog(context, "Error!", 'Failed to load videos: $e',
-            type: ToastType.error);
+        Graphics.showTopDialog(
+          context,
+          "Error!",
+          'Failed to load videos: $e',
+          type: ToastType.error,
+        );
       }
     } finally {
       _isFetchingMore = false;
@@ -286,6 +387,27 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     if (_pageController.hasClients) {
       _pageController.jumpToPage(0);
     }
+
+    // Keep PreloadVideos in sync with current list
+    if (_videos.isNotEmpty) {
+      if (_preloadReady) {
+        _preloadVideos.disposeAll();
+        _preloadReady = false;
+      }
+      _preloadVideos = PreloadVideos(
+        videoUrls: _videos.map((v) => v.videoUrl).toList(),
+        preloadForward: 5,
+        preloadBackward: 5,
+        windowSize: 11,
+        autoplayFirstVideo: false,
+      );
+      _preloadReady = true;
+      _preloadVideos.scroll(0);
+      _preloadWindow(0);
+      _clearPreparedControllers();
+      _prepareControllersAround(0);
+      _cleanupPreparedNotNeeded(0);
+    }
   }
 
   void _clearFilters() {
@@ -296,6 +418,27 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     });
     if (_pageController.hasClients) {
       _pageController.jumpToPage(0);
+    }
+
+    // Rebuild PreloadVideos for full list
+    if (_videos.isNotEmpty) {
+      if (_preloadReady) {
+        _preloadVideos.disposeAll();
+        _preloadReady = false;
+      }
+      _preloadVideos = PreloadVideos(
+        videoUrls: _videos.map((v) => v.videoUrl).toList(),
+        preloadForward: 5,
+        preloadBackward: 5,
+        windowSize: 11,
+        autoplayFirstVideo: false,
+      );
+      _preloadReady = true;
+      _preloadVideos.scroll(0);
+      _preloadWindow(0);
+      _clearPreparedControllers();
+      _prepareControllersAround(0);
+      _cleanupPreparedNotNeeded(0);
     }
   }
 
@@ -342,86 +485,16 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     if (changed) setState(() {});
   }
 
-  Widget _videoFeedWidget({
-      required int index,
-      required bool showAds,
-      required int videosPerAd,
-  }) {
-    final videoIndex = showAds ? index - (index ~/ (videosPerAd + 1)) : index;
-
-    if (videoIndex >= _videos.length) return const SizedBox.shrink();
-
-    final video = _videos[videoIndex];
-
-    final betterController = BetterPlayerController(
-      const BetterPlayerConfiguration(
-        autoPlay: false,
-        looping: false,
-        handleLifecycle: true,
-        expandToFill: true,
-        fit: BoxFit.contain,
-        controlsConfiguration: BetterPlayerControlsConfiguration(showControls: false),
-      ),
-      betterPlayerDataSource: _makeDS(video.videoUrl),
-    );
-
-    return VideoFeedItemWidget(
-      key: ValueKey(video.id),
-      video: video,
-      isActive: index == _currentIndex && _isScreenVisible,
-      customController: betterController,
-      onVideoCompleted: () {
-        if (_pageController.hasClients) {
-          final nextPage = (_currentIndex + 1) % _videos.length;
-          _pageController.animateToPage(
-            nextPage,
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-          );
-        }
-      },
-      onVideoDeleted: (deletedVideo) {
-        _modifyVideo(video.id, (_) => null);
-      },
-      onLikeUpdated: (newCount, isLiked) =>
-          _modifyVideo(video.id, (v) => v.copyWith(
-            likesCount: newCount,
-            isLiked: isLiked,
-          )),
-      onCommentUpdated: (newCount) =>
-          _modifyVideo(video.id, (v) => v.copyWith(commentsCount: newCount)),
-      onReported: (reportedVideo) =>
-          _modifyVideo(reportedVideo.id, (_) => null),
-      onFollowUpdated: (updatedUser) =>
-          _modifyVideo(video.id, (v) => v.copyWith(user: updatedUser)),
-      onPauseRequested: () => setScreenVisible(false),
-      onResumeRequested: () => setScreenVisible(true),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          _isLoading
-              ? const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          )
-              : _videos.isEmpty
-              ? _buildEmptyState()
-              : _buildFeedView(),
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 16,
-            right: 16,
-            child: _buildTopActionBar(),
-          ),
-        ],
-      ),
-    );
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_videos.isEmpty) {
+      return _buildEmptyState();
+    }
+    return _buildFeedView();
   }
 
   Widget _buildTopActionBar() {
@@ -526,8 +599,12 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               ? index - (index ~/ (videosPerAd + 1))
               : index;
           if (videoIndex >= 0 && videoIndex < _videos.length) {
-            // _preloadWindow(videoIndex, prevCount: 1, nextCount: 2);
-            _buildVideoWidgets(videoIndex);
+            _preloadWindow(videoIndex);
+            if (_preloadReady) {
+              _preloadVideos.scroll(videoIndex);
+            }
+            _prepareControllersAround(videoIndex);
+            _cleanupPreparedNotNeeded(videoIndex);
           }
 
           if (_hasMore && !_isFetchingMore && videoIndex >= _videos.length - 3) {
@@ -546,16 +623,56 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               ),
             );
           }
-          final videoIndex = showAds ? index - (index ~/ (videosPerAd + 1)) : index;
 
-          // if (videoIndex >= _videosFeedWidgets.length) {
-          //   return _videoFeedWidget(
-          //     index: videoIndex,
-          //     showAds: showAds,
-          //     videosPerAd: videosPerAd,
-          //   );
-          // }
-          return _videosFeedWidgets[videoIndex];
+          final videoIndex = showAds
+              ? index - (index ~/ (videosPerAd + 1))
+              : index;
+
+          if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
+
+          final video = loadedVideos[videoIndex];
+
+          // Compute current visible video index (excluding ads)
+          final currentVideoIndex = showAds
+              ? _currentIndex - (_currentIndex ~/ (videosPerAd + 1))
+              : _currentIndex;
+          // Pre-initialize Better Player for prev 1 and next 2
+          final shouldPreload =
+              videoIndex >= currentVideoIndex - 1 && videoIndex <= currentVideoIndex + 2;
+
+          return VideoFeedItemWidget(
+            key: ValueKey(video.id),
+            video: video,
+            isActive: index == _currentIndex && _isScreenVisible,
+            shouldPreload: shouldPreload,
+            externalController: _preparedControllers[videoIndex],
+            onVideoCompleted: () {
+              if (_pageController.hasClients) {
+                final nextPage = (_currentIndex + 1) % _videos.length;
+                _pageController.animateToPage(
+                  nextPage,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+              }
+            },
+            onVideoDeleted: (deletedVideo) {
+              _modifyVideo(video.id, (_) => null);
+            },
+            onLikeUpdated: (newCount, isLiked) =>
+                _modifyVideo(video.id, (v) => v.copyWith(
+                  likesCount: newCount,
+                  isLiked: isLiked,
+                )),
+            onCommentUpdated: (newCount) =>
+                _modifyVideo(video.id, (v) => v.copyWith(commentsCount: newCount)),
+            onReported: (reportedVideo) =>
+                _modifyVideo(reportedVideo.id, (_) => null),
+            onFollowUpdated: (updatedUser) =>
+                _modifyVideo(video.id, (v) => v.copyWith(user: updatedUser)),
+            onPauseRequested: () => setScreenVisible(false),
+            onResumeRequested: () => setScreenVisible(true),
+          );
         },
       ),
     );
