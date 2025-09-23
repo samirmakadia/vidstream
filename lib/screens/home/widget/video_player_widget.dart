@@ -277,7 +277,8 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     return Stack(
       alignment: Alignment.center,
       children: [
-        SizedBox.expand(
+        if (isInitialized)
+          SizedBox.expand(
           child: BetterPlayer(controller: renderController),
         ),
 
