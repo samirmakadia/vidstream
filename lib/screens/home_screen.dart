@@ -60,7 +60,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadVideos();
+    _loadVideos(isRefresh: true);
     if (_canPrecache) {
       _precacheController = BetterPlayerController(
         const BetterPlayerConfiguration(autoPlay: false),
@@ -370,6 +370,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   void _openSearchScreen() {
+    setScreenVisible(false);
     NavigationHelper.navigateWithAd(
       context: context,
       destination: const SearchScreen(),

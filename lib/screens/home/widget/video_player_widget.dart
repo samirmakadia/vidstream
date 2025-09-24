@@ -114,9 +114,9 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       cacheConfiguration: BetterPlayerCacheConfiguration(
         useCache: true,
         //useCache: Platform.isAndroid,
-        preCacheSize: 2 * 1024 * 1024,
+        preCacheSize: 5 * 1024 * 1024,
         maxCacheSize: 500 * 1024 * 1024,
-        maxCacheFileSize: 20 * 1024 * 1024,
+        maxCacheFileSize: 50 * 1024 * 1024,
       ),
     );
   }
