@@ -16,6 +16,8 @@ import 'home/bottomsheet/filter_bottom_sheet.dart';
 import 'home/widget/video_feed_item_widget.dart';
 import 'package:better_player_plus/better_player_plus.dart';
 
+import 'home/widget/video_player_widget.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -621,6 +623,37 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           final videoIndex = showAds
               ? index - (index ~/ (videosPerAd + 1))
               : index;
+
+          // If current page is an ad, ensure all prepared controllers are muted/paused
+          final isAdIndex = showAds && (index + 1) % (videosPerAd + 1) == 0;
+          if (isAdIndex) {
+            for (final s in VideoPlayerWidgetState.allInstances) {
+              try { s.muteAndPause(); } catch (_) {}
+            }
+            for (final c in _preparedControllers.values) {
+              try { c.setVolume(0.0); } catch (_) {}
+              try { c.pause(); } catch (_) {}
+            }
+          } else {
+            // Proactively mute/pause any prepared controllers that are not the current video
+            for (final s in VideoPlayerWidgetState.allInstances) {
+              try { s.muteAndPause(); } catch (_) {}
+            }
+            // If we have a prepared controller for the new video, unmute & play it.
+            final activePrepared = _preparedControllers[videoIndex];
+            if (activePrepared != null) {
+              try { activePrepared.setVolume(1.0); } catch (_) {}
+              try { activePrepared.play(); } catch (_) {}
+            }
+            _preparedControllers.forEach((idx, c) {
+              if (idx != videoIndex) {
+                try { c.setVolume(0.0); } catch (_) {}
+                try { c.pause(); } catch (_) {}
+              } else {
+                try { c.setVolume(1.0); } catch (_) {}
+              }
+            });
+          }
           if (videoIndex >= 0 && videoIndex < _videos.length) {
             _preloadWindow(videoIndex);
             _preloadVideos.scroll(videoIndex);
