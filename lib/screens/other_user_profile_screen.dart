@@ -260,7 +260,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
         _isBlocked
             ? 'Blocked ${_user?.displayName ?? ""}'
             : 'Unblocked ${_user?.displayName ?? ""}',
-        type: _isBlocked ? ToastType.error : ToastType.success,
+        type: ToastType.success,
       );
     } catch (e) {
       Graphics.showTopDialog(
