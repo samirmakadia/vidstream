@@ -156,7 +156,9 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         }
       }
     }
-
+    if (oldWidget.videoUrl != widget.videoUrl && widget.isActive) {
+      _initializePlayer();
+    }
     // Stop or keep controller based on preload/active state
     if (oldWidget.isActive && !widget.isActive) {
       if (widget.shouldPreload) {

@@ -660,13 +660,17 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           // Pre-initialize Better Player for prev 1 and next 2
           final shouldPreload =
               videoIndex >= currentVideoIndex - 1 && videoIndex <= currentVideoIndex + 2;
+          final preparedController = _preparedControllers[videoIndex];
+          final externalController = (preparedController?.isVideoInitialized() ?? false)
+              ? preparedController
+              : null;
 
           return VideoFeedItemWidget(
             key: ValueKey(video.id),
             video: video,
             isActive: index == _currentIndex && _isScreenVisible,
             shouldPreload: shouldPreload,
-            externalController: _preparedControllers[videoIndex],
+            externalController: externalController,
             onVideoCompleted: () {
               if (_pageController.hasClients) {
                 final nextPage = (_currentIndex + 1) % _videos.length;
