@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:custom_preload_videos/interface/controller_interface.dart';
 import 'package:custom_preload_videos/preload_videos.dart';
 import 'package:flutter/material.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
@@ -721,3 +722,96 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 }
 
+class MyBetterPlayerController extends CustomVideoController {
+  final String _url;
+  late BetterPlayerController _betterPlayerController;
+  bool _isDisposed = false;
+  bool _isInitialized = false;
+
+  BetterPlayerController get betterPlayerController => _betterPlayerController;
+
+  MyBetterPlayerController(this._url) {
+    _betterPlayerController = BetterPlayerController(
+      BetterPlayerConfiguration(
+        autoPlay: false,
+        looping: false,
+        handleLifecycle: true,
+        expandToFill: true,
+        fit: BoxFit.contain,
+        controlsConfiguration: const BetterPlayerControlsConfiguration(
+          showControls: false,
+        ),
+      ),
+      betterPlayerDataSource: BetterPlayerDataSource(
+        BetterPlayerDataSourceType.network,
+        _url,
+        cacheConfiguration: const BetterPlayerCacheConfiguration(
+          preCacheSize: 5 * 1024 * 1024,
+          maxCacheSize: 500 * 1024 * 1024,
+          maxCacheFileSize: 20 * 1024 * 1024,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> initialize() async {
+    if (_isDisposed || _isInitialized) return;
+
+    final completer = Completer<void>();
+    void listener(BetterPlayerEvent event) {
+      if (event.betterPlayerEventType == BetterPlayerEventType.initialized &&
+          !completer.isCompleted) {
+        _isInitialized = true;
+        completer.complete();
+      }
+    }
+
+    _betterPlayerController.addEventsListener(listener);
+
+    try {
+      // Only setup data source once
+      await _betterPlayerController.setupDataSource(_betterPlayerController.betterPlayerDataSource!);
+      final aspect = _betterPlayerController.videoPlayerController!.value.aspectRatio;
+      _betterPlayerController.setOverriddenAspectRatio(aspect);
+
+      await completer.future;
+    } catch (e) {
+      debugPrint("❌ Failed to initialize BetterPlayer for $_url: $e");
+    } finally {
+      _betterPlayerController.removeEventsListener(listener);
+    }
+  }
+
+  @override
+  Future<void> play() async {
+    if (!_isDisposed && isInitialized) {
+      print("Playing video $_url");
+      await _betterPlayerController.play();
+    }
+  }
+
+  @override
+  Future<void> pause() async {
+    if (!_isDisposed && isInitialized) {
+      print("Pausing video $_url");
+      await _betterPlayerController.pause();
+    }
+  }
+
+  @override
+  Future<void> dispose() async {
+    if (_isDisposed) return;
+    _isDisposed = true;
+    _betterPlayerController.dispose();
+  }
+
+  @override
+  bool get isPlaying => !_isDisposed && (_betterPlayerController.isPlaying() ?? false);
+
+  @override
+  bool get isInitialized => !_isDisposed && _isInitialized;
+
+  @override
+  String get dataSource => _url;
+}
