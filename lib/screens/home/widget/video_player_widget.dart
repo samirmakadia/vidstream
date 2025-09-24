@@ -21,8 +21,6 @@ class VideoPlayerWidget extends StatefulWidget {
 }
 
 class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
-  static final Set<VideoPlayerWidgetState> _instances = <VideoPlayerWidgetState>{};
-  static Iterable<VideoPlayerWidgetState> get allInstances => _instances;
   BetterPlayerController? controller;
   bool _showPlayPauseIcon = false;
   bool _initialized = false;
@@ -47,15 +45,11 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   @override
   void dispose() {
-    _instances.remove(this);
     if (_ownsController) {
-      try { controller?.setVolume(0.0); } catch (_) {}
-      try { controller?.pause(); } catch (_) {}
-      try { controller?.dispose(); } catch (_) {}
+      controller?.dispose();
     } else {
-      // Don't dispose external controller; just pause and mute for safety
-      try { controller?.setVolume(0.0); } catch (_) {}
-      try { controller?.pause(); } catch (_) {}
+      // Don't dispose external controller; just pause for safety
+      controller?.pause();
     }
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([
@@ -93,12 +87,10 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       controller!.setOverriddenAspectRatio(aspect);
 
       if (widget.isActive) {
-        try { controller!.setVolume(1.0); } catch (_) {}
-        try { controller!.play(); } catch (_) {}
-      } else {
-        // Always mute preloaded videos, never auto-play them
-        try { controller!.setVolume(0.0); } catch (_) {}
-        try { controller!.pause(); } catch (_) {}
+        controller!.play();
+      } else if (mounted && !_initialized && widget.shouldPreload && widget.key == const ValueKey("firstVideo")) {
+        // Edge-case safety: if first video, auto-play it
+        controller!.play();
       }
 
       _attachListenersOnce();
@@ -167,23 +159,15 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
     // Stop or keep controller based on preload/active state
     if (oldWidget.isActive && !widget.isActive) {
-      final ctrl = _activeController();
       if (widget.shouldPreload) {
-        try { ctrl?.setVolume(0.0); } catch (_) {}
-        try { ctrl?.pause(); } catch (_) {}
+        try { controller?.pause(); } catch (_) {}
         // keep controller initialized for instant resume
       } else {
-        try { ctrl?.setVolume(0.0); } catch (_) {}
-        try { ctrl?.pause(); } catch (_) {}
+        try { controller?.pause(); } catch (_) {}
         if (_ownsController) {
-          final c = controller;
-          controller = null;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            try { c?.dispose(); } catch (_) {}
-          });
-        } else {
-          controller = null;
+          controller?.dispose();
         }
+        controller = null;
       }
     }
 
@@ -192,8 +176,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       if (controller == null) {
         _initializePlayer();
       } else {
-        try { controller!.setVolume(1.0); } catch (_) {}
-        try { controller!.play(); } catch (_) {}
+        controller!.play();
       }
     }
 
@@ -204,7 +187,6 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
     // Dispose if it left the preload window and is not active
     if (oldWidget.shouldPreload && !widget.shouldPreload && !widget.isActive) {
-      try { controller?.setVolume(0.0); } catch (_) {}
       try { controller?.pause(); } catch (_) {}
       if (_ownsController) {
         controller?.dispose();
@@ -241,11 +223,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     if (ctrl == null) return;
     try {
       if (!(ctrl.isPlaying() ?? false)) {
-        try { ctrl.setVolume(1.0); } catch (_) {}
-        // ctrl.play();
-        if (!(ctrl.isPlaying() ?? false)) {
-          ctrl.play();
-        }
+        ctrl.play();
       }
     } catch (_) {}
   }
@@ -255,7 +233,6 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     if (ctrl == null) return;
     try {
       if (ctrl.isPlaying() ?? false) {
-        try { ctrl.setVolume(0.0); } catch (_) {}
         ctrl.pause();
       }
     } catch (_) {}
@@ -267,10 +244,8 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     try {
       final playing = ctrl.isPlaying() ?? false;
       if (playing) {
-        try { ctrl.setVolume(0.0); } catch (_) {}
         ctrl.pause();
       } else {
-        try { ctrl.setVolume(1.0); } catch (_) {}
         ctrl.play();
       }
     } catch (_) {
@@ -289,16 +264,6 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         });
       }
     });
-  }
-  //
-  void muteAndPause() {
-    final ctrl = _activeController();
-    try {
-      ctrl?.pause();
-    } catch (_) {}
-    try {
-      ctrl?.setVolume(0.0);
-    } catch (_) {}
   }
 
   @override
@@ -320,8 +285,8 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       children: [
         if (isInitialized)
           SizedBox.expand(
-            child: BetterPlayer(controller: renderController),
-          ),
+          child: BetterPlayer(controller: renderController),
+        ),
 
         if (!isInitialized)
           const Center(
@@ -360,16 +325,6 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     controller!.addEventsListener((event) {
       if (event.betterPlayerEventType == BetterPlayerEventType.finished) {
         widget.onVideoCompleted?.call();
-      }
-      if (event.betterPlayerEventType == BetterPlayerEventType.pause) {
-        try { controller!.setVolume(0.0); } catch (_) {}
-      }
-      if (event.betterPlayerEventType == BetterPlayerEventType.play) {
-        if (widget.isActive) {
-          try { controller!.setVolume(1.0); } catch (_) {}
-        } else {
-          try { controller!.setVolume(0.0); } catch (_) {}
-        }
       }
     });
     _listenersAttached = true;
