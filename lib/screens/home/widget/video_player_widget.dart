@@ -36,7 +36,6 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     super.initState();
     // Use external prebuilt controller if provided
     if (widget.externalController != null) {
-      print("Using external video controller");
       controller = widget.externalController;
       _ownsController = false;
       _attachListenersOnce();
@@ -46,8 +45,10 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   @override
   void dispose() {
-    if (widget.externalController == null || widget.externalController!.isVideoInitialized() == false) {
+    if (_ownsController) {
       controller?.dispose();
+    }else{
+      controller?.pause();
     }
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([
@@ -64,7 +65,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   void _initializePlayer() {
     // Initialize when either visible or within preload window
     if (!(widget.isActive || widget.shouldPreload)) return;
-    if (widget.externalController != null) return;
+    if (controller != null) return;
 
     controller = BetterPlayerController(
       BetterPlayerConfiguration(

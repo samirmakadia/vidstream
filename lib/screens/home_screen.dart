@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:custom_preload_videos/interface/controller_interface.dart';
-import 'package:custom_preload_videos/preload_videos.dart';
 import 'package:flutter/material.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
 import 'package:vidmeet/models/api_models.dart';
@@ -41,7 +40,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   bool _hasMore = true;
   int _page = 1;
   final int _pageSize = 20;
-  late PreloadVideos _preloadVideos;
   bool _preloadReady = false;
   final Map<int, BetterPlayerController> _preparedControllers = {};
   final Set<int> _preparingControllers = {};
@@ -115,7 +113,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       _precacheController.dispose();
     }
     if (_preloadReady) {
-      _preloadVideos.disposeAll();
       _preloadReady = false;
     }
     _pageController.dispose();
@@ -311,23 +308,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           if (_videos.isNotEmpty) {
             // ✅ Initialize/Reset PreloadVideos for background preloading (no UI)
             if (_preloadReady) {
-              _preloadVideos.disposeAll();
               _preloadReady = false;
             }
-            _preloadVideos = PreloadVideos(
-              videoUrls: _videos.map((v) => v.videoUrl).toList(),
-              preloadForward: 5,
-              preloadBackward: 5,
-              windowSize: 11,
-              autoplayFirstVideo: true,
-              onPaginationNeeded: () async {
-                final more = await ApiRepository.instance.videos.getVideosOnce(
-                  limit: _pageSize,
-                  page: _page + 1,
-                );
-                return more.map((v) => v.videoUrl).toList();
-              },
-            );
             _preloadReady = true;
             // Prime around the current video index if possible
             final videosPerAd = SettingManager().nativeFrequency;
@@ -338,7 +320,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             final safeIndex = (currentVideoIndex >= 0 && currentVideoIndex < _videos.length)
                 ? currentVideoIndex
                 : 0;
-            _preloadVideos.scroll(safeIndex);
             _preloadWindow(safeIndex);
             _clearPreparedControllers();
             _prepareControllersAround(safeIndex);
@@ -403,18 +384,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     // Keep PreloadVideos in sync with current list
     if (_videos.isNotEmpty) {
       if (_preloadReady) {
-        _preloadVideos.disposeAll();
         _preloadReady = false;
       }
-      _preloadVideos = PreloadVideos(
-        videoUrls: _videos.map((v) => v.videoUrl).toList(),
-        preloadForward: 5,
-        preloadBackward: 5,
-        windowSize: 11,
-        autoplayFirstVideo: false,
-      );
       _preloadReady = true;
-      _preloadVideos.scroll(0);
       _preloadWindow(0);
       _clearPreparedControllers();
       _prepareControllersAround(0);
@@ -435,18 +407,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     // Rebuild PreloadVideos for full list
     if (_videos.isNotEmpty) {
       if (_preloadReady) {
-        _preloadVideos.disposeAll();
         _preloadReady = false;
       }
-      _preloadVideos = PreloadVideos(
-        videoUrls: _videos.map((v) => v.videoUrl).toList(),
-        preloadForward: 5,
-        preloadBackward: 5,
-        windowSize: 11,
-        autoplayFirstVideo: false,
-      );
       _preloadReady = true;
-      _preloadVideos.scroll(0);
       _preloadWindow(0);
       _clearPreparedControllers();
       _prepareControllersAround(0);
@@ -625,7 +588,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               : index;
           if (videoIndex >= 0 && videoIndex < _videos.length) {
             _preloadWindow(videoIndex);
-            _preloadVideos.scroll(videoIndex);
             _prepareControllersAround(videoIndex);
             _cleanupPreparedNotNeeded(videoIndex);
           }
@@ -720,98 +682,4 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       ),
     );
   }
-}
-
-class MyBetterPlayerController extends CustomVideoController {
-  final String _url;
-  late BetterPlayerController _betterPlayerController;
-  bool _isDisposed = false;
-  bool _isInitialized = false;
-
-  BetterPlayerController get betterPlayerController => _betterPlayerController;
-
-  MyBetterPlayerController(this._url) {
-    _betterPlayerController = BetterPlayerController(
-      BetterPlayerConfiguration(
-        autoPlay: false,
-        looping: false,
-        handleLifecycle: true,
-        expandToFill: true,
-        fit: BoxFit.contain,
-        controlsConfiguration: const BetterPlayerControlsConfiguration(
-          showControls: false,
-        ),
-      ),
-      betterPlayerDataSource: BetterPlayerDataSource(
-        BetterPlayerDataSourceType.network,
-        _url,
-        cacheConfiguration: const BetterPlayerCacheConfiguration(
-          preCacheSize: 5 * 1024 * 1024,
-          maxCacheSize: 500 * 1024 * 1024,
-          maxCacheFileSize: 20 * 1024 * 1024,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Future<void> initialize() async {
-    if (_isDisposed || _isInitialized) return;
-
-    final completer = Completer<void>();
-    void listener(BetterPlayerEvent event) {
-      if (event.betterPlayerEventType == BetterPlayerEventType.initialized &&
-          !completer.isCompleted) {
-        _isInitialized = true;
-        completer.complete();
-      }
-    }
-
-    _betterPlayerController.addEventsListener(listener);
-
-    try {
-      // Only setup data source once
-      await _betterPlayerController.setupDataSource(_betterPlayerController.betterPlayerDataSource!);
-      final aspect = _betterPlayerController.videoPlayerController!.value.aspectRatio;
-      _betterPlayerController.setOverriddenAspectRatio(aspect);
-
-      await completer.future;
-    } catch (e) {
-      debugPrint("❌ Failed to initialize BetterPlayer for $_url: $e");
-    } finally {
-      _betterPlayerController.removeEventsListener(listener);
-    }
-  }
-
-  @override
-  Future<void> play() async {
-    if (!_isDisposed && isInitialized) {
-      print("Playing video $_url");
-      await _betterPlayerController.play();
-    }
-  }
-
-  @override
-  Future<void> pause() async {
-    if (!_isDisposed && isInitialized) {
-      print("Pausing video $_url");
-      await _betterPlayerController.pause();
-    }
-  }
-
-  @override
-  Future<void> dispose() async {
-    if (_isDisposed) return;
-    _isDisposed = true;
-    _betterPlayerController.dispose();
-  }
-
-  @override
-  bool get isPlaying => !_isDisposed && (_betterPlayerController.isPlaying() ?? false);
-
-  @override
-  bool get isInitialized => !_isDisposed && _isInitialized;
-
-  @override
-  String get dataSource => _url;
 }
