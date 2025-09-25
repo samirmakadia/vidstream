@@ -13,13 +13,14 @@ class ReportDialog extends StatefulWidget {
   final bool isDescriptionRequired;
   final ReportSubmitCallback onSubmit;
   final BuildContext scaffoldContext;
+  final VoidCallback? onCancel;
 
   const ReportDialog({
     super.key,
     required this.title,
     required this.reasons,
     required this.onSubmit,
-    this.isDescriptionRequired = false, required this.scaffoldContext,
+    this.isDescriptionRequired = false, required this.scaffoldContext, this.onCancel,
   });
 
   @override
@@ -73,7 +74,12 @@ class _ReportDialogState extends State<ReportDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (widget.onCancel != null) {
+              widget.onCancel!();
+            }
+            Navigator.pop(context);
+          },
           child: const Text('Cancel'),
         ),
         ElevatedButton(

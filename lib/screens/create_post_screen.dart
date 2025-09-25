@@ -233,7 +233,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> with TickerProvider
       print('Uploaded video object: $uploadedVideo');
       if (_isCancelled) return;
       if (uploadedVideo != null && mounted) {
-        eventBus.fire('updatedVideo');
+        eventBus.fire({
+          'type': 'updatedVideo',
+          'source': 'fromOther',
+        });
         Navigator.of(context).pop();
         Graphics.showTopDialog(
           context,

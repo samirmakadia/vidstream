@@ -9,7 +9,6 @@ import 'package:vidmeet/models/api_models.dart';
 import 'package:flutter/services.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
 import '../../../helper/navigation_helper.dart';
-import '../../../services/socket_manager.dart';
 import '../bottomsheet/comments_bottom_sheet.dart';
 import '../bottomsheet/report_dialog.dart';
 import '../../other_user_profile_screen.dart';
@@ -64,7 +63,6 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
 
     if (updatedCommentCount != null) {
       widget.onCommentUpdated?.call(updatedCommentCount);
-      eventBus.fire('updatedVideo');
     }
     widget.onResumeRequested?.call();
   }
@@ -123,6 +121,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
         [XFile(file.path)],
         text: 'Watch this awesome video on VidMeet!\n$appLink',
       );
+
     } catch (e, s) {
       print('❌ Error sharing video: $e');
       print('Stacktrace: $s');
@@ -136,11 +135,13 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
     }
   }
 
-  void _showVideoOptions(BuildContext context) {
+  Future<void> _showVideoOptions(BuildContext context) async {
+    widget.onPauseRequested?.call();
+
     final currentUserId = ApiRepository.instance.auth.currentUser?.id;
     final isOwner = currentUserId == widget.video.userId;
 
-    showModalBottomSheet(
+    final result = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.grey[900],
       shape: const RoundedRectangleBorder(
@@ -165,31 +166,33 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
                 ListTile(
                   leading: const Icon(Icons.delete, color: Colors.red),
                   title: const Text('Delete Video', style: TextStyle(color: Colors.white)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _deleteVideo(context);
-                  },
+                  onTap: () => Navigator.pop(context, 'delete'),
                 ),
               ] else ...[
                 ListTile(
                   leading: const Icon(Icons.report, color: Colors.orange),
                   title: const Text('Report as Spam', style: TextStyle(color: Colors.white)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _reportVideo(widget.video);
-                  },
+                  onTap: () => Navigator.pop(context, 'report'),
                 ),
               ],
               ListTile(
                 leading: const Icon(Icons.cancel, color: Colors.grey),
                 title: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-                onTap: () => Navigator.pop(context),
+                onTap: () => Navigator.pop(context, 'cancel'),
               ),
             ],
           ),
         ),
       ),
     );
+
+    if (result == 'delete') {
+      await _deleteVideo(context);
+    } else if (result == 'report') {
+      await _reportVideo(widget.video);
+    } else {
+      widget.onResumeRequested?.call();
+    }
   }
 
   Future<void> _deleteVideo(BuildContext context) async {
@@ -220,7 +223,6 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
       try {
         await ApiRepository.instance.videos.deleteVideo(widget.video.id);
         widget.onVideoDeleted?.call(widget.video);
-        eventBus.fire('updatedVideo');
         Graphics.showTopDialog(
           context,
           "Success!",
@@ -237,6 +239,7 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
         }
       }
     }
+    widget.onResumeRequested?.call();
   }
 
   Future<void> _reportVideo(Video video) async {
@@ -256,6 +259,9 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
         title: 'Report Video',
         reasons: reasons,
         isDescriptionRequired: false,
+        onCancel: () {
+          widget.onResumeRequested?.call();
+        },
         onSubmit: ({required reason, String? description}) async {
           return await handleReport(
             targetId: video.id,
@@ -315,6 +321,8 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
         type: ToastType.error,
       );
       return '';
+    } finally {
+      widget.onResumeRequested?.call();
     }
   }
 

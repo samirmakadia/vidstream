@@ -15,6 +15,7 @@ class VideoFeedItemWidget extends StatefulWidget {
   final ApiVideo video;
   final bool isActive;
   final bool shouldPreload;
+  final bool isFromHome;
   final BetterPlayerController? externalController;
   final void Function(ApiVideo video)? onVideoDeleted;
   final void Function(int likeCount, bool isLiked)? onLikeUpdated;
@@ -31,6 +32,7 @@ class VideoFeedItemWidget extends StatefulWidget {
     super.key,
     required this.video,
     required this.isActive,
+    this.isFromHome = false,
     required this.shouldPreload,
     this.externalController,
     this.onVideoDeleted,
@@ -121,8 +123,10 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
             _localLikeCount = (_localLikeCount > 0) ? _localLikeCount - 1 : 0;
           }
         });
-        eventBus.fire('updatedVideo');
-        print("👍 Video ${widget.video.id} liked by $currentUserId");
+        eventBus.fire({
+          'type': 'updatedVideo',
+          'source': widget.isFromHome ? 'fromHome' : 'fromOther',
+        });
         widget.onLikeUpdated?.call(_localLikeCount, _isLiked);
       } catch (e) {
         if (mounted) {
@@ -338,10 +342,20 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
                     onLikeToggle: _toggleLike,
                     likeCount: _localLikeCount,
                     isLikeLoading: _isLikeLoading,
-                    onVideoDeleted: widget.onVideoDeleted,
+                    onVideoDeleted: (deletedVideo) {
+                      widget.onVideoDeleted?.call(deletedVideo);
+                      eventBus.fire({
+                        'type': 'updatedVideo',
+                        'source': widget.isFromHome ? 'fromHome' : 'fromOther',
+                      });
+                    },
                     onCommentUpdated: (newCount) {
                       setState(() {
                         widget.onCommentUpdated?.call(newCount);
+                        eventBus.fire({
+                          'type': 'updatedVideo',
+                          'source': widget.isFromHome ? 'fromHome' : 'fromOther',
+                        });
                       });
                     },
                     onReported: (reportedVideo) {

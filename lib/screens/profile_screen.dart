@@ -58,14 +58,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _loadUserProfile();
     _refreshFollowCounts();
     _videoUploadedSubscription = eventBus.on().listen((event) {
-      if (event == 'updatedVideo') {
-        _loadPosts(refresh: true);
-        _loadLiked(refresh: true);
-      }
-      else if (event == 'updatedUser') {
-        print('updatedUser event 1234');
-        _loadUserProfile();
-        _refreshFollowCounts();
+      if (event is Map<String, dynamic>) {
+        final type = event['type'];
+        if (type == 'updatedVideo') {
+          _loadPosts(refresh: true);
+          _loadLiked(refresh: true);
+        } else if (type == 'updatedUser') {
+          _loadUserProfile();
+          _refreshFollowCounts();
+        }
       }
     });
   }

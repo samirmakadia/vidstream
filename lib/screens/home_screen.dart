@@ -68,14 +68,18 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
   void updateEventSubscription() {
     _videoUploadedSubscription = eventBus.on().listen((event) {
-      if (event == 'updatedVideo') {
-        _loadVideos(isLoadingShow: false, isRefresh: true);
-      } else if (event is Map<String, dynamic>) {
-        final userId = event["userId"];
-        final isFollow = event["isFollow"];
-        if (userId != null && isFollow != null) {
-          _updateFollowStatus(_videos, userId, isFollow);
-          _updateFollowStatus(_allVideos, userId, isFollow);
+      if (event is Map<String, dynamic>) {
+        if (event['type'] == 'updatedVideo') {
+          if (event['source'] != 'fromHome') {
+             _loadVideos(isLoadingShow: true, isRefresh: true);
+          }
+        } else {
+          final userId = event["userId"];
+          final isFollow = event["isFollow"];
+          if (userId != null && isFollow != null) {
+            _updateFollowStatus(_videos, userId, isFollow);
+            _updateFollowStatus(_allVideos, userId, isFollow);
+          }
         }
       }
     });
@@ -474,6 +478,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             video: video,
             isActive: index == _currentIndex && _isScreenVisible,
             shouldPreload: shouldPreload,
+            isFromHome: true,
             externalController: externalController,
             onVideoCompleted: () {
               if (_pageController.hasClients) {

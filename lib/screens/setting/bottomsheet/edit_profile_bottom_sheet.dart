@@ -258,7 +258,10 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
           profileImageUrl: _avatarImageUrl ?? '',
           bannerImageUrl: _bannerImageUrl ?? '',
         );
-        eventBus.fire('updatedVideo');
+        eventBus.fire({
+          'type': 'updatedVideo',
+          'source': 'fromOther',
+        });
         print('Profile update completed successfully');
       } else {
         print('Error: userId is null');

@@ -60,12 +60,15 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
     _initAnimations();
     _loadUserProfile();
     _videoUploadedSubscription = eventBus.on().listen((event) {
-     if (event == 'updatedUser') {
+      if (event is Map<String, dynamic>) {
+        final type = event['type'];
+        if (type == 'updatedVideo') {
+          _loadPostVideos(reset: true);
+        }
+      }
+      if (event == 'updatedUser') {
         _loadUserProfile(isLoadingShow: false);
       }
-     if (event == 'updatedVideo') {
-       _loadPostVideos(reset: true);
-     }
     });
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
