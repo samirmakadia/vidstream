@@ -10,6 +10,7 @@ import '../manager/applovin_ad_manager.dart';
 import '../manager/setting_manager.dart';
 import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
+import '../widgets/circular_icon_button.dart';
 import '../widgets/empty_section.dart';
 import 'home/bottomsheet/filter_bottom_sheet.dart';
 import 'home/widget/video_feed_item_widget.dart';
@@ -261,7 +262,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   Future<void> _loadVideos({bool isLoadingShow = true, bool isRefresh = false}) async {
     if (_isFetchingMore) return;
     _isFetchingMore = true;
-
     if (isLoadingShow) setState(() => _isLoading = true);
 
     try {
@@ -270,10 +270,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         _hasMore = true;
       }
 
-      final videos = await ApiRepository.instance.videos.getVideosOnce(
-        limit: _pageSize,
-        page: _page,
-      );
+      final videos = await ApiRepository.instance.videos.getVideosOnce(limit: _pageSize, page: _page,);
 
       if (mounted) {
         setState(() {
@@ -286,25 +283,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           }
           _isLoading = false;
           _hasMore = videos.length == _pageSize;
-
-          if (_videos.isNotEmpty) {
-            final videosPerAd = SettingManager().nativeFrequency;
-            final showAds = AppLovinAdManager.isMrecAdLoaded;
-            final currentVideoIndex = showAds
-                ? _currentIndex - (_currentIndex ~/ (videosPerAd + 1))
-                : _currentIndex;
-            final safeIndex = (currentVideoIndex >= 0 && currentVideoIndex < _videos.length)
-                ? currentVideoIndex
-                : 0;
-            _preloadWindow(safeIndex);
-            _clearPreparedControllers();
-            _prepareControllersAround(safeIndex);
-            _cleanupPreparedNotNeeded(safeIndex);
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              setState(() => _currentIndex = 0);
-              _prepareControllersAround(0);
-            });
-          }
+          _handlePreCachePreloading();
         });
       }
       _page++;
@@ -315,6 +294,27 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       }
     } finally {
       _isFetchingMore = false;
+    }
+  }
+
+  void _handlePreCachePreloading() {
+    if (_videos.isNotEmpty) {
+      final videosPerAd = SettingManager().nativeFrequency;
+      final showAds = AppLovinAdManager.isMrecAdLoaded;
+      final currentVideoIndex = showAds
+          ? _currentIndex - (_currentIndex ~/ (videosPerAd + 1))
+          : _currentIndex;
+      final safeIndex = (currentVideoIndex >= 0 && currentVideoIndex < _videos.length)
+          ? currentVideoIndex
+          : 0;
+      _preloadWindow(safeIndex);
+      _clearPreparedControllers();
+      _prepareControllersAround(safeIndex);
+      _cleanupPreparedNotNeeded(safeIndex);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() => _currentIndex = 0);
+        _prepareControllersAround(0);
+      });
     }
   }
 
@@ -364,7 +364,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
   Future<void> _showFilterDialog() async {
     setScreenVisible(false);
-
     final result = await showModalBottomSheet<List<String>>(
       context: context,
       isScrollControlled: true,
@@ -382,7 +381,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
   void _modifyVideo(String videoId, ApiVideo? Function(ApiVideo video) modifyFn) {
     bool changed = false;
-
     void updateList(List<ApiVideo> list) {
       final i = list.indexWhere((v) => v.id == videoId);
       if (i != -1) {
@@ -395,10 +393,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         changed = true;
       }
     }
-
     updateList(_videos);
     updateList(_allVideos);
-
     if (changed) setState(() {});
   }
 
@@ -410,9 +406,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       body: Stack(
         children: [
           _isLoading
-              ? const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          )
+              ? const Center(child: CircularProgressIndicator(color: Colors.white),)
               : _videos.isEmpty
               ? _buildEmptyState()
               : _buildFeedView(),
@@ -427,92 +421,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     );
   }
 
-  Widget _buildTopActionBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        GestureDetector(
-          onTap: _openSearchScreen,
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 1.5,
-              ),
-            ),
-            child: Icon(
-              Icons.search,
-              color: Colors.white,
-              size: 18,
-            ),
-          ),
-        ),
-
-        GestureDetector(
-          onTap: _showFilterDialog,
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: _selectedTags.isNotEmpty
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.white.withValues(alpha: 0.3),
-                width: 1.5,
-              ),
-            ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  Icons.filter_list,
-                  color: _selectedTags.isNotEmpty
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.white,
-                  size: 20,
-                ),
-                if (_selectedTags.isNotEmpty)
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '${_selectedTags.length}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        )
-      ],
-    );
-  }
-
   Widget _buildFeedView() {
     int videosPerAd = SettingManager().nativeFrequency;
     final showAds = AppLovinAdManager.isMrecAdLoaded;
     final loadedVideos = _videos;
-
     final totalAds = showAds ? (loadedVideos.length / videosPerAd).floor() : 0;
     final totalItems = loadedVideos.length + totalAds;
 
@@ -524,10 +436,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         itemCount: totalItems,
         onPageChanged: (index) {
           setState(() => _currentIndex = index);
-
-          final videoIndex = showAds
-              ? index - (index ~/ (videosPerAd + 1))
-              : index;
+          final videoIndex = showAds ? index - (index ~/ (videosPerAd + 1)) : index;
           if (videoIndex >= 0 && videoIndex < _videos.length) {
             _preloadWindow(videoIndex);
             _prepareControllersAround(videoIndex);
@@ -540,32 +449,21 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         },
         itemBuilder: (context, index) {
           final isAdIndex = showAds && (index + 1) % (videosPerAd + 1) == 0;
-
           if (isAdIndex) {
             return SizedBox.expand(
               child: AppLovinAdManager.largeMrecAd(
                 height: Utils(context).screenHeight,
                 width: Utils(context).screenWidth,
-
               ),
             );
           }
 
-          final videoIndex = showAds
-              ? index - (index ~/ (videosPerAd + 1))
-              : index;
-
+          final videoIndex = showAds ? index - (index ~/ (videosPerAd + 1)) : index;
           if (videoIndex >= loadedVideos.length) return const SizedBox.shrink();
-
           final video = loadedVideos[videoIndex];
 
-          // Compute current visible video index (excluding ads)
-          final currentVideoIndex = showAds
-              ? _currentIndex - (_currentIndex ~/ (videosPerAd + 1))
-              : _currentIndex;
-          // Pre-initialize Better Player for prev 1 and next 2
-          final shouldPreload =
-              videoIndex >= currentVideoIndex - 1 && videoIndex <= currentVideoIndex + 2;
+          final currentVideoIndex = showAds ? _currentIndex - (_currentIndex ~/ (videosPerAd + 1)) : _currentIndex;
+          final shouldPreload = videoIndex >= currentVideoIndex - 1 && videoIndex <= currentVideoIndex + 2;
           final preparedController = _preparedControllers[videoIndex];
           final externalController = (preparedController?.isVideoInitialized() ?? false)
               ? preparedController
@@ -609,9 +507,32 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     );
   }
 
+  Widget _buildTopActionBar() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        CircularIconButton(
+          icon: Icons.search,
+          onTap: _openSearchScreen,
+          borderColor: Colors.white.withOpacity(0.3),
+        ),
+        CircularIconButton(
+          icon: Icons.filter_list,
+          onTap: _showFilterDialog,
+          borderColor: _selectedTags.isNotEmpty
+              ? Theme.of(context).colorScheme.primary
+              : Colors.white.withOpacity(0.3),
+          iconColor: _selectedTags.isNotEmpty
+              ? Theme.of(context).colorScheme.primary
+              : Colors.white,
+          badgeCount: _selectedTags.length,
+        ),
+      ],
+    );
+  }
+
   Widget _buildEmptyState() {
     final hasTags = _selectedTags.isNotEmpty;
-
     return Center(
       child: EmptySection(
         icon: hasTags ? Icons.search_off : Icons.video_library_outlined,
