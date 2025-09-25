@@ -1093,7 +1093,7 @@ class ApiService {
     required String reason,
     String? description,
   }) async {
-    return ErrorHandler.safeApiCall(() async {
+    try {
       final response = await _httpClient.post<Report>(
         '/reports',
         data: {
@@ -1111,8 +1111,12 @@ class ApiService {
       }
 
       throw response_models.ApiException(response.message);
-    });
+    } on DioException catch (dioError) {
+      final message = dioError.response?.data['message'] ?? dioError.message;
+      throw response_models.ApiException(message);
+    }
   }
+
 
   Future<response_models.PaginatedResponse<Report>?> getUserReports({
     int page = 1,

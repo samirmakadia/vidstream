@@ -1,21 +1,16 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vidmeet/screens/home_screen.dart';
 import 'package:vidmeet/screens/profile_screen.dart';
 import 'package:vidmeet/screens/create_post_screen.dart';
 import 'package:vidmeet/screens/meet_screen.dart';
 import 'package:vidmeet/screens/chat_list_screen.dart';
-
 import '../helper/navigation_helper.dart';
-import '../manager/applovin_ad_manager.dart';
-import '../manager/firebase_manager.dart';
 import '../manager/session_manager.dart';
 import '../manager/setting_manager.dart';
 import '../services/meet_service.dart';

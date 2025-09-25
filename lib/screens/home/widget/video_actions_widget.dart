@@ -115,8 +115,6 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
       final file = File(filePath);
       if (!await file.exists()) throw Exception('Failed to download video');
 
-      print('✅ Successfully downloaded video to ${file.path}');
-
       await Share.shareXFiles(
         [XFile(file.path)],
         text: 'Watch this awesome video on VidMeet!\n$appLink',
@@ -311,6 +309,9 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
       if (result.toLowerCase().contains('success')) {
         onSuccess?.call();
       }
+      else {
+        widget.onResumeRequested?.call();
+      }
 
       return result;
     } catch (e) {
@@ -321,8 +322,6 @@ class _VideoActionsWidgetState extends State<VideoActionsWidget> {
         type: ToastType.error,
       );
       return '';
-    } finally {
-      widget.onResumeRequested?.call();
     }
   }
 

@@ -385,21 +385,38 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
   void _modifyVideo(String videoId, ApiVideo? Function(ApiVideo video) modifyFn) {
     bool changed = false;
+
     void updateList(List<ApiVideo> list) {
       final i = list.indexWhere((v) => v.id == videoId);
       if (i != -1) {
         final newVideo = modifyFn(list[i]);
         if (newVideo == null) {
           list.removeAt(i);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && i < list.length && list[i].id == videoId) {
+              if (_pageController.hasClients && _videos.isNotEmpty) {
+                final safeIndex = _currentIndex.clamp(0, _videos.length - 1);
+                _currentIndex = safeIndex;
+                _pageController.jumpToPage(safeIndex);
+                setState(() {});
+              }
+            }
+          });
         } else {
           list[i] = newVideo;
         }
         changed = true;
       }
     }
+
     updateList(_videos);
     updateList(_allVideos);
-    if (changed) setState(() {});
+
+    if (changed && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
+    }
   }
 
   @override
@@ -500,8 +517,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                 )),
             onCommentUpdated: (newCount) =>
                 _modifyVideo(video.id, (v) => v.copyWith(commentsCount: newCount)),
-            onReported: (reportedVideo) =>
-                _modifyVideo(reportedVideo.id, (_) => null),
+            onReported: (reportedVideo) {
+              _modifyVideo(reportedVideo.id, (_) => null);
+            },
             onFollowUpdated: (updatedUser) =>
                 _modifyVideo(video.id, (v) => v.copyWith(user: updatedUser)),
             onPauseRequested: () => setScreenVisible(false),

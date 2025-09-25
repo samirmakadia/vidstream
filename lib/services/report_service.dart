@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:vidmeet/models/api_models.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
 
@@ -6,7 +7,6 @@ import '../models/response_model.dart';
 class ReportService {
   ApiRepository get _apiRepository => ApiRepository.instance;
 
-  // Report content (video or comment)
   Future<String> reportContent({
     required String reporterId,
     required String targetId,
@@ -31,7 +31,19 @@ class ReportService {
     } on ApiException catch (e) {
       return e.message;
     } catch (e) {
-      return 'Failed to submit report: $e';
+      String message;
+      if (e is ValidationException) {
+        message = e.message;
+      } else if (e is ApiException) {
+        message = e.message;
+      } else if (e is DioException) {
+        message = e.response?.data['message'] ?? e.message;
+      } else {
+        message = e.toString(); // fallback
+      }
+
+      print('Error reporting content: $message');
+      return message;
     }
   }
 
