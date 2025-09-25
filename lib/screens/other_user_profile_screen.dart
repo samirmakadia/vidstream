@@ -265,6 +265,10 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
             : 'Unblocked ${_user?.displayName ?? ""}',
         type: ToastType.success,
       );
+      eventBus.fire({
+        'type': 'updatedVideo',
+        'source': 'fromOther',
+      });
     } catch (e) {
       Graphics.showTopDialog(
         context,

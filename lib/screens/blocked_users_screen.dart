@@ -7,6 +7,7 @@ import 'package:vidmeet/screens/other_user_profile_screen.dart';
 import '../helper/navigation_helper.dart';
 import '../manager/applovin_ad_manager.dart';
 import '../manager/setting_manager.dart';
+import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
 import '../utils/utils.dart';
 import '../widgets/empty_section.dart';
@@ -122,6 +123,10 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         'Unblocked ${user.displayName}',
       );
       _loadBlockedUsers();
+      eventBus.fire({
+        'type': 'updatedVideo',
+        'source': 'fromOther',
+      });
     } catch (e) {
       Graphics.showTopDialog(
         context,
