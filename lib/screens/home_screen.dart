@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:custom_preload_videos/interface/controller_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
 import 'package:vidmeet/models/api_models.dart';
@@ -26,23 +25,21 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   bool get _canPrecache => Platform.isAndroid;
   final PageController _pageController = PageController();
+  late StreamSubscription _videoUploadedSubscription;
+  late BetterPlayerController _precacheController;
+  final Map<int, BetterPlayerController> _preparedControllers = {};
+  final Set<int> _preparingControllers = {};
+  final Set<String> _precaching = {};
   List<ApiVideo> _videos = [];
   List<ApiVideo> _allVideos = [];
-  bool _isLoading = true;
-  int _currentIndex = 0;
   List<String> _selectedTags = [];
   bool _isScreenVisible = true;
-  late StreamSubscription _videoUploadedSubscription;
-
-  late BetterPlayerController _precacheController;
-  final Set<String> _precaching = {};
+  bool _isLoading = true;
   bool _isFetchingMore = false;
   bool _hasMore = true;
   int _page = 1;
+  int _currentIndex = 0;
   final int _pageSize = 20;
-  bool _preloadReady = false;
-  final Map<int, BetterPlayerController> _preparedControllers = {};
-  final Set<int> _preparingControllers = {};
 
   @override
   bool get wantKeepAlive => true;
@@ -72,21 +69,13 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     _videoUploadedSubscription = eventBus.on().listen((event) {
       if (event == 'updatedVideo') {
         _loadVideos(isLoadingShow: false, isRefresh: true);
-        return;
-      }
-
-      if (event is Map<String, dynamic>) {
+      } else if (event is Map<String, dynamic>) {
         final userId = event["userId"];
         final isFollow = event["isFollow"];
-
-        if (userId == null || isFollow == null) return;
-
-        debugPrint("🏷 Updating follow status for $userId → $isFollow");
-
-        setState(() {
+        if (userId != null && isFollow != null) {
           _updateFollowStatus(_videos, userId, isFollow);
           _updateFollowStatus(_allVideos, userId, isFollow);
-        });
+        }
       }
     });
   }
@@ -102,7 +91,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     }
   }
 
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -111,9 +99,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
         _stopPrecache(url);
       }
       _precacheController.dispose();
-    }
-    if (_preloadReady) {
-      _preloadReady = false;
     }
     _pageController.dispose();
     _videoUploadedSubscription.cancel();
@@ -219,7 +204,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   void _prepareControllersAround(int center) {
-    // Prepare previous 1 and next two items' controllers in advance
     _prepareControllerAt(center - 1);
     _prepareControllerAt(center + 1);
     _prepareControllerAt(center + 2);
@@ -238,11 +222,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   void _cleanupPreparedNotNeeded(int center) {
-    // Keep current and nearby indices so we don't dispose in-use controllers
     final keep = <int>{center - 1, center, center + 1, center + 2};
     for (final idx in _preparedControllers.keys.toList()) {
       if (!keep.contains(idx)) {
-        // Delay disposal slightly to avoid race with ongoing frames
         Future.delayed(const Duration(milliseconds: 350), () {
           final currentCenter = _currentLogicalIndex();
           if (!_shouldKeepIndex(currentCenter, idx)) {
@@ -306,12 +288,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           _hasMore = videos.length == _pageSize;
 
           if (_videos.isNotEmpty) {
-            // ✅ Initialize/Reset PreloadVideos for background preloading (no UI)
-            if (_preloadReady) {
-              _preloadReady = false;
-            }
-            _preloadReady = true;
-            // Prime around the current video index if possible
             final videosPerAd = SettingManager().nativeFrequency;
             final showAds = AppLovinAdManager.isMrecAdLoaded;
             final currentVideoIndex = showAds
@@ -335,12 +311,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        Graphics.showTopDialog(
-          context,
-          "Error!",
-          'Failed to load videos: $e',
-          type: ToastType.error,
-        );
+        Graphics.showTopDialog(context, "Error!", 'Failed to load videos: $e', type: ToastType.error,);
       }
     } finally {
       _isFetchingMore = false;
@@ -360,60 +331,34 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   }
 
   void _applyFilter() {
-    if (_selectedTags.isEmpty) {
-      setState(() {
-        _videos = _allVideos;
-        _currentIndex = 0;
-      });
-    } else {
-      final filtered = _allVideos.where((video) {
-        return _selectedTags.any((tag) =>
-            video.tags.any((videoTag) => videoTag.toLowerCase() == tag.toLowerCase()));
-      }).toList();
-
-      setState(() {
-        _videos = filtered;
-        _currentIndex = 0;
-      });
-    }
-
-    if (_pageController.hasClients) {
-      _pageController.jumpToPage(0);
-    }
-
-    // Keep PreloadVideos in sync with current list
-    if (_videos.isNotEmpty) {
-      if (_preloadReady) {
-        _preloadReady = false;
-      }
-      _preloadReady = true;
-      _preloadWindow(0);
-      _clearPreparedControllers();
-      _prepareControllersAround(0);
-      _cleanupPreparedNotNeeded(0);
-    }
+    setState(() {
+      _videos = _selectedTags.isEmpty
+          ? _allVideos
+          : _allVideos.where((video) {
+        return _selectedTags.any((tag) => video.tags.any((videoTag) => videoTag.toLowerCase() == tag.toLowerCase()));}).toList();
+      _currentIndex = 0;
+    });
+    _resetPageViewAndPrepare(0);
   }
 
   void _clearFilters() {
+    _selectedTags.clear();
     setState(() {
-      _selectedTags.clear();
       _videos = _allVideos;
       _currentIndex = 0;
     });
+    _resetPageViewAndPrepare(0);
+  }
+
+  void _resetPageViewAndPrepare(int centerIndex) {
     if (_pageController.hasClients) {
       _pageController.jumpToPage(0);
     }
-
-    // Rebuild PreloadVideos for full list
     if (_videos.isNotEmpty) {
-      if (_preloadReady) {
-        _preloadReady = false;
-      }
-      _preloadReady = true;
-      _preloadWindow(0);
+      _preloadWindow(centerIndex);
       _clearPreparedControllers();
-      _prepareControllersAround(0);
-      _cleanupPreparedNotNeeded(0);
+      _prepareControllersAround(centerIndex);
+      _cleanupPreparedNotNeeded(centerIndex);
     }
   }
 
@@ -424,14 +369,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => FilterBottomSheet(
-        selectedTags: _selectedTags,
-      ),
+      builder: (_) => FilterBottomSheet(selectedTags: _selectedTags),
     );
+
     if (result != null) {
-      setState(() {
-        _selectedTags = result;
-      });
+      _selectedTags = result;
       _applyFilter();
     }
 
