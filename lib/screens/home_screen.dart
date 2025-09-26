@@ -13,7 +13,6 @@ import '../services/socket_manager.dart';
 import '../utils/graphics.dart';
 import '../widgets/circular_icon_button.dart';
 import '../widgets/empty_section.dart';
-import 'home/bottomsheet/filter_bottom_sheet.dart';
 import 'home/widget/video_feed_item_widget.dart';
 import 'package:better_player_plus/better_player_plus.dart';
 
@@ -476,7 +475,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             externalController: externalController,
             onVideoCompleted: () {
               if (_isAuto) {
-                // Auto-scroll enabled
                 if (_pageController.hasClients) {
                   final nextPage = (_currentIndex + 1) % _videos.length;
                   _pageController.animateToPage(
@@ -490,15 +488,23 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                 final videoIndex = AppLovinAdManager.isMrecAdLoaded
                     ? _currentIndex - (_currentIndex ~/ (SettingManager().nativeFrequency + 1))
                     : _currentIndex;
-                print("Restarting video at index $videoIndex");
+                if(videoIndex == 0) {
+                  _currentIndex = 0;
+                  _resetPageViewAndPrepare(0);
+                }
                 final controller = _preparedControllers[videoIndex];
                 if (controller != null && controller.isVideoInitialized() == true) {
                   controller.seekTo(const Duration(seconds: 0));
                   controller.play();
+                } else {
+                  _prepareControllerAt(videoIndex).then((_) {
+                    final newController = _preparedControllers[videoIndex];
+                    newController?.seekTo(const Duration(seconds: 0));
+                    newController?.play();
+                  });
                 }
               }
             },
-
             onVideoDeleted: (deletedVideo) {
               _modifyVideo(video.id, (_) => null);
             },

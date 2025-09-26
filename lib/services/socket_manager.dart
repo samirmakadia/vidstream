@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:event_bus/event_bus.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:vidmeet/storage/conversation_storage_drift.dart';
+import '../manager/session_manager.dart';
 import '../models/api_models.dart';
 import '../storage/message_storage_drift.dart';
 import 'package:flutter/foundation.dart';
@@ -133,6 +134,17 @@ class SocketManager {
 
   void sendMessage(MessageModel message) async {
     try {
+      if (_socket == null || _socket?.connected != true) {
+        print("⚠️ Socket not connected, reconnecting...");
+        final token = await SessionManager().getAccessToken();
+        if (token!.isNotEmpty) {
+          await connect(token: token);
+          await Future.delayed(const Duration(milliseconds: 500));
+        } else {
+          print("❌ Cannot send message: user token is missing");
+          return;
+        }
+      }
       final nowIso = DateTime.now().toIso8601String();
       String jsonString = jsonEncode(message.toSocketJson());
       print('📤 Sending message 1: $jsonString\n${message.toSocketJson()}');
