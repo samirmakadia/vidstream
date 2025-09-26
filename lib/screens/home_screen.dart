@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_switch/flutter_switch.dart';
 import 'package:vidmeet/repositories/api_repository.dart';
 import 'package:vidmeet/models/api_models.dart';
 import 'package:vidmeet/screens/search_screen.dart';
@@ -33,7 +34,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   final Set<String> _precaching = {};
   List<ApiVideo> _videos = [];
   List<ApiVideo> _allVideos = [];
-  List<String> _selectedTags = [];
+  final List<String> _selectedTags = [];
   bool _isScreenVisible = true;
   bool _isLoading = true;
   bool _isFetchingMore = false;
@@ -41,6 +42,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
   int _page = 1;
   int _currentIndex = 0;
   final int _pageSize = 20;
+  bool _isAuto  = true;
 
   @override
   bool get wantKeepAlive => true;
@@ -334,16 +336,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     );
   }
 
-  void _applyFilter() {
-    setState(() {
-      _videos = _selectedTags.isEmpty
-          ? _allVideos
-          : _allVideos.where((video) {
-        return _selectedTags.any((tag) => video.tags.any((videoTag) => videoTag.toLowerCase() == tag.toLowerCase()));}).toList();
-      _currentIndex = 0;
-    });
-    _resetPageViewAndPrepare(0);
-  }
+
 
   void _clearFilters() {
     _selectedTags.clear();
@@ -364,23 +357,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       _prepareControllersAround(centerIndex);
       _cleanupPreparedNotNeeded(centerIndex);
     }
-  }
-
-  Future<void> _showFilterDialog() async {
-    setScreenVisible(false);
-    final result = await showModalBottomSheet<List<String>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => FilterBottomSheet(selectedTags: _selectedTags),
-    );
-
-    if (result != null) {
-      _selectedTags = result;
-      _applyFilter();
-    }
-
-    setScreenVisible(true);
   }
 
   void _modifyVideo(String videoId, ApiVideo? Function(ApiVideo video) modifyFn) {
@@ -499,15 +475,30 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             isFromHome: true,
             externalController: externalController,
             onVideoCompleted: () {
-              if (_pageController.hasClients) {
-                final nextPage = (_currentIndex + 1) % _videos.length;
-                _pageController.animateToPage(
-                  nextPage,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                );
+              if (_isAuto) {
+                // Auto-scroll enabled
+                if (_pageController.hasClients) {
+                  final nextPage = (_currentIndex + 1) % _videos.length;
+                  _pageController.animateToPage(
+                    nextPage,
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut,
+                  );
+                }
+              } else {
+                print("Auto-scroll disabled, restarting video");
+                final videoIndex = AppLovinAdManager.isMrecAdLoaded
+                    ? _currentIndex - (_currentIndex ~/ (SettingManager().nativeFrequency + 1))
+                    : _currentIndex;
+                print("Restarting video at index $videoIndex");
+                final controller = _preparedControllers[videoIndex];
+                if (controller != null && controller.isVideoInitialized() == true) {
+                  controller.seekTo(const Duration(seconds: 0));
+                  controller.play();
+                }
               }
             },
+
             onVideoDeleted: (deletedVideo) {
               _modifyVideo(video.id, (_) => null);
             },
@@ -540,16 +531,30 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
           onTap: _openSearchScreen,
           borderColor: Colors.white.withOpacity(0.3),
         ),
-        CircularIconButton(
-          icon: Icons.filter_list,
-          onTap: _showFilterDialog,
-          borderColor: _selectedTags.isNotEmpty
-              ? Theme.of(context).colorScheme.primary
-              : Colors.white.withOpacity(0.3),
-          iconColor: _selectedTags.isNotEmpty
-              ? Theme.of(context).colorScheme.primary
-              : Colors.white,
-          badgeCount: _selectedTags.length,
+        FlutterSwitch(
+          inactiveText: "Manual",
+          activeText: "Auto",
+          value: _isAuto,
+          valueFontSize: 10.0,
+          width: 80,
+          height: 25,
+          toggleSize: 20,
+          borderRadius: 20.0,
+          showOnOff: true,
+          activeColor: Theme.of(context).colorScheme.primary,
+          inactiveColor: Theme.of(context).colorScheme.secondary,
+          toggleColor: Theme.of(context).colorScheme.onPrimary,
+          activeTextColor: Colors.black,
+          inactiveTextColor: Colors.white,
+          activeTextFontWeight: FontWeight.bold,
+          inactiveTextFontWeight: FontWeight.bold,
+          inactiveIcon: const Icon(Icons.touch_app, color: Colors.white, size: 16),
+          activeIcon: const Icon(Icons.swap_vert, color: Colors.white, size: 16),
+          onToggle: (val) {
+            setState(() {
+              _isAuto = val;
+            });
+          },
         ),
       ],
     );
