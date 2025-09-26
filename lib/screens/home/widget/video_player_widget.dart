@@ -88,7 +88,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       controller!.setOverriddenAspectRatio(aspect);
 
       _attachListenersOnce();
-      _updatePlayback(); // instead of controller!.play()
+      _updatePlayback();
 
       setState(() {});
     });
@@ -260,7 +260,6 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         ctrl.play();
       }
     } catch (_) {
-      // If controller was disposed externally, ignore tap
       return;
     }
 
@@ -292,7 +291,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     }
 
     return VisibilityDetector(
-      key: Key(widget.videoUrl), // unique per video
+      key: Key(widget.videoUrl),
       onVisibilityChanged: (info) {
         _visibleFraction = info.visibleFraction;
         _updatePlayback();
