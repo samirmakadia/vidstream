@@ -33,6 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   int _followerCount = 0;
   int _followingCount = 0;
   double offsetY = 0;
+  final ValueNotifier<double> _collapseProgress = ValueNotifier<double>(0.0);
   late StreamSubscription _videoUploadedSubscription;
   int _postsPage = 1;
   bool _isFetchingPosts = false;
@@ -217,6 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   void dispose() {
     _tabController.dispose();
     _videoUploadedSubscription.cancel();
+    _collapseProgress.dispose();
     super.dispose();
   }
 
@@ -268,10 +270,29 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   ],
                 ),
               ),
-              Positioned(
-                top: 300 - offsetY - 60 ,
-                left: MediaQuery.of(context).size.width / 2 - 100 / 2,
-                child: _buildFloatingAvatar(),
+              ValueListenableBuilder<double>(
+                valueListenable: _collapseProgress,
+                builder: (context, t, _) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final centerLeft = screenWidth / 2 - 100 / 2;
+                  const leftCollapsed = 16.0;
+                  final leftPosition = leftCollapsed + (centerLeft - leftCollapsed) * (1.0 - t);
+                  final topPosition = 300 - offsetY - 60;
+                  final opacity = (1.0 - t).clamp(0.0, 1.0);
+                  final scale = 1.0 - 0.4 * t;
+                  return Positioned(
+                    top: topPosition,
+                    left: leftPosition,
+                    child: Opacity(
+                      opacity: opacity,
+                      child: Transform.scale(
+                        scale: scale,
+                        alignment: Alignment.center,
+                        child: _buildFloatingAvatar(),
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -281,13 +302,65 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _buildSliverAppBar() {
+    const double expandedHeight = 250.0;
     return SliverAppBar(
-      expandedHeight: 250.0,
+      expandedHeight: expandedHeight,
       floating: false,
       pinned: true,
       backgroundColor: Colors.black,
       elevation: 0,
       clipBehavior: Clip.none,
+      centerTitle: false,
+      title: ValueListenableBuilder<double>(
+        valueListenable: _collapseProgress,
+        builder: (context, t, _) {
+          return Opacity(
+            opacity: t.clamp(0.0, 1.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: (_currentUser?.profileImageUrl != null && _currentUser!.profileImageUrl!.isNotEmpty) ||
+                          (_currentUser?.photoURL != null && _currentUser!.photoURL!.isNotEmpty)
+                      ? ClipOval(
+                          child: CustomImageWidget(
+                            imageUrl: _currentUser?.profileImageUrl?.isNotEmpty == true
+                                ? _currentUser!.profileImageUrl!
+                                : _currentUser!.photoURL!,
+                            height: double.infinity,
+                            width: double.infinity,
+                            cornerRadius: 0,
+                            borderWidth: 0,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          child: const Icon(Icons.person, color: Colors.white),
+                        ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _currentUser?.displayName ?? 'User',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 16,),
@@ -297,93 +370,108 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ),
         )
       ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: ClipRect(
-          clipBehavior: Clip.none,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              if (_currentUser?.bannerImageUrl != null &&
-                  _currentUser!.bannerImageUrl!.isNotEmpty) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ImagePreviewScreen(
-                      imageUrl: _currentUser!.bannerImageUrl!,
-                      showUploadButton: false,
-                    ),
-                  ),
-                );
-              }
-            },
-            child: Stack(
-              fit: StackFit.expand,
-              clipBehavior: Clip.none,
-              children: [
-                // Banner background
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Theme.of(context).colorScheme.primary,
-                        Color(0xFFA3E635),
-                        Color(0xFF2E7D32),
-                      ],
-                    ),
-                  ),
-                  child: _currentUser?.bannerImageUrl != null &&
-                      _currentUser!.bannerImageUrl!.isNotEmpty
-                      ? CustomImageWidget(
-                    imageUrl: _currentUser!.bannerImageUrl!,
-                    height: double.infinity,
-                    width: double.infinity,
-                    cornerRadius: 0,
-                    borderWidth: 0,
-                    fit: BoxFit.cover,
-                  )
-                      : Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_photo_alternate_outlined,
-                          size: 40,
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Add Banner',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          final double statusBarHeight = MediaQuery.of(context).padding.top;
+          final double collapsedHeight = kToolbarHeight + statusBarHeight;
+          final double currentHeight = constraints.biggest.height;
+          final double progress = ((currentHeight - collapsedHeight) /
+                  (expandedHeight - collapsedHeight))
+              .clamp(0.0, 1.0);
+          _collapseProgress.value = 1.0 - progress;
 
-                // Gradient overlay
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.6),
-                      ],
+          return Stack(
+            fit: StackFit.expand,
+            clipBehavior: Clip.none,
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (_currentUser?.bannerImageUrl != null &&
+                      _currentUser!.bannerImageUrl!.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ImagePreviewScreen(
+                          imageUrl: _currentUser!.bannerImageUrl!,
+                          showUploadButton: false,
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            const Color(0xFFA3E635),
+                            const Color(0xFF2E7D32),
+                          ],
+                        ),
+                      ),
+                      child: _currentUser?.bannerImageUrl?.isNotEmpty == true
+                          ? CustomImageWidget(
+                        imageUrl: _currentUser!.bannerImageUrl!,
+                        height: double.infinity,
+                        width: double.infinity,
+                        cornerRadius: 0,
+                        borderWidth: 0,
+                        fit: BoxFit.cover,
+                      )
+                          : Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_photo_alternate_outlined,
+                              size: 40,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Add Banner',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+
+                    // Gradient overlay
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.6),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    Opacity(
+                      opacity: (1.0 - progress),
+                      child: Container(color: Colors.black),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   } 
