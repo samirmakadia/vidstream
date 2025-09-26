@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:better_player_plus/better_player_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
@@ -26,6 +27,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   bool _initialized = false;
   bool _ownsController = true;
   bool _listenersAttached = false;
+  double _visibleFraction = 0.0;
 
   BetterPlayerController? _activeController() {
     return _ownsController ? controller : (widget.externalController ?? controller);
@@ -85,17 +87,25 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       final aspect = controller!.videoPlayerController!.value.aspectRatio;
       controller!.setOverriddenAspectRatio(aspect);
 
-      if (widget.isActive) {
-        controller!.play();
-      } else if (mounted && !_initialized && widget.shouldPreload && widget.key == const ValueKey("firstVideo")) {
-        // Edge-case safety: if first video, auto-play it
-        controller!.play();
-      }
-
       _attachListenersOnce();
+      _updatePlayback(); // instead of controller!.play()
 
       setState(() {});
     });
+  }
+
+  void _updatePlayback() {
+    final ctrl = _activeController();
+    if (ctrl == null) return;
+
+    final shouldPlay = widget.isActive && _visibleFraction > 0.5;
+    try {
+      if (shouldPlay) {
+        if (!(ctrl.isPlaying() ?? false)) ctrl.play();
+      } else {
+        if (ctrl.isPlaying() ?? false) ctrl.pause();
+      }
+    } catch (_) {}
   }
 
 
@@ -177,7 +187,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       if (controller == null) {
         _initializePlayer();
       } else {
-        controller!.play();
+        _updatePlayback();
       }
     }
 
@@ -281,43 +291,50 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       isInitialized = false;
     }
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        if (isInitialized)
-          SizedBox.expand(
-          child: BetterPlayer(controller: renderController),
-        ),
+    return VisibilityDetector(
+      key: Key(widget.videoUrl), // unique per video
+      onVisibilityChanged: (info) {
+        _visibleFraction = info.visibleFraction;
+        _updatePlayback();
 
-        if (!isInitialized)
-          const Center(
-            child: CircularProgressIndicator(
+      },
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (isInitialized)
+            SizedBox.expand(
+              child: BetterPlayer(controller: renderController),
+            ),
+
+          if (!isInitialized)
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
+
+          if (_showPlayPauseIcon)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                controller!.isPlaying() ?? false
+                    ? Icons.pause
+                    : Icons.play_arrow,
+                size: 48,
+                color: Colors.white,
+              ),
+            ),
+
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _togglePlayPause,
             ),
           ),
-
-        if (_showPlayPauseIcon)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              controller!.isPlaying() ?? false
-                  ? Icons.pause
-                  : Icons.play_arrow,
-              size: 48,
-              color: Colors.white,
-            ),
-          ),
-
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _togglePlayPause,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
