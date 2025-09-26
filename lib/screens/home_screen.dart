@@ -385,21 +385,22 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
 
   void _modifyVideo(String videoId, ApiVideo? Function(ApiVideo video) modifyFn) {
     bool changed = false;
-
     void updateList(List<ApiVideo> list) {
       final i = list.indexWhere((v) => v.id == videoId);
       if (i != -1) {
         final newVideo = modifyFn(list[i]);
         if (newVideo == null) {
+          _disposePreparedAt(i);
           list.removeAt(i);
+
+          if (_currentIndex >= list.length) {
+            _currentIndex = list.isEmpty ? 0 : list.length - 1;
+          }
+
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && i < list.length && list[i].id == videoId) {
-              if (_pageController.hasClients && _videos.isNotEmpty) {
-                final safeIndex = _currentIndex.clamp(0, _videos.length - 1);
-                _currentIndex = safeIndex;
-                _pageController.jumpToPage(safeIndex);
-                setState(() {});
-              }
+            if (mounted && _pageController.hasClients && _videos.isNotEmpty) {
+              _pageController.jumpToPage(_currentIndex);
+              setState(() {});
             }
           });
         } else {
