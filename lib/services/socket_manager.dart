@@ -47,11 +47,12 @@ class SocketManager {
       await _sendPendingMessages();
     });
 
-    _socket?.on('reconnect', (_) {
+    _socket?.on('reconnect', (_) async {
       print("🔄 Reconnected, re-attaching message listener");
       _socket?.off('message');
       _socket?.on('message', _handleMessage);
       _syncMessagesSinceLastSync();
+      await _sendPendingMessages();
     });
 
     _socket?.on('connect_error', (err) {
@@ -139,7 +140,7 @@ class SocketManager {
         print("⚠️ Socket not connected, reconnecting...");
         final token = await SessionManager().getAccessToken();
         if (token!.isNotEmpty) {
-          await connect(token: token);
+          await connect(token: token); 
           await Future.delayed(const Duration(milliseconds: 500));
         } else {
           print("❌ Cannot send message: user token is missing");
@@ -293,7 +294,7 @@ class SocketManager {
 
       await Utils.saveLastSyncDate();
 
-      print("🟢 Messages synced successfully since $sinceDate");     
+      print("🟢 Messages synced successfully since $sinceDate");
     } catch (e, stack) {
       debugPrint("❌ Error syncing messages: $e\n$stack");
     }
