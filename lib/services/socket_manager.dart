@@ -44,6 +44,7 @@ class SocketManager {
     _socket?.on('connect', (_) async {
       print("✅ Socket connected successfully with token: $token");
       await _syncMessagesSinceLastSync();
+      await _sendPendingMessages();
     });
 
     _socket?.on('reconnect', (_) {
@@ -292,11 +293,31 @@ class SocketManager {
 
       await Utils.saveLastSyncDate();
 
-      print("🟢 Messages synced successfully since $sinceDate");
+      print("🟢 Messages synced successfully since $sinceDate");     
     } catch (e, stack) {
       debugPrint("❌ Error syncing messages: $e\n$stack");
     }
   }
+
+  Future<void> _sendPendingMessages() async {
+    try {
+      final pendingMessages = await MessageDatabase.instance.getMessagesByStatus(MessageStatus.pending.name);
+
+      if (pendingMessages.isEmpty) return;
+
+      print("🔄 Sending ${pendingMessages.length} pending messages...");
+
+      for (var message in pendingMessages) {
+        final sentMessage = message.copyWith(status: MessageStatus.sent);
+        _socket?.emit('message', sentMessage.toSocketJson());
+        await MessageDatabase.instance.updateMessageStatus(message.messageId, MessageStatus.sent.name);
+        print("📤 Pending message sent: ${message.messageId}");
+      }
+    } catch (e, stack) {
+      debugPrint("❌ Error sending pending messages: $e\n$stack");
+    }
+  }
+
 
   Future<void> _sendDeliveredReceipt(
       MessageModel message,
@@ -357,7 +378,6 @@ class SocketManager {
 
 }
 
-
 enum MeetEventType { joined, left, online, offline }
 
 class MeetEvent {
@@ -369,7 +389,6 @@ class MeetEvent {
     required this.type,
   });
 }
-
 
 class TypingEvent {
   final String receiverId;
