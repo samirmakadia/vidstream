@@ -16,6 +16,7 @@ class VideoFeedItemWidget extends StatefulWidget {
   final bool isActive;
   final bool shouldPreload;
   final bool isFromHome;
+  final bool isAuto;
   final BetterPlayerController? externalController;
   final void Function(ApiVideo video)? onVideoDeleted;
   final void Function(int likeCount, bool isLiked)? onLikeUpdated;
@@ -33,6 +34,7 @@ class VideoFeedItemWidget extends StatefulWidget {
     required this.video,
     required this.isActive,
     this.isFromHome = false,
+    this.isAuto = true,
     required this.shouldPreload,
     this.externalController,
     this.onVideoDeleted,
@@ -241,6 +243,7 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
           key: _videoKey,
           videoUrl: widget.video.videoUrl,
           isActive: widget.isActive,
+          isAuto: widget.isAuto,
           shouldPreload: widget.shouldPreload,
           externalController: widget.externalController,
           onVideoCompleted: widget.onVideoCompleted,

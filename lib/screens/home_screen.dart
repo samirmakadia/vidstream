@@ -164,7 +164,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       final controller = BetterPlayerController(
         BetterPlayerConfiguration(
           autoPlay: false,
-          looping: false,
+          looping: !_isAuto,
           handleLifecycle: true,
           expandToFill: true,
           fit: BoxFit.contain,
@@ -316,10 +316,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
       _clearPreparedControllers();
       _prepareControllersAround(safeIndex);
       _cleanupPreparedNotNeeded(safeIndex);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() => _currentIndex = 0);
-        _prepareControllersAround(0);
-      });
     }
   }
 
@@ -467,11 +463,12 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               : null;
 
           return VideoFeedItemWidget(
-            key: ValueKey(video.id),
+            key: ValueKey('${video.id}_$_isAuto'),
             video: video,
             isActive: index == _currentIndex && _isScreenVisible,
             shouldPreload: shouldPreload,
             isFromHome: true,
+            isAuto: _isAuto,
             externalController: externalController,
             onVideoCompleted: () {
               if (_isAuto) {
@@ -482,26 +479,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
                     duration: const Duration(milliseconds: 400),
                     curve: Curves.easeInOut,
                   );
-                }
-              } else {
-                print("Auto-scroll disabled, restarting video");
-                final videoIndex = AppLovinAdManager.isMrecAdLoaded
-                    ? _currentIndex - (_currentIndex ~/ (SettingManager().nativeFrequency + 1))
-                    : _currentIndex;
-                if(videoIndex == 0) {
-                  _currentIndex = 0;
-                  _resetPageViewAndPrepare(0);
-                }
-                final controller = _preparedControllers[videoIndex];
-                if (controller != null && controller.isVideoInitialized() == true) {
-                  controller.seekTo(const Duration(seconds: 0));
-                  controller.play();
-                } else {
-                  _prepareControllerAt(videoIndex).then((_) {
-                    final newController = _preparedControllers[videoIndex];
-                    newController?.seekTo(const Duration(seconds: 0));
-                    newController?.play();
-                  });
                 }
               }
             },

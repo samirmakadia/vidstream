@@ -7,6 +7,7 @@ class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
   final bool isActive;
   final bool shouldPreload;
+  final bool isAuto;
   final BetterPlayerController? externalController;
   final VoidCallback? onVideoCompleted;
 
@@ -14,6 +15,7 @@ class VideoPlayerWidget extends StatefulWidget {
     super.key,
     required this.videoUrl,
     required this.isActive,
+    required this.isAuto,
     required this.shouldPreload, this.externalController, this.onVideoCompleted,
   });
 
@@ -65,14 +67,13 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
 
   void _initializePlayer() {
-    // Initialize when either visible or within preload window
     if (!(widget.isActive || widget.shouldPreload)) return;
     if (controller != null) return;
 
     controller = BetterPlayerController(
       BetterPlayerConfiguration(
         autoPlay: false,
-        looping: false,
+        looping: !widget.isAuto,
         handleLifecycle: true,
         expandToFill: true,
         fit: BoxFit.contain,
