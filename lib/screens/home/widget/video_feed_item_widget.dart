@@ -90,6 +90,9 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
   @override
   void didUpdateWidget(VideoFeedItemWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.isAuto != widget.isAuto) {
+      _videoKey.currentState?.updateLooping(widget.isAuto);
+    }
     if (oldWidget.video.id != widget.video.id ||
         oldWidget.video.likesCount != widget.video.likesCount ||
         oldWidget.video.isLiked != widget.video.isLiked) {

@@ -95,6 +95,13 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     });
   }
 
+  void updateLooping(bool isAuto) {
+    final ctrl = _activeController();
+    if (ctrl != null) {
+      ctrl.setLooping(!isAuto);  
+    }
+  }
+
   void _updatePlayback() {
     final ctrl = _activeController();
     if (ctrl == null) return;

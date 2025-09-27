@@ -463,7 +463,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
               : null;
 
           return VideoFeedItemWidget(
-            key: ValueKey('${video.id}_$_isAuto'),
+            key: ValueKey(video.id),
             video: video,
             isActive: index == _currentIndex && _isScreenVisible,
             shouldPreload: shouldPreload,
