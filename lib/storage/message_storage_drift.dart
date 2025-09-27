@@ -182,30 +182,4 @@ class MessageDatabase extends _$MessageDatabase {
 
     print("✅ Message $messageId status updated to $status");
   }
-
-  Future<List<MessageModel>> getMessagesByStatus(String status) async {
-    final rows = await (select(messagesDb)
-      ..where((tbl) => tbl.status.equals(status))
-      ..orderBy([(tbl) => OrderingTerm.asc(tbl.createdAt)])
-    ).get();
-
-    return rows.map((row) => MessageModel(
-      id: row.id,
-      messageId: row.messageId,
-      conversationId: row.conversationId,
-      senderId: row.senderId,
-      messageType: row.messageType,
-      content: MessageContent.fromJson(jsonDecode(row.content)),
-      status: MessageStatus.values.firstWhere(
-              (e) => e.name == row.status,
-          orElse: () => MessageStatus.sent),
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      isDeleted: row.isDeleted,
-      deletedFor: row.deletedFor != null
-          ? List<String>.from(jsonDecode(row.deletedFor!))
-          : [],
-    )).toList();
-  }
-
 }
