@@ -47,6 +47,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
   final FollowService _followService = FollowService();
   final BlockService _blockService = BlockService();
   double offsetY = 0;
+  final ValueNotifier<double> _collapseProgress = ValueNotifier<double>(0.0);
   late StreamSubscription _videoUploadedSubscription;
   int _currentPage = 1;
   bool _isFetchingMore = false;
@@ -83,6 +84,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
   @override
   void dispose() {
     _animationController.dispose();
+    _collapseProgress.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -364,20 +367,21 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
                     onRefresh: () => _loadUserProfile(isLoadingShow: false),
                     child: CustomScrollView(
                       controller: _scrollController,
+                      clipBehavior: Clip.none,
+                      physics: const BouncingScrollPhysics(),
                       slivers: [
                         _buildSliverAppBar(isOwnProfile),
-                        _buildProfileInfo(isOwnProfile),
+                        _buildProfileInfoWithoutAvatar(isOwnProfile),
                         _buildStatsSection(),
                         _buildTabBar(context),
                         _buildTabContent(),
                         if(_isFetchingMore)
-                        SliverToBoxAdapter(
-                          child: const Padding(
+                          SliverToBoxAdapter(
+                            child: const Padding(
                             padding: EdgeInsets.all(16),
                             child: Center(child: CircularProgressIndicator()),
-                          )
-
-                        ),
+                            )
+                          ),
                         SliverToBoxAdapter(
                           child: SizedBox(height: 130),
                         ),
@@ -387,7 +391,30 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
                 ),
               ),
               _buildBottomBannerAd(),
-              _buildFloatingAvatar(),
+              ValueListenableBuilder<double>(
+                valueListenable: _collapseProgress,
+                builder: (context, t, _) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final centerLeft = screenWidth / 2 - 100 / 2;
+                  const leftCollapsed = 16.0;
+                  final leftPosition = leftCollapsed + (centerLeft - leftCollapsed) * (1.0 - t);
+                  final topPosition = 300 - offsetY - 60;
+                  final opacity = (1.0 - t).clamp(0.0, 1.0);
+                  final scale = 1.0 - 0.4 * t;
+                  return Positioned(
+                    top: topPosition,
+                    left: leftPosition,
+                    child: Opacity(
+                      opacity: opacity,
+                      child: Transform.scale(
+                        scale: scale,
+                        alignment: Alignment.center,
+                        child: _buildFloatingAvatar(),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -425,10 +452,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
   }
 
   Widget _buildFloatingAvatar() {
-    return Positioned(
-      top: 300 - offsetY - 70,
-      left: MediaQuery.of(context).size.width / 2 - 100 / 2,
-      child: GestureDetector(
+      return GestureDetector(
         onTap: (){
           Navigator.push(
             context,
@@ -450,7 +474,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 10,
-                offset: const Offset(0, 5),
+                spreadRadius: 3,
               ),
             ],
           ),
@@ -476,7 +500,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
               size: 40,
               color: Colors.white,
             ),
-          ),
         ),
       ),
     );
@@ -492,13 +515,69 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
   }
 
   Widget _buildSliverAppBar(bool isOwnProfile) {
+    const double expandedHeight = 250.0;
     return SliverAppBar(
-      expandedHeight: 250.0,
+      expandedHeight: expandedHeight,
       floating: false,
       pinned: true,
       backgroundColor: Colors.black,
       foregroundColor: Colors.white,
-      title: Text(_user?.displayName ?? 'Profile'),
+      elevation: 0,
+      clipBehavior: Clip.none,
+      centerTitle: false,
+      title: ValueListenableBuilder<double>(
+        valueListenable: _collapseProgress,
+        builder: (context, t, _) {
+          return Opacity(
+            opacity: t.clamp(0.0, 1.0),
+            child: Transform.translate(
+              offset: const Offset(-16, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: (_user?.profileImageUrl != null && _user!.profileImageUrl!.isNotEmpty) ||
+                        (_user?.photoURL != null && _user!.photoURL!.isNotEmpty)
+                        ? ClipOval(
+                      child: CustomImageWidget(
+                        imageUrl: _user?.profileImageUrl?.isNotEmpty == true
+                            ? _user!.profileImageUrl!
+                            : _user!.photoURL!,
+                        height: double.infinity,
+                        width: double.infinity,
+                        cornerRadius: 0,
+                        borderWidth: 0,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                        : CircleAvatar(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      child: const Icon(Icons.person, color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _user?.displayName ?? 'User',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
       actions: [
         if (!isOwnProfile)
           PopupMenuButton<String>(
@@ -531,78 +610,98 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
             ],
           ),
       ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () {
-            final banner = _user?.bannerImageUrl;
-            if (banner != null && banner.isNotEmpty) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ImagePreviewScreen(
-                    imageUrl: banner,
-                    isAvatar: false,
-                  ),
-                ),
-              );
-            }
-          },
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Banner Image
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Color(0xFFA3E635),
-                      Color(0xFF2E7D32),
-                    ],
-                  ),
-                ),
-                child: _user?.bannerImageUrl != null && _user!.bannerImageUrl!.isNotEmpty
-                    ? CustomImageWidget(
-                  imageUrl: _user!.bannerImageUrl!,
-                  height: double.infinity,
-                  width: double.infinity,
-                  cornerRadius: 0,
-                  borderWidth: 0,
-                  fit: BoxFit.cover,
-                )
-                    : null,
-              ),
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          final double statusBarHeight = MediaQuery.of(context).padding.top;
+          final double collapsedHeight = kToolbarHeight + statusBarHeight;
+          final double currentHeight = constraints.biggest.height;
+          final double progress = ((currentHeight - collapsedHeight) /
+              (expandedHeight - collapsedHeight))
+              .clamp(0.0, 1.0);
+          _collapseProgress.value = 1.0 - progress;
 
-              // Gradient Overlay
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.7),
-                    ],
-                  ),
+          return Stack(
+            fit: StackFit.expand,
+            clipBehavior: Clip.none,
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  final banner = _user?.bannerImageUrl;
+                  if (banner != null && banner.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ImagePreviewScreen(
+                          imageUrl: banner,
+                          isAvatar: false,
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Banner Image
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            Color(0xFFA3E635),
+                            Color(0xFF2E7D32),
+                          ],
+                        ),
+                      ),
+                      child: _user?.bannerImageUrl != null && _user!.bannerImageUrl!.isNotEmpty
+                          ? CustomImageWidget(
+                        imageUrl: _user!.bannerImageUrl!,
+                        height: double.infinity,
+                        width: double.infinity,
+                        cornerRadius: 0,
+                        borderWidth: 0,
+                        fit: BoxFit.cover,
+                      )
+                          : null,
+                    ),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.6),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    Opacity(
+                      opacity: (1.0 - progress),
+                      child: Container(color: Colors.black),
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildProfileInfo(bool isOwnProfile) {
+  Widget _buildProfileInfoWithoutAvatar(bool isOwnProfile) {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            SizedBox(height: 40,),
+            SizedBox(height: 70,),
             Text(
               _user?.displayName ?? 'User',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -813,7 +912,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> with Ti
         ),
       ),
     );
-  } 
+  }
 
   Widget _buildTabContent() {
     final videos = _userVideos;
