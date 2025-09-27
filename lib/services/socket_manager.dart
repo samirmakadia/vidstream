@@ -30,7 +30,7 @@ class SocketManager {
     _currentUserId = _authService.currentUser?.id ?? "";
 
     _socket = IO.io(
-      'https://creatives-macbook-air-2.taild45175.ts.net',
+      'https://api.vidmeet.fun',
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
