@@ -8,6 +8,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'graphics.dart';
 import 'package:path/path.dart' as path;
+import 'package:android_id/android_id.dart';
 
 class Utils{
 
@@ -64,17 +65,14 @@ class Utils{
     return Size(bannerWidth, bannerHeight);
   }
 
-  static Future<String> getDeviceId() async {
-    final deviceInfo = DeviceInfoPlugin();
-
-    if (Platform.isAndroid) {
-      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      return androidInfo.id ?? '';
-    } else if (Platform.isIOS) {
-      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-      return iosInfo.identifierForVendor ?? '';
-    } else {
-      return '';
+  static Future<String?> getDeviceId() async {
+    var deviceInfo = DeviceInfoPlugin();
+    if (Platform.isIOS) {
+      var iosDeviceInfo = await deviceInfo.iosInfo;
+      return iosDeviceInfo.identifierForVendor;
+    } else if(Platform.isAndroid) {
+      var androidDeviceInfo = await deviceInfo.androidInfo;
+      return AndroidId().getId();
     }
   }
 

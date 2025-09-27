@@ -8,6 +8,8 @@ import 'package:vidmeet/services/api_service.dart';
 import 'package:vidmeet/services/notification_service.dart';
 import 'package:vidmeet/utils/auth_utils.dart';
 
+import '../utils/utils.dart';
+
 class AuthService {
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
@@ -373,12 +375,11 @@ class AuthService {
   }
 
   Future<ApiUser> _createGuestUser() async {
-    final deviceId = await AuthUtils().getDeviceId();
-    // final deviceId = 'T2SNS33.73-22-3-15';
+    final deviceId = await Utils.getDeviceId();
 
     print('Creating guest user with device ID: $deviceId');
 
-    final authResponse = await _apiService.guestLogin(deviceId: deviceId);
+    final authResponse = await _apiService.guestLogin(deviceId: deviceId ?? '');
 
     if (authResponse != null) {
       _accessToken = authResponse.token;
