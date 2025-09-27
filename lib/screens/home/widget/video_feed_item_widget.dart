@@ -24,6 +24,7 @@ class VideoFeedItemWidget extends StatefulWidget {
   final void Function(ApiVideo video)? onReported;
   final void Function(ApiUser updatedUser)? onFollowUpdated;
   final VoidCallback? onVideoCompleted;
+  final int totalVideos;
 
   final ApiUser? user;
   final VoidCallback? onPauseRequested;
@@ -38,7 +39,7 @@ class VideoFeedItemWidget extends StatefulWidget {
     required this.shouldPreload,
     this.externalController,
     this.onVideoDeleted,
-    this.onLikeUpdated, this.onCommentUpdated, this.onReported, this.onFollowUpdated, this.user, this.onPauseRequested, this.onResumeRequested, this.onVideoCompleted,
+    this.onLikeUpdated, this.onCommentUpdated, this.onReported, this.onFollowUpdated, this.user, this.onPauseRequested, this.onResumeRequested, this.onVideoCompleted, required this.totalVideos,
   });
 
   @override
@@ -247,6 +248,7 @@ class _VideoFeedItemWidgetState extends State<VideoFeedItemWidget> {
           videoUrl: widget.video.videoUrl,
           isActive: widget.isActive,
           isAuto: widget.isAuto,
+          totalVideos: widget.totalVideos,
           shouldPreload: widget.shouldPreload,
           externalController: widget.externalController,
           onVideoCompleted: widget.onVideoCompleted,

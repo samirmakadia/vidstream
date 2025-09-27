@@ -10,13 +10,14 @@ class VideoPlayerWidget extends StatefulWidget {
   final bool isAuto;
   final BetterPlayerController? externalController;
   final VoidCallback? onVideoCompleted;
+  final int totalVideos;
 
   const VideoPlayerWidget({
     super.key,
     required this.videoUrl,
     required this.isActive,
     required this.isAuto,
-    required this.shouldPreload, this.externalController, this.onVideoCompleted,
+    required this.shouldPreload, this.externalController, this.onVideoCompleted, required this.totalVideos,
   });
 
   @override
@@ -69,11 +70,14 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   void _initializePlayer() {
     if (!(widget.isActive || widget.shouldPreload)) return;
     if (controller != null) return;
+    final shouldLoop =
+        (!widget.isAuto) ||
+            (widget.isAuto && widget.totalVideos == 1);
 
     controller = BetterPlayerController(
       BetterPlayerConfiguration(
         autoPlay: false,
-        looping: !widget.isAuto,
+        looping: shouldLoop,
         handleLifecycle: true,
         expandToFill: true,
         fit: BoxFit.contain,

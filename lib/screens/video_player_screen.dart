@@ -150,6 +150,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> with AutomaticKee
         return VideoFeedItemWidget(
           key: ValueKey(video.id),
           video: video,
+          totalVideos: _videos.length,
           isActive: index == _currentIndex && _isScreenVisible,
           shouldPreload: () {
             final currentVideoIndex = showAds

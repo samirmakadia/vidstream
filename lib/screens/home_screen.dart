@@ -161,10 +161,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     _preparingControllers.add(index);
     try {
       final url = _videos[index].videoUrl;
+      final shouldLoop = !_isAuto || (_isAuto && _videos.length == 1);
       final controller = BetterPlayerController(
         BetterPlayerConfiguration(
           autoPlay: false,
-          looping: !_isAuto,
+          looping: shouldLoop,
           handleLifecycle: true,
           expandToFill: true,
           fit: BoxFit.contain,
@@ -424,6 +425,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
     return RefreshIndicator(
       onRefresh: _refreshVideos,
       child: PageView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         controller: _pageController,
         scrollDirection: Axis.vertical,
         itemCount: totalItems,
@@ -469,6 +471,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, A
             shouldPreload: shouldPreload,
             isFromHome: true,
             isAuto: _isAuto,
+            totalVideos: _videos.length,
             externalController: externalController,
             onVideoCompleted: () {
               if (_isAuto) {
