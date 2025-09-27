@@ -49,6 +49,8 @@ class SocketManager {
 
     _socket?.onReconnect((_)  async {
       print("🔄 Reconnected, re-attaching message listener");
+      _socket?.off('message');
+      _socket?.on('message', _handleMessage);
       _syncMessagesSinceLastSync();
       await _sendPendingMessages();
     });
